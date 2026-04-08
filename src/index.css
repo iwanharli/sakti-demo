@@ -1,0 +1,536 @@
+@import url('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 30% 6%;
+    --foreground: 210 40% 96%;
+    --card: 220 35% 8%;
+    --card-foreground: 210 40% 96%;
+    --popover: 220 35% 8%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 200 100% 50%;
+    --primary-foreground: 220 30% 6%;
+    --secondary: 220 25% 14%;
+    --secondary-foreground: 210 40% 96%;
+    --muted: 220 20% 18%;
+    --muted-foreground: 210 20% 55%;
+    --accent: 200 100% 50%;
+    --accent-foreground: 220 30% 6%;
+    --destructive: 0 84% 50%;
+    --destructive-foreground: 210 40% 96%;
+    --border: 220 20% 18%;
+    --input: 220 20% 18%;
+    --ring: 200 100% 50%;
+    --radius: 0.5rem;
+    
+    /* Custom EWS Colors */
+    --ews-blue: #0ea5e9;
+    --ews-cyan: #06b6d4;
+    --ews-red: #dc2626;
+    --ews-amber: #f59e0b;
+    --ews-green: #10b981;
+    --ews-purple: #8b5cf6;
+    --ews-dark: #0a0f1a;
+    --ews-darker: #070a12;
+    --ews-card: #111827;
+    --ews-border: #1f2937;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-[#070a12] text-foreground antialiased;
+    font-family: 'Rajdhani', sans-serif;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0f1a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1f2937;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #374151;
+}
+
+/* Grid Background Pattern */
+.ews-grid-bg {
+  background-image: 
+    linear-gradient(rgba(14, 165, 233, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(14, 165, 233, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Scanline Effect */
+.ews-scanline::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.03) 2px,
+    rgba(0, 0, 0, 0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Glow Effects */
+.ews-glow-cyan {
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+}
+
+.ews-glow-red {
+  box-shadow: 0 0 20px rgba(220, 38, 38, 0.4);
+}
+
+.ews-glow-amber {
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+}
+
+.ews-glow-green {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+}
+
+/* Pulse Animations */
+@keyframes ews-pulse-red {
+  0%, 100% { 
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+  }
+  50% { 
+    box-shadow: 0 0 0 10px rgba(220, 38, 38, 0);
+  }
+}
+
+@keyframes ews-pulse-cyan {
+  0%, 100% { 
+    box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.7);
+  }
+  50% { 
+    box-shadow: 0 0 0 8px rgba(6, 182, 212, 0);
+  }
+}
+
+@keyframes ews-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@keyframes ews-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes ews-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ews-ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.ews-animate-pulse-red {
+  animation: ews-pulse-red 2s ease-in-out infinite;
+}
+
+.ews-animate-pulse-cyan {
+  animation: ews-pulse-cyan 2s ease-in-out infinite;
+}
+
+.ews-animate-blink {
+  animation: ews-blink 1.5s ease-in-out infinite;
+}
+
+.ews-animate-slide-in {
+  animation: ews-slide-in 0.3s ease-out;
+}
+
+.ews-animate-fade-in {
+  animation: ews-fade-in 0.5s ease-out;
+}
+
+.ews-ticker {
+  animation: ews-ticker 30s linear infinite;
+}
+
+/* Typography */
+.font-orbitron {
+  font-family: 'Orbitron', monospace;
+}
+
+.font-rajdhani {
+  font-family: 'Rajdhani', sans-serif;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Card Styles */
+.ews-card {
+  @apply bg-[#111827] border border-[#1f2937] rounded-lg overflow-hidden;
+  transition: all 0.3s ease;
+}
+
+.ews-card:hover {
+  border-color: rgba(14, 165, 233, 0.3);
+}
+
+/* Status Indicators */
+.ews-status-dot {
+  @apply w-2 h-2 rounded-full;
+}
+
+.ews-status-dot.red {
+  @apply bg-red-500;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+}
+
+.ews-status-dot.amber {
+  @apply bg-amber-500;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.8);
+}
+
+.ews-status-dot.green {
+  @apply bg-emerald-500;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.8);
+}
+
+.ews-status-dot.cyan {
+  @apply bg-cyan-500;
+  box-shadow: 0 0 8px rgba(6, 182, 212, 0.8);
+}
+
+/* Alert Levels */
+.ews-alert-critical {
+  @apply border-l-4 border-red-500 bg-red-500/10;
+}
+
+.ews-alert-high {
+  @apply border-l-4 border-amber-500 bg-amber-500/10;
+}
+
+.ews-alert-medium {
+  @apply border-l-4 border-cyan-500 bg-cyan-500/10;
+}
+
+.ews-alert-low {
+  @apply border-l-4 border-emerald-500 bg-emerald-500/10;
+}
+
+/* Heatmap Zones */
+.ews-heat-zone {
+  position: absolute;
+  border-radius: 50%;
+  animation: heat-pulse 3s ease-in-out infinite;
+}
+
+@keyframes heat-pulse {
+  0%, 100% { 
+    transform: scale(1); 
+    opacity: 0.7; 
+  }
+  50% { 
+    transform: scale(1.1); 
+    opacity: 0.9; 
+  }
+}
+
+.ews-heat-red {
+  background: radial-gradient(circle, rgba(220, 38, 38, 0.7) 0%, rgba(220, 38, 38, 0) 70%);
+}
+
+.ews-heat-amber {
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.6) 0%, rgba(245, 158, 11, 0) 70%);
+}
+
+.ews-heat-yellow {
+  background: radial-gradient(circle, rgba(234, 179, 8, 0.5) 0%, rgba(234, 179, 8, 0) 70%);
+}
+
+/* Map Markers */
+.ews-map-marker {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  cursor: pointer;
+  z-index: 10;
+}
+
+.ews-marker-dot {
+  @apply w-3.5 h-3.5 rounded-full border-2 border-white/80 backdrop-blur-md;
+  animation: marker-breath 3s ease-in-out infinite;
+  box-shadow: 0 0 15px currentColor, 0 0 30px currentColor;
+  position: relative;
+}
+
+.ews-marker-dot::after {
+  content: '';
+  @apply absolute -inset-2 rounded-full;
+  background: currentColor;
+  opacity: 0.2;
+  filter: blur(8px);
+  animation: marker-glow 3s ease-in-out infinite;
+}
+
+@keyframes marker-breath {
+  0%, 100% { 
+    transform: scale(0.85);
+    filter: brightness(1);
+  }
+  50% { 
+    transform: scale(1.1);
+    filter: brightness(1.4);
+  }
+}
+
+@keyframes marker-glow {
+  0%, 100% { transform: scale(1); opacity: 0.1; }
+  50% { transform: scale(1.5); opacity: 0.4; }
+}
+
+.ews-patrol-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.ews-marker-label {
+  @apply absolute -top-6 whitespace-nowrap bg-black/70 backdrop-blur-sm px-1.5 py-0.5 rounded border border-white/10 text-[9px] font-bold text-white;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Progress Bars */
+.ews-progress-bar {
+  @apply h-1.5 bg-gray-800 rounded-full overflow-hidden;
+}
+
+.ews-progress-fill {
+  @apply h-full rounded-full transition-all duration-1000 ease-out;
+}
+
+/* Tag Styles */
+.ews-tag {
+  @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold tracking-wide;
+}
+
+.ews-tag-red {
+  @apply bg-red-500/15 text-red-400 border border-red-500/30;
+}
+
+.ews-tag-amber {
+  @apply bg-amber-500/15 text-amber-400 border border-amber-500/30;
+}
+
+.ews-tag-green {
+  @apply bg-emerald-500/15 text-emerald-400 border border-emerald-500/30;
+}
+
+.ews-tag-cyan {
+  @apply bg-cyan-500/15 text-cyan-400 border border-cyan-500/30;
+}
+
+.ews-tag-purple {
+  @apply bg-purple-500/15 text-purple-400 border border-purple-500/30;
+}
+
+/* Navigation */
+.ews-nav-item {
+  @apply flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-400 cursor-pointer transition-all duration-200;
+}
+
+.ews-nav-item:hover {
+  @apply bg-cyan-500/10 text-cyan-400;
+}
+
+.ews-nav-item.active {
+  @apply bg-gradient-to-r from-cyan-500/20 to-cyan-500/5 text-cyan-400 border border-cyan-500/30;
+}
+
+.ews-nav-item.active::before {
+  content: '';
+  @apply absolute left-0 w-1 h-6 bg-cyan-500 rounded-r;
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+}
+
+/* Live Badge */
+.ews-live-badge {
+  @apply inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-bold;
+}
+
+.ews-live-badge.red {
+  @apply bg-red-500/15 text-red-400 border border-red-500/30;
+}
+
+.ews-live-dot {
+  @apply w-1.5 h-1.5 rounded-full bg-red-500;
+  animation: ews-blink 1s ease-in-out infinite;
+}
+
+/* Stat Card */
+.ews-stat-card {
+  @apply relative bg-[#111827] border border-[#1f2937] rounded-lg p-5 overflow-hidden;
+  transition: all 0.3s ease;
+}
+
+.ews-stat-card::before {
+  content: '';
+  @apply absolute top-0 left-0 right-0 h-0.5;
+}
+
+.ews-stat-card:hover {
+  transform: translateY(-2px);
+}
+
+.ews-stat-card.red::before {
+  @apply bg-red-500;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+}
+
+.ews-stat-card.amber::before {
+  @apply bg-amber-500;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+}
+
+.ews-stat-card.green::before {
+  @apply bg-emerald-500;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+.ews-stat-card.cyan::before {
+  @apply bg-cyan-500;
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+}
+
+.ews-stat-card.purple::before {
+  @apply bg-purple-500;
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+}
+
+/* Timeline */
+.ews-timeline {
+  @apply relative pl-5;
+}
+
+.ews-timeline::before {
+  content: '';
+  @apply absolute left-1.5 top-0 bottom-0 w-px bg-gray-800;
+}
+
+.ews-timeline-item {
+  @apply relative pb-4;
+}
+
+.ews-timeline-dot {
+  @apply absolute -left-3.5 w-3 h-3 rounded-full border-2 border-[#070a12];
+}
+
+/* Table Styles */
+.ews-table {
+  @apply w-full border-collapse;
+}
+
+.ews-table th {
+  @apply text-left px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-800 bg-gray-900/50;
+}
+
+.ews-table td {
+  @apply px-3 py-2.5 text-sm border-b border-gray-800/50;
+}
+
+.ews-table tr:hover td {
+  @apply bg-cyan-500/5;
+}
+
+/* Button Styles */
+.ews-btn {
+  @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200;
+}
+
+.ews-btn-cyan {
+  @apply bg-cyan-500/15 text-cyan-400 border border-cyan-500/40 hover:bg-cyan-500/25;
+}
+
+.ews-btn-red {
+  @apply bg-red-500/15 text-red-400 border border-red-500/40 hover:bg-red-500/25;
+}
+
+/* Section Title */
+.ews-section-title {
+  @apply flex items-center gap-3 text-sm font-bold text-cyan-400 uppercase tracking-widest mb-4;
+}
+
+.ews-section-title::before {
+  content: '';
+  @apply w-1 h-5 bg-cyan-500 rounded;
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+}
+
+/* Tooltip */
+.ews-tooltip {
+  @apply absolute z-50 px-2 py-1 text-xs text-white bg-gray-900 rounded border border-gray-700;
+}
+
+/* Modal Overlay */
+.ews-modal-overlay {
+  @apply fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm;
+}
+
+.ews-modal {
+  @apply bg-[#111827] border border-gray-700 rounded-xl p-6 max-w-lg w-full mx-4;
+}
+
+/* Toast */
+.ews-toast {
+  @apply fixed top-20 right-4 z-50 flex items-start gap-3 px-4 py-3 rounded-lg border text-sm;
+  animation: ews-slide-in 0.3s ease-out;
+}
+
+.ews-toast.alert {
+  @apply bg-red-500/10 border-red-500/40 text-red-400;
+}
+
+.ews-toast.info {
+  @apply bg-cyan-500/10 border-cyan-500/40 text-cyan-400;
+}
+
+.ews-toast.success {
+  @apply bg-emerald-500/10 border-emerald-500/40 text-emerald-400;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .ews-sidebar {
+    @apply -translate-x-full;
+  }
+}
