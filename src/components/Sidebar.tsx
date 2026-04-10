@@ -24,77 +24,92 @@ export default function Sidebar({ currentPage }: SidebarProps) {
   };
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 w-64 bg-gradient-to-b from-[#0a0f1a] to-[#070a12] border-r border-gray-800 z-50 flex flex-col">
-      {/* Logo */}
-      <div className="p-6 border-b border-gray-800/50">
+    <aside className="fixed left-0 top-0 bottom-0 w-64 bg-gradient-to-b from-[#0a0f1a] to-[#070a12] border-r border-gray-800 z-50 flex flex-col ews-animate-fade-in">
+      {/* Logo Section */}
+      <div className="p-6 border-b border-gray-800/50 bg-black/10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center ews-glow-cyan">
             <span className="font-orbitron font-black text-xl text-cyan-400">S</span>
           </div>
           <div>
             <div className="font-orbitron font-bold text-sm tracking-widest text-white">SAKTI</div>
-            <div className="text-[10px] text-gray-500 tracking-tighter">NATIONAL SECURITY EWS</div>
+            <div className="text-[10px] text-gray-500 tracking-tighter uppercase font-bold">National Security</div>
           </div>
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1 ews-scrollbar">
-        <div className="px-3 mb-2">
-          <span className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">Modul Utama</span>
+      {/* Navigation - Using Native EWS Styles */}
+      <nav className="flex-1 overflow-y-auto pt-6 pb-4 px-3 space-y-1 ews-scrollbar">
+        <div className="px-4 mb-4">
+          <span className="text-[10px] text-gray-600 font-black uppercase tracking-[0.2em] flex items-center gap-2">
+            <span className="w-4 h-px bg-gray-800"></span>
+            Modul Operasional
+          </span>
         </div>
-        {menuItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => navigateTo(item.id)}
-            className={`
-              w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 group
-              ${currentPage === item.id 
-                ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.1)]' 
-                : 'text-gray-400 hover:bg-gray-800/50 hover:text-gray-200'
-              }
-            `}
+        
+        {menuItems.map((item, idx) => (
+          <div 
+            key={item.id} 
+            className="ews-animate-slide-in"
+            style={{ animationDelay: `${idx * 0.03}s` }}
           >
-            <span className={`text-lg grayscale group-hover:grayscale-0 transition-all ${currentPage === item.id ? 'grayscale-0' : ''}`}>
-              {item.icon}
-            </span>
-            <span className="font-medium tracking-wide">{item.label}</span>
-            {currentPage === item.id && (
-              <div className="ml-auto w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.8)]" />
-            )}
-          </button>
+            <div
+              onClick={() => navigateTo(item.id)}
+              className={`ews-nav-item relative ${currentPage === item.id ? 'active' : ''}`}
+            >
+              <span className={`text-lg transition-transform duration-300 ${currentPage === item.id ? 'scale-110 drop-shadow-[0_0_8px_rgba(6,182,212,0.5)]' : 'grayscale group-hover:grayscale-0'}`}>
+                {item.icon}
+              </span>
+              <span className={`font-semibold tracking-wide ${currentPage === item.id ? 'text-cyan-400' : 'text-gray-400 group-hover:text-gray-200'}`}>
+                {item.label}
+              </span>
+              
+              {/* Active Indicator Bar (Handled by .active::before in index.css but reinforced here for premium feel) */}
+              {currentPage === item.id && (
+                <div className="absolute right-2 w-1 h-1 rounded-full bg-cyan-400 animate-pulse" />
+              )}
+            </div>
+          </div>
         ))}
       </nav>
 
-      {/* Bottom Status */}
-      <div className="p-4 border-t border-gray-800 bg-black/20">
-        <div className="space-y-2">
+      {/* Bottom Status Section */}
+      <div className="mt-auto p-4 bg-black/40 border-t border-gray-800 backdrop-blur-md">
+        <div className="bg-gray-900/40 rounded-xl p-3 border border-gray-800/50 space-y-2.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="ews-status-dot green ews-animate-blink" />
-              <span className="text-xs text-gray-400">Platform Online</span>
+              <span className="text-[11px] text-gray-400 font-medium">Platform Core</span>
             </div>
-            <span className="text-xs font-bold text-emerald-400">AKTIF</span>
+            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 rounded">ONLINE</span>
           </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="ews-status-dot amber ews-animate-blink" />
-              <span className="text-xs text-gray-400">Sinkronisasi</span>
+              <span className="ews-status-dot cyan ews-animate-blink" />
+              <span className="text-[11px] text-gray-400 font-medium">Sync Data</span>
             </div>
-            <span className="text-xs font-bold text-amber-400">Realtime</span>
+            <span className="text-[10px] font-bold text-cyan-400 bg-cyan-500/10 px-1.5 rounded">REALTIME</span>
           </div>
         </div>
-        <div className="mt-3 pt-3 border-t border-gray-800">
-          <span className="text-[10px] text-gray-500 uppercase tracking-wider">Personel Aktif</span>
-          <div className="flex items-center gap-2 mt-1">
-            <div className="w-6 h-6 rounded-full bg-blue-900 border border-blue-400/30 flex items-center justify-center text-[10px] text-blue-200">
-              AH
+
+        {/* User Profile Info */}
+        <div className="mt-4 px-2">
+          <div className="flex items-center gap-3 p-2 rounded-lg bg-cyan-500/5 border border-cyan-500/10 group hover:border-cyan-500/30 transition-all cursor-pointer">
+            <div className="relative">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 p-[1px]">
+                <div className="w-full h-full rounded-full bg-gray-900 flex items-center justify-center text-[10px] font-bold text-cyan-400">
+                  AH
+                </div>
+              </div>
+              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#070a12] rounded-full flex items-center justify-center border border-gray-800">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              </div>
             </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] text-gray-300 font-bold">AKBP Ahmad K.</span>
-              <span className="text-[8px] text-gray-500">ID: 88090547</span>
+            <div className="flex flex-col flex-1 overflow-hidden">
+              <span className="text-[11px] text-gray-200 font-bold truncate">AKBP Ahmad K.</span>
+              <span className="text-[9px] text-gray-500 font-mono tracking-tighter">NRP: 88090547</span>
             </div>
-            <button className="ml-auto text-gray-600 hover:text-red-400 transition-colors">
+            <button className="text-gray-600 hover:text-red-400 transition-colors p-1" title="Logout">
               🚪
             </button>
           </div>
