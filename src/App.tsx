@@ -184,7 +184,7 @@ function App() {
         <Sidebar currentPage={currentPage} />
       )}
 
-      <div className={`${isLoginPage ? '' : 'ml-64'} min-h-screen flex flex-col`}>
+      <div className={`${isLoginPage ? '' : 'ml-72'} min-h-screen flex flex-col`}>
         {!isLoginPage && (
           <Topbar 
             title={pageTitles[currentPage]}
