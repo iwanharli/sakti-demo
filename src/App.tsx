@@ -12,11 +12,13 @@ import Bencana from './pages/Bencana';
 import Cuaca from './pages/Cuaca';
 import Sembako from './pages/Sembako';
 import Mitigasi from './pages/Mitigasi';
+import Login from './pages/Login';
 import AlertModal from './components/AlertModal';
 import ToastContainer from './components/ToastContainer';
 import type { Toast, AlertItem } from './types';
 
 export type PageType = 
+  | 'login'
   | 'dashboard' 
   | 'osint' 
   | 'prediktif' 
@@ -30,6 +32,7 @@ export type PageType =
   | 'mitigasi';
 
 const pageTitles: Record<PageType, string> = {
+  login: 'AUTENTIKASI SISTEM',
   dashboard: 'COMMAND CENTER',
   osint: 'SOCIAL SENSING & OSINT',
   prediktif: 'ANALITIK PREDIKTIF',
@@ -74,7 +77,7 @@ const alertData: AlertItem[] = [
 ];
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<PageType>('dashboard');
+  const [currentPage, setCurrentPage] = useState<PageType>('login');
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -89,6 +92,8 @@ function App() {
 
   // Auto alerts simulation
   useEffect(() => {
+    if (currentPage === 'login') return;
+
     const alerts = [
       { msg: '📡 Data DUKCAPIL disinkronkan — 247 record baru', type: 'info' as const },
       { msg: '⚠️ Keyword "begal" naik +45% di TikTok', type: 'alert' as const },
@@ -116,7 +121,8 @@ function App() {
   }, []);
 
   const addToast = useCallback((message: string, type: Toast['type'] = 'info') => {
-    const id = Date.now().toString();
+    // Add a random suffix to prevent duplicates if multiple toasts trigger at once
+    const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     setToasts(prev => [...prev, { id, message, type }]);
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
@@ -129,6 +135,8 @@ function App() {
 
   const renderPage = () => {
     switch (currentPage) {
+      case 'login':
+        return <Login onLoginSuccess={() => setCurrentPage('dashboard')} addToast={addToast} />;
       case 'dashboard':
         return <Dashboard addToast={addToast} />;
       case 'osint':
@@ -156,36 +164,45 @@ function App() {
     }
   };
 
+  const isLoginPage = currentPage === 'login';
+
   return (
     <div className="min-h-screen bg-[#070a12] text-gray-100 font-rajdhani ews-grid-bg ews-scanline">
-      {/* Sidebar */}
-      <Sidebar 
-        currentPage={currentPage} 
-        onPageChange={setCurrentPage} 
-      />
+      {/* Sidebar - Hidden on Login */}
+      {!isLoginPage && (
+        <Sidebar 
+          currentPage={currentPage} 
+          onPageChange={setCurrentPage} 
+          addToast={addToast}
+        />
+      )}
 
       {/* Main Content */}
-      <div className="ml-64 min-h-screen flex flex-col">
-        {/* Topbar */}
-        <Topbar 
-          title={pageTitles[currentPage]}
-          currentTime={currentTime}
-          alertCount={3}
-          onAlertClick={() => setIsAlertModalOpen(true)}
-        />
+      <div className={`${isLoginPage ? '' : 'ml-64'} min-h-screen flex flex-col`}>
+        {/* Topbar - Hidden on Login */}
+        {!isLoginPage && (
+          <Topbar 
+            title={pageTitles[currentPage]}
+            currentTime={currentTime}
+            alertCount={3}
+            onAlertClick={() => setIsAlertModalOpen(true)}
+          />
+        )}
 
         {/* Page Content */}
-        <main className="flex-1 p-5">
+        <main className={`${isLoginPage ? 'p-0' : 'flex-1 p-5'}`}>
           {renderPage()}
         </main>
       </div>
 
       {/* Alert Modal */}
-      <AlertModal 
-        isOpen={isAlertModalOpen}
-        onClose={() => setIsAlertModalOpen(false)}
-        alerts={alertData}
-      />
+      {!isLoginPage && (
+        <AlertModal 
+          isOpen={isAlertModalOpen}
+          onClose={() => setIsAlertModalOpen(false)}
+          alerts={alertData}
+        />
+      )}
 
       {/* Toast Container */}
       <ToastContainer 

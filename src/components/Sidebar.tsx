@@ -1,8 +1,12 @@
+import { useState } from 'react';
 import type { PageType } from '../App';
+import type { Toast } from '../types';
+import { useTracking } from '../hooks/useTracking';
 
 interface SidebarProps {
   currentPage: PageType;
   onPageChange: (page: PageType) => void;
+  addToast: (message: string, type: Toast['type']) => void;
 }
 
 interface NavItem {
@@ -28,7 +32,7 @@ const navItems: NavItem[] = [
   { id: 'mitigasi', icon: '🔐', label: 'Mitigasi Keamanan', badge: 5, badgeColor: 'red' },
 ];
 
-export default function Sidebar({ currentPage, onPageChange }: SidebarProps) {
+export default function Sidebar({ currentPage, onPageChange, addToast }: SidebarProps) {
   return (
     <aside className="fixed left-0 top-0 bottom-0 w-64 bg-gradient-to-b from-[#0a0f1a] to-[#070a12] border-r border-gray-800 z-50 flex flex-col">
       {/* Logo */}
