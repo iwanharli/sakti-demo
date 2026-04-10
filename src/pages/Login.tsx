@@ -37,6 +37,7 @@ export default function Login({ onLoginSuccess, addToast }: LoginProps) {
 
     if (success) {
       setAuthStatus('Otentikasi Berhasil. Membuka Dashboard...');
+      sessionStorage.setItem('sakti_auth', 'true');
       setTimeout(() => {
         onLoginSuccess();
       }, 1000);

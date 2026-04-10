@@ -82,11 +82,44 @@ function App() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
 
-  // Update clock every second
+  // --- NATIVE HASH ROUTING LOGIC ---
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#/', '') as PageType;
+      
+      // Validation & Guard
+      const isValidPage = pageTitles[hash] !== undefined;
+      const isAuthenticated = sessionStorage.getItem('sakti_auth') === 'true';
+
+      if (!isValidPage) {
+        window.location.hash = isAuthenticated ? '#/dashboard' : '#/login';
+        return;
+      }
+
+      // Force login if not authenticated
+      if (hash !== 'login' && !isAuthenticated) {
+        window.location.hash = '#/login';
+        return;
+      }
+
+      setCurrentPage(hash);
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    
+    // Initial call
+    if (!window.location.hash) {
+      window.location.hash = '#/login';
+    } else {
+      handleHashChange();
+    }
+
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  // Update clock
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -109,19 +142,10 @@ function App() {
       alertIdx++;
     }, 15000);
 
-    // First toast after 3 seconds
-    const initialTimeout = setTimeout(() => {
-      addToast('🟢 Sistem SAKTI aktif — Semua modul operasional', 'success');
-    }, 3000);
-
-    return () => {
-      clearInterval(interval);
-      clearTimeout(initialTimeout);
-    };
-  }, []);
+    return () => clearInterval(interval);
+  }, [currentPage]);
 
   const addToast = useCallback((message: string, type: Toast['type'] = 'info') => {
-    // Add a random suffix to prevent duplicates if multiple toasts trigger at once
     const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     setToasts(prev => [...prev, { id, message, type }]);
     setTimeout(() => {
@@ -136,31 +160,19 @@ function App() {
   const renderPage = () => {
     switch (currentPage) {
       case 'login':
-        return <Login onLoginSuccess={() => setCurrentPage('dashboard')} addToast={addToast} />;
-      case 'dashboard':
-        return <Dashboard addToast={addToast} />;
-      case 'osint':
-        return <OSINT addToast={addToast} />;
-      case 'prediktif':
-        return <Prediktif addToast={addToast} />;
-      case 'peta':
-        return <CrimeMapping addToast={addToast} />;
-      case 'reskrim':
-        return <Reskrim addToast={addToast} />;
-      case 'kolaborasi':
-        return <Kolaborasi addToast={addToast} />;
-      case 'integritas':
-        return <Integritas addToast={addToast} />;
-      case 'bencana':
-        return <Bencana addToast={addToast} />;
-      case 'cuaca':
-        return <Cuaca addToast={addToast} />;
-      case 'sembako':
-        return <Sembako addToast={addToast} />;
-      case 'mitigasi':
-        return <Mitigasi addToast={addToast} />;
-      default:
-        return <Dashboard addToast={addToast} />;
+        return <Login onLoginSuccess={() => window.location.hash = '#/dashboard'} addToast={addToast} />;
+      case 'dashboard': return <Dashboard addToast={addToast} />;
+      case 'osint': return <OSINT addToast={addToast} />;
+      case 'prediktif': return <Prediktif addToast={addToast} />;
+      case 'peta': return <CrimeMapping addToast={addToast} />;
+      case 'reskrim': return <Reskrim addToast={addToast} />;
+      case 'kolaborasi': return <Kolaborasi addToast={addToast} />;
+      case 'integritas': return <Integritas addToast={addToast} />;
+      case 'bencana': return <Bencana addToast={addToast} />;
+      case 'cuaca': return <Cuaca addToast={addToast} />;
+      case 'sembako': return <Sembako addToast={addToast} />;
+      case 'mitigasi': return <Mitigasi addToast={addToast} />;
+      default: return <Dashboard addToast={addToast} />;
     }
   };
 
@@ -168,18 +180,11 @@ function App() {
 
   return (
     <div className="min-h-screen bg-[#070a12] text-gray-100 font-rajdhani ews-grid-bg ews-scanline">
-      {/* Sidebar - Hidden on Login */}
       {!isLoginPage && (
-        <Sidebar 
-          currentPage={currentPage} 
-          onPageChange={setCurrentPage} 
-          addToast={addToast}
-        />
+        <Sidebar currentPage={currentPage} />
       )}
 
-      {/* Main Content */}
       <div className={`${isLoginPage ? '' : 'ml-64'} min-h-screen flex flex-col`}>
-        {/* Topbar - Hidden on Login */}
         {!isLoginPage && (
           <Topbar 
             title={pageTitles[currentPage]}
@@ -189,13 +194,11 @@ function App() {
           />
         )}
 
-        {/* Page Content */}
         <main className={`${isLoginPage ? 'p-0' : 'flex-1 p-5'}`}>
           {renderPage()}
         </main>
       </div>
 
-      {/* Alert Modal */}
       {!isLoginPage && (
         <AlertModal 
           isOpen={isAlertModalOpen}
@@ -204,11 +207,7 @@ function App() {
         />
       )}
 
-      {/* Toast Container */}
-      <ToastContainer 
-        toasts={toasts}
-        onRemove={removeToast}
-      />
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
   );
 }
