@@ -22,6 +22,54 @@ Berikut adalah struktur data yang digunakan pada masing-masing modul:
 | **`mockCommoditiesPrice.ts`** | *Scraping* / pemantauan harga sembako, status stok pasar harian, dan sistem deteksi waspada hiperinflasi yang dapat menyebabkan gejolak sosial. |
 | **`mockSecurityMitigation.ts`** | Matriks risiko keamanan spasial (per kecamatan), pemantauan kerumunan / unjuk rasa, status operasi utilitas & objek vital. |
 
+### 📋 Contoh Struktur Data (Mock Data)
+
+Berikut adalah beberapa contoh representasi *array of objects* yang digunakan sebagai standar data komponen:
+
+**1. `mockOsint.ts`**
+```typescript
+export const keywordAlerts = [
+  { 
+    keyword: 'demo · kerusuhan', 
+    platform: 'X, FB', 
+    volume: '3,240', 
+    spike: '+280%', 
+    spikeColor: 'red', 
+    sentiment: 'NEGATIF', 
+    sentimentColor: 'red', 
+    status: '🚨 ALERT', 
+    statusColor: 'red' 
+  }
+];
+```
+
+**2. `mockPredictiveAnalytics.ts`**
+```typescript
+export const recidivismData = [
+  { 
+    id: '1', 
+    initials: 'RS', 
+    name: 'Rahmat S.', 
+    description: 'Eks-napi Curanmor · Bebas 2 bln lalu', 
+    score: 89, 
+    riskLevel: 'high' // 'high' | 'medium' | 'low'
+  }
+];
+```
+
+**3. `mockDisasterMitigation.ts`**
+```typescript
+export const bencanaAlerts = [
+  { 
+    time: '14:30 WIB', 
+    source: 'BMKG', 
+    content: 'Peringatan Dini Hujan Lebat...', 
+    tags: ['SIAGA', 'BMKG'], 
+    color: 'red' // 'red' | 'amber' | 'green' | 'cyan'
+  }
+];
+```
+
 ### 🚀 Cara Integrasi API Jangka Panjang
 Seluruh data ini diekspor langsung sebagai konstan (`export const data = [...]`). Apabila platform SAKTI akan disambungkan ke **Real Backend API / Database Asli (seperti Postgres, MongoDB)**, Anda hanya perlu:
 1. Menambahkan sintaks pengambil API seperti `useEffect()` dan `fetch()` di masing-masing *file components* di folder `src/pages/`.
