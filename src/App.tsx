@@ -2,48 +2,48 @@ import { useState, useEffect, useCallback } from 'react';
 import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
 import Dashboard from './pages/Dashboard';
-import OSINT from './pages/OSINT';
-import Prediktif from './pages/Prediktif';
-import CrimeMapping from './pages/CrimeMapping';
-import Reskrim from './pages/Reskrim';
-import Kolaborasi from './pages/Kolaborasi';
-import Integritas from './pages/Integritas';
-import Bencana from './pages/Bencana';
-import Cuaca from './pages/Cuaca';
-import Sembako from './pages/Sembako';
-import Mitigasi from './pages/Mitigasi';
+import Osint from './pages/Osint';
+import PredictiveAnalytics from './pages/PredictiveAnalytics';
+// import CrimeMapping from './pages/CrimeMapping';
+// import InvestigationManagement from './pages/InvestigationManagement';
+// import SectoralCollaboration from './pages/SectoralCollaboration';
+import SecurityIntegrity from './pages/SecurityIntegrity';
+import DisasterMitigation from './pages/DisasterMitigation';
+import WeatherForecast from './pages/WeatherForecast';
+import CommoditiesPrice from './pages/CommoditiesPrice';
+import SecurityMitigation from './pages/SecurityMitigation';
 import Login from './pages/Login';
 import AlertModal from './components/AlertModal';
-import ToastContainer from './components/ToastContainer';
+import Swal from 'sweetalert2';
 import type { Toast, AlertItem } from './types';
 
 export type PageType = 
   | 'login'
   | 'dashboard' 
   | 'osint' 
-  | 'prediktif' 
-  | 'peta' 
-  | 'reskrim' 
-  | 'kolaborasi' 
-  | 'integritas' 
-  | 'bencana' 
-  | 'cuaca' 
-  | 'sembako' 
-  | 'mitigasi';
+  | 'predictive-analytics' 
+  // | 'crime-mapping' 
+  // | 'investigation-management' 
+  // | 'sectoral-collaboration' 
+  | 'security-integrity' 
+  | 'disaster-mitigation' 
+  | 'weather-forecast' 
+  | 'commodities-price' 
+  | 'security-mitigation';
 
 const pageTitles: Record<PageType, string> = {
   login: 'AUTENTIKASI SISTEM',
   dashboard: 'COMMAND CENTER',
-  osint: 'SOCIAL SENSING & OSINT',
-  prediktif: 'ANALITIK PREDIKTIF',
-  peta: 'DYNAMIC CRIME MAPPING',
-  reskrim: 'MANAJEMEN INVESTIGASI',
-  kolaborasi: 'KOLABORASI SEKTORAL',
-  integritas: 'INTEGRITAS & KEAMANAN',
-  bencana: 'MITIGASI BENCANA',
-  cuaca: 'PREDIKSI CUACA & KLIMATOLOGI',
-  sembako: 'PANTAUAN HARGA SEMBAKO',
-  mitigasi: 'MITIGASI KEAMANAN WILAYAH'
+  osint: 'OSINT',
+  'predictive-analytics': 'ANALITIK PREDIKTIF',
+  // 'crime-mapping': 'DYNAMIC CRIME MAPPING',
+  // 'investigation-management': 'MANAJEMEN INVESTIGASI',
+  // 'sectoral-collaboration': 'KOLABORASI SEKTORAL',
+  'security-integrity': 'INTEGRITAS & KEAMANAN',
+  'disaster-mitigation': 'MITIGASI BENCANA',
+  'weather-forecast': 'PREDIKSI CUACA',
+  'commodities-price': 'HARGA SEMBAKO',
+  'security-mitigation': 'MITIGASI KEAMANAN'
 };
 
 const alertData: AlertItem[] = [
@@ -79,7 +79,6 @@ const alertData: AlertItem[] = [
 function App() {
   const [currentPage, setCurrentPage] = useState<PageType>('login');
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // --- NATIVE HASH ROUTING LOGIC ---
@@ -146,15 +145,31 @@ function App() {
   }, [currentPage]);
 
   const addToast = useCallback((message: string, type: Toast['type'] = 'info') => {
-    const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
-    }, 4000);
-  }, []);
+    const Toast = Swal.mixin({
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 4000,
+      timerProgressBar: true,
+      didOpen: (toast) => {
+        toast.onmouseenter = Swal.stopTimer;
+        toast.onmouseleave = Swal.resumeTimer;
+      },
+      background: '#05080f',
+      color: '#ffffff',
+      customClass: {
+        popup: 'border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.15)] font-rajdhani',
+      }
+    });
 
-  const removeToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
+    let swalIcon: 'info' | 'warning' | 'success' | 'error' = 'info';
+    if (type === 'alert') swalIcon = 'warning';
+    if (type === 'success') swalIcon = 'success';
+
+    Toast.fire({
+      icon: swalIcon,
+      title: message
+    });
   }, []);
 
   const renderPage = () => {
@@ -162,16 +177,16 @@ function App() {
       case 'login':
         return <Login onLoginSuccess={() => window.location.hash = '#/dashboard'} addToast={addToast} />;
       case 'dashboard': return <Dashboard addToast={addToast} />;
-      case 'osint': return <OSINT addToast={addToast} />;
-      case 'prediktif': return <Prediktif addToast={addToast} />;
-      case 'peta': return <CrimeMapping addToast={addToast} />;
-      case 'reskrim': return <Reskrim addToast={addToast} />;
-      case 'kolaborasi': return <Kolaborasi addToast={addToast} />;
-      case 'integritas': return <Integritas addToast={addToast} />;
-      case 'bencana': return <Bencana addToast={addToast} />;
-      case 'cuaca': return <Cuaca addToast={addToast} />;
-      case 'sembako': return <Sembako addToast={addToast} />;
-      case 'mitigasi': return <Mitigasi addToast={addToast} />;
+      case 'osint': return <Osint addToast={addToast} />;
+      case 'predictive-analytics': return <PredictiveAnalytics addToast={addToast} />;
+      // case 'crime-mapping': return <CrimeMapping addToast={addToast} />;
+      // case 'investigation-management': return <InvestigationManagement addToast={addToast} />;
+      // case 'sectoral-collaboration': return <SectoralCollaboration addToast={addToast} />;
+      case 'security-integrity': return <SecurityIntegrity addToast={addToast} />;
+      case 'disaster-mitigation': return <DisasterMitigation addToast={addToast} />;
+      case 'weather-forecast': return <WeatherForecast addToast={addToast} />;
+      case 'commodities-price': return <CommoditiesPrice addToast={addToast} />;
+      case 'security-mitigation': return <SecurityMitigation addToast={addToast} />;
       default: return <Dashboard addToast={addToast} />;
     }
   };
@@ -206,8 +221,6 @@ function App() {
           alerts={alertData}
         />
       )}
-
-      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
   );
 }

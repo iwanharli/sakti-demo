@@ -21,36 +21,42 @@ const menuSections: MenuSection[] = [
   {
     title: 'UNIT OPERASIONAL',
     subtitle: 'POLRES KOTA METRO',
-    items: []
+    items: [
+      { id: 'dashboard', label: 'Command Center', icon: '🖥️' }
+    ]
   },
   {
     title: 'MODUL INTELIJEN',
     items: [
-      { id: 'osint', label: 'Social Sensing & OSINT', icon: '🌐', badge: { count: 7, color: 'red' } },
-      { id: 'prediktif', label: 'Analitik Prediktif', icon: '🔮' },
+      { id: 'osint', label: 'OSINT', icon: '🌐', badge: { count: 7, color: 'red' } },
+      { id: 'predictive-analytics', label: 'Analitik Prediktif', icon: '🔮' },
     ]
   },
+  /*
   {
-    title: 'MODUL OPERASIONAL',
+    title: 'OPERATIONAL MODULE',
     items: [
-      { id: 'peta', label: 'Crime Mapping', icon: '🗺️', badge: { count: 3, color: 'red' } },
-      { id: 'reskrim', label: 'Manajemen Investigasi', icon: '🔍' },
+      // { id: 'crime-mapping', label: 'Crime Mapping', icon: '🗺️', badge: { count: 3, color: 'red' } },
+      // { id: 'investigation-management', label: 'Investigation Management', icon: '🔍' },
     ]
   },
+  */
+  /*
   {
-    title: 'KOLABORASI & SISTEM',
+    title: 'COLLABORATION & SYSTEMS',
     items: [
-      { id: 'kolaborasi', label: 'Kolaborasi Sektoral', icon: '🤝' },
-      { id: 'integritas', label: 'Integritas & Keamanan', icon: '🛡️' },
+      // { id: 'sectoral-collaboration', label: 'Sectoral Collaboration', icon: '🤝' },
+      // { id: 'security', label: 'Integrity & Security', icon: '🛡️' },
     ]
   },
+  */
   {
     title: 'MITIGASI & PANTAUAN',
     items: [
-      { id: 'bencana', label: 'Mitigasi Bencana', icon: '🌋', badge: { count: 2, color: 'yellow' } },
-      { id: 'cuaca', label: 'Prediksi Cuaca', icon: '🌦️' },
-      { id: 'sembako', label: 'Harga Sembako', icon: '🛒', badge: { count: 4, color: 'yellow' } },
-      { id: 'mitigasi', label: 'Mitigasi Keamanan', icon: '🔐', badge: { count: 5, color: 'red' } },
+      { id: 'disaster-mitigation', label: 'Mitigasi Bencana', icon: '🌋', badge: { count: 2, color: 'yellow' } },
+      { id: 'weather-forecast', label: 'Prediksi Cuaca', icon: '🌦️' },
+      { id: 'commodities-price', label: 'Harga Sembako', icon: '🛒', badge: { count: 4, color: 'yellow' } },
+      { id: 'security-mitigation', label: 'Mitigasi Keamanan', icon: '🔐', badge: { count: 5, color: 'red' } },
     ]
   }
 ];
@@ -128,6 +134,27 @@ export default function Sidebar({ currentPage }: SidebarProps) {
 
       {/* Bottom Status Section */}
       <div className="p-5 border-t border-gray-800/50 bg-[#05080f]/80 backdrop-blur-md">
+        <button
+          onClick={() => navigateTo('security-integrity')}
+          className={`
+            w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 group relative mb-5
+            ${currentPage === 'security-integrity' 
+              ? 'bg-cyan-500/10 border border-cyan-500/40 shadow-[inset_0_0_15px_rgba(6,182,212,0.1)]' 
+              : 'hover:bg-gray-800/30'
+            }
+          `}
+        >
+          {currentPage === 'security-integrity' && (
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-cyan-400 rounded-r-full shadow-[0_0_10px_#22d3ee]" />
+          )}
+          <span className={`text-xl transition-all duration-300 ${currentPage === 'security-integrity' ? 'grayscale-0' : 'grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100'}`}>
+            🛡️
+          </span>
+          <span className={`text-sm font-bold tracking-wide flex-1 text-left ${currentPage === 'security-integrity' ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>
+            Integritas & Keamanan
+          </span>
+        </button>
+
         <div className="space-y-2 mb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">

@@ -534,3 +534,83 @@
     @apply -translate-x-full;
   }
 }
+/* --- Premium Login Enhancements --- */
+
+@keyframes scan-ray {
+  0% { transform: translateY(-100%); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+
+@keyframes cyber-flicker {
+  0% { opacity: 0; transform: scale(0.95); }
+  5% { opacity: 1; transform: scale(1); }
+  10% { opacity: 0.8; }
+  15% { opacity: 1; }
+  20% { opacity: 0.9; }
+  25% { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+@keyframes digital-rain {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 0% 100%; }
+}
+
+.ews-scan-ray {
+  animation: scan-ray 2s ease-in-out infinite;
+}
+
+.ews-cyber-flicker {
+  animation: cyber-flicker 0.4s ease-out forwards;
+}
+
+.ews-glass-premium {
+  @apply bg-[#0f172a]/40 backdrop-blur-2xl border border-white/5;
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    inset 0 1px 1px rgba(255, 255, 255, 0.05);
+}
+
+.ews-hud-bracket {
+  @apply absolute w-4 h-4 border-cyan-500/40;
+}
+
+.ews-hud-bracket-tl { @apply top-0 left-0 border-t-2 border-l-2 rounded-tl-lg; }
+.ews-hud-bracket-tr { @apply top-0 right-0 border-t-2 border-r-2 rounded-tr-lg; }
+.ews-hud-bracket-bl { @apply bottom-0 left-0 border-b-2 border-l-2 rounded-bl-lg; }
+.ews-hud-bracket-br { @apply bottom-0 right-0 border-b-2 border-r-2 rounded-br-lg; }
+
+.ews-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.ews-shimmer::after {
+  content: '';
+  @apply absolute inset-0 -translate-x-full;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.05),
+    transparent
+  );
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
+.ews-input-tactical {
+  @apply bg-black/40 border-gray-800 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all duration-300;
+  clip-path: polygon(
+    0 0, 
+    calc(100% - 10px) 0, 
+    100% 10px, 
+    100% 100%, 
+    10px 100%, 
+    0 calc(100% - 10px)
+  );
+}
