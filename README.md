@@ -70,6 +70,19 @@ export const bencanaAlerts = [
 ];
 ```
 
+### 🌍 Sumber Data Eksternal yang Dibutuhkan (Integrasi Data)
+
+Untuk membuat aplikasi SAKTI berjalan secara *real-time* dan sesuai dengan fungsinya sebagai *Command Center* intelijen terpadu, aplikasi ini akan membutuhkan asupan data (integrasi API/Webhook) dari lembaga atau entitas berikut:
+
+1. **API Media Sosial (Twitter/X, Meta, TikTok)**: Untuk menyuplai data *Social Sensing*, analisis sentimen, pergerakan tren kata kunci provokasi (Modul OSINT).
+2. **Database Internal Polri (SPKT, E-Tilang, dll)**: Untuk menyuplai data kriminalitas mentah, laporan masuk 110, status SP2HP, dan riwayat residivis (Modul Reskrim & Analitik Prediktif).
+3. **GPS Telematics (Kendaraan Dinas)**: Data *real-time tracking* latitude/longitude dari unit patroli Sabhara dan Lantas (Modul Crime Mapping).
+4. **API Cuaca & Bencana Alam (BMKG)**: Data peringatan dini (*early warning*), curah hujan, indikator suhu, angin, indeks UV, dan gempa bumi (Modul Prediksi Cuaca & Mitigasi Bencana).
+5. **Database Sektoral Pemkot/Pemda & BPS**: Data kependudukan (Dukcapil), data rumah sakit umum (Kemenkes), pergerakan ekonomi, kemiskinan, dan inflasi (Modul Kolaborasi Sektoral).
+6. **Data Scraping / Disperindag**: Harga eceran sembako di pasar tradisional dan ritel modern untuk mendeteksi anomali tinggi (hiperinflasi) yang bisa memicu gangguan kamtibmas (Modul Harga Sembako).
+
+---
+
 ### 🚀 Cara Integrasi API Jangka Panjang
 Seluruh data ini diekspor langsung sebagai konstan (`export const data = [...]`). Apabila platform SAKTI akan disambungkan ke **Real Backend API / Database Asli (seperti Postgres, MongoDB)**, Anda hanya perlu:
 1. Menambahkan sintaks pengambil API seperti `useEffect()` dan `fetch()` di masing-masing *file components* di folder `src/pages/`.
