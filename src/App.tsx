@@ -151,7 +151,7 @@ function App() {
       showConfirmButton: false,
       timer: 4000,
       timerProgressBar: true,
-      didOpen: (toast) => {
+      didOpen: (toast: HTMLElement) => {
         toast.onmouseenter = Swal.stopTimer;
         toast.onmouseleave = Swal.resumeTimer;
       },
