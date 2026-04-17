@@ -709,8 +709,9 @@
 .swal2-popup.ews-capsule-toast {
   border-radius: 9999px !important;
   overflow: hidden !important;
-  padding: 0px 2.5rem !important;
+  padding: 0.6rem 2.5rem !important;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8) !important;
+  margin-top: 1rem !important;
 }
 
 .swal2-popup.ews-capsule-toast .swal2-html-container {
