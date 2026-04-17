@@ -5,7 +5,7 @@ import { dbPrimary, dbSecondary } from './db.ts';
 import { sql } from 'drizzle-orm';
 
 const app = express();
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 8440;
 
 // Swagger definition
 const swaggerOptions = {

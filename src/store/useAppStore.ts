@@ -13,6 +13,19 @@ interface AppStore {
   setSelectedSource: (source: string) => void;
 }
 
+export const getApiBase = () => {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const port = 8440; // Backend specific port
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return `http://localhost:${port}/api`;
+    }
+    // Default to current hostname and port 8440
+    return `http://${hostname}:${port}/api`;
+  }
+  return import.meta.env.VITE_API_BASE_URL || 'http://localhost:8440/api';
+};
+
 export const useAppStore = create<AppStore>()((set) => ({
   selectedRegion: 'Nasional',
   selectedDate: '',
@@ -45,7 +58,7 @@ export const useAppStore = create<AppStore>()((set) => ({
       timerProgressBar: false,
       background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(10, 15, 26, 0.98) 100%)',
       color: '#ffffff',
-      backdrop: 'transparent',
+      // backdrop: 'transparent', // REMOVED: Incompatible with toasts
       didOpen: (toast: HTMLElement) => {
         toast.onmouseenter = Swal.stopTimer;
         toast.onmouseleave = Swal.resumeTimer;
