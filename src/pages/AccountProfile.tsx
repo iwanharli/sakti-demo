@@ -14,6 +14,24 @@ interface UserProfile {
   phone?: string;
 }
 
+const getDeviceIcon = (ua: string) => {
+  if (!ua) return 'fa-solid fa-desktop';
+  if (/mobile|android|iphone|ipad/i.test(ua)) return 'fa-solid fa-mobile-screen-button';
+  return 'fa-solid fa-desktop';
+};
+
+const getDeviceName = (ua: string) => {
+  if (!ua) return 'Perangkat Tidak Dikenal';
+  const uaLower = ua.toLowerCase();
+  if (uaLower.includes('iphone')) return 'Apple iPhone';
+  if (uaLower.includes('ipad')) return 'Apple iPad';
+  if (uaLower.includes('android')) return 'Android Device';
+  if (uaLower.includes('macintosh')) return 'macOS Device';
+  if (uaLower.includes('windows')) return 'Windows PC';
+  if (uaLower.includes('linux')) return 'Linux System';
+  return 'Desktop Client';
+};
+
 export default function AccountProfile() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isUploading, setIsUploading] = useState(false);
