@@ -4,9 +4,22 @@ import type { Toast } from '../types';
 
 interface AppStore {
   addToast: (message: string, type: Toast['type']) => void;
+  // Commodity Filters
+  selectedRegion: string;
+  selectedDate: string;
+  selectedSource: string;
+  setSelectedRegion: (region: string) => void;
+  setSelectedDate: (date: string) => void;
+  setSelectedSource: (source: string) => void;
 }
 
-export const useAppStore = create<AppStore>()(() => ({
+export const useAppStore = create<AppStore>()((set) => ({
+  selectedRegion: 'Nasional',
+  selectedDate: '',
+  selectedSource: 'SP2KP',
+  setSelectedRegion: (region) => set({ selectedRegion: region }),
+  setSelectedDate: (date) => set({ selectedDate: date }),
+  setSelectedSource: (source) => set({ selectedSource: source }),
   addToast: (message: string, type: Toast['type'] = 'info') => {
     const iconMap = {
       success: '<i class="fa-solid fa-circle-check text-emerald-400"></i>',

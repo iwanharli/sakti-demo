@@ -10,6 +10,7 @@ import SecurityIntegrity from './pages/SecurityIntegrity';
 import DisasterMitigation from './pages/DisasterMitigation';
 import WeatherForecast from './pages/WeatherForecast';
 import CommoditiesPrice from './pages/CommoditiesPrice';
+import CommodityDetail from './pages/CommodityDetail';
 import SecurityMitigation from './pages/SecurityMitigation';
 import ApiDocs from './pages/ApiDocs';
 import Login from './pages/Login';
@@ -28,6 +29,8 @@ export type PageType =
   | 'disaster-mitigation' 
   | 'weather-forecast' 
   | 'commodities-price' 
+  | 'sp2kp'
+  | 'pihps'
   | 'security-mitigation'
   | 'api-docs';
 
@@ -42,6 +45,8 @@ const pageTitles: Record<PageType, string> = {
   'disaster-mitigation': 'MITIGASI BENCANA',
   'weather-forecast': 'PREDIKSI CUACA',
   'commodities-price': 'HARGA SEMBAKO',
+  'sp2kp': 'DETAIL ANALITIK KOMODITAS',
+  'pihps': 'DETAIL ANALITIK KOMODITAS',
   'security-mitigation': 'MITIGASI KEAMANAN',
   'api-docs': 'API DOCUMENTATION'
 };
@@ -57,6 +62,8 @@ const pageSubtitles: Record<PageType, string> = {
   'disaster-mitigation': 'Monitoring Bencana & Manajemen Kedaruratan',
   'weather-forecast': 'Analisis Cuaca & Prediksi Atmosferik',
   'commodities-price': 'Pemantauan Harga Pangan & Inflasi',
+  'sp2kp': 'Visualisasi Tren Historis & Analitik Harga Mendalam',
+  'pihps': 'Visualisasi Tren Historis & Analitik Harga Mendalam',
   'security-mitigation': 'Strategi Pencegahan & Mitigasi Kejahatan',
   'api-docs': 'Referensi Teknis & Dokumentasi Endpoint SAKTI'
 };
@@ -95,15 +102,25 @@ function App() {
   const [currentPage, setCurrentPage] = useState<PageType>('login');
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const addToast = useAppStore((s) => s.addToast);
+  const [commodityParam, setCommodityParam] = useState('');
+  const { addToast, setSelectedSource } = useAppStore();
 
   // --- NATIVE HASH ROUTING LOGIC ---
   useEffect(() => {
     const handleHashChange = () => {
-      const hash = window.location.hash.replace('#/', '') as PageType;
+      const fullHash = window.location.hash.replace('#/', '');
+      const [hash, param] = fullHash.split('/');
+      
+      // Dynamic Parameter Mapping
+      if ((hash === 'sp2kp' || hash === 'pihps') && param) {
+        setCommodityParam(param);
+        setSelectedSource(hash.toUpperCase());
+      } else {
+        setCommodityParam('');
+      }
       
       // Validation & Guard
-      const isValidPage = pageTitles[hash] !== undefined;
+      const isValidPage = pageTitles[hash as PageType] !== undefined;
       const isAuthenticated = sessionStorage.getItem('sakti_auth') === 'true';
 
       if (!isValidPage) {
@@ -117,7 +134,7 @@ function App() {
         return;
       }
 
-      setCurrentPage(hash);
+      setCurrentPage(hash as PageType);
     };
 
     window.addEventListener('hashchange', handleHashChange);
@@ -173,6 +190,9 @@ function App() {
       case 'disaster-mitigation': return <DisasterMitigation />;
       case 'weather-forecast': return <WeatherForecast />;
       case 'commodities-price': return <CommoditiesPrice />;
+      case 'sp2kp': 
+      case 'pihps': 
+        return <CommodityDetail commodityCode={commodityParam} />;
       case 'security-mitigation': return <SecurityMitigation />;
       case 'api-docs': return <ApiDocs />;
       default: return <Dashboard />;

@@ -153,7 +153,7 @@ app.get('/api/weather/cities', async (req, res) => {
  *         name: city
  *         schema:
  *           type: string
- *         description: The name of the city (default: JAKARTA PUSAT)
+ *         description: "The name of the city (default: JAKARTA PUSAT)"
  *     responses:
  *       200:
  *         description: Detailed 7-day forecast and current stats.
@@ -188,6 +188,8 @@ app.get('/api/weather/forecast', async (req, res) => {
  *     description: Returns current average weather stats for each province (region) based on recent data from all cities within that province.
  *     responses:
  *       200:
+ *         description: Aggregated province data.
+ */
 app.get('/api/weather/provinces', async (req, res) => {
   try {
     const results = await dbSecondary.execute(sql`
@@ -256,6 +258,301 @@ app.get('/api/weather/map-cities', async (req, res) => {
       ORDER BY city_name ASC
     `);
     
+    res.json(results.rows);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+const API_BASE = 'http://localhost:3001/api';
+
+// Helper for resolving data source table and metadata columns
+function resolveSource(source?: string) {
+  const isPihps = source?.toLowerCase() === 'pihps';
+  return {
+    tableName: isPihps ? 'nasional_pihps_commodity_regional_prices' : 'nasional_commodity_sp2kp',
+    metadataCol: isPihps ? 'additional_data' : 'additional_info',
+    isPihps,
+    // Add default filter for PIHPS to use traditional market for parity
+    pihpsFilter: isPihps ? sql`AND market_type = 'pasar tradisional'` : sql``
+  };
+}
+
+/**
+ * @openapi
+ * /api/commodities/regions:
+ *   get:
+ *     summary: Get unique regions from commodity data
+ */
+app.get('/api/commodities/regions', async (req, res) => {
+  const { tableName, pihpsFilter } = resolveSource(req.query.source as string);
+  try {
+    const results = await dbSecondary.execute(sql`
+      SELECT DISTINCT region_name 
+      FROM ${sql.identifier(tableName)}
+      WHERE 1=1 ${pihpsFilter}
+      ORDER BY region_name ASC
+    `);
+    const regions = results.rows.map(r => r.region_name);
+    // Ensure "Nasional" is prioritized
+    const finalRegions = regions.filter(r => r !== 'Nasional');
+    res.json(['Nasional', ...finalRegions]);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/commodities/dates:
+ *   get:
+ *     summary: Get unique available dates
+ */
+app.get('/api/commodities/dates', async (req, res) => {
+  const { tableName, pihpsFilter } = resolveSource(req.query.source as string);
+  try {
+    const results = await dbSecondary.execute(sql`
+      SELECT DISTINCT report_date 
+      FROM ${sql.identifier(tableName)}
+      WHERE 1=1 ${pihpsFilter}
+      ORDER BY report_date DESC 
+      LIMIT 60
+    `);
+    res.json(results.rows.map(r => r.report_date));
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/commodities/matrix:
+ *   get:
+ *     summary: Get prices and 7-day variation for all commodities on a specific date
+ */
+app.get('/api/commodities/matrix', async (req, res) => {
+  const region = req.query.region || 'Nasional';
+  const dateStr = req.query.date as string;
+  const { tableName, metadataCol, pihpsFilter } = resolveSource(req.query.source as string);
+  
+  try {
+    const isNasional = region === 'Nasional';
+    const dateQuery = dateStr ? sql`${dateStr}::date` : sql`(SELECT MAX(report_date) FROM ${sql.identifier(tableName)})`;
+    
+    const query = isNasional 
+      ? sql`
+          WITH latest_date AS (SELECT ${dateQuery} as d),
+               national_latest AS (
+                 SELECT commodity_code, AVG(price::numeric) as avg_price, MAX(report_date) as report_date
+                 FROM ${sql.identifier(tableName)}, latest_date
+                 WHERE report_date = latest_date.d ${pihpsFilter}
+                 GROUP BY commodity_code
+               ),
+               national_prev AS (
+                 SELECT commodity_code, AVG(price::numeric) as prev_price
+                 FROM ${sql.identifier(tableName)}, latest_date
+                 WHERE report_date = latest_date.d - INTERVAL '7 days' ${pihpsFilter}
+                 GROUP BY commodity_code
+               ),
+               national_yesterday AS (
+                 SELECT commodity_code, AVG(price::numeric) as yesterday_price
+                 FROM ${sql.identifier(tableName)}, latest_date
+                 WHERE report_date = latest_date.d - INTERVAL '1 day' ${pihpsFilter}
+                 GROUP BY commodity_code
+               )
+          SELECT 
+            nl.commodity_code, 
+            (SELECT ${sql.identifier(metadataCol)}->>'variant_nama' FROM ${sql.identifier(tableName)} p2 WHERE p2.commodity_code = nl.commodity_code LIMIT 1) as name,
+            ROUND(nl.avg_price, 0) as price,
+            ROUND(nl.avg_price - COALESCE(ny.yesterday_price, nl.avg_price), 0) as delta_day,
+            ROUND(((nl.avg_price - COALESCE(np.prev_price, nl.avg_price)) / NULLIF(nl.avg_price, 0)) * 100, 2) as variation_pct,
+            nl.report_date
+          FROM national_latest nl
+          LEFT JOIN national_prev np ON nl.commodity_code = np.commodity_code
+          LEFT JOIN national_yesterday ny ON nl.commodity_code = ny.commodity_code
+        `
+      : sql`
+          WITH latest_date AS (SELECT ${dateQuery} as d),
+               regional_latest AS (
+                 SELECT commodity_code, price::numeric as cur_price, ${sql.identifier(metadataCol)}->>'variant_nama' as name, report_date
+                 FROM ${sql.identifier(tableName)}, latest_date
+                 WHERE region_name = ${region} AND report_date = latest_date.d ${pihpsFilter}
+               ),
+               regional_prev AS (
+                 SELECT commodity_code, price::numeric as prev_price
+                 FROM ${sql.identifier(tableName)}, latest_date
+                 WHERE region_name = ${region} AND report_date = latest_date.d - INTERVAL '7 days' ${pihpsFilter}
+               ),
+               regional_yesterday AS (
+                 SELECT commodity_code, price::numeric as yesterday_price
+                 FROM ${sql.identifier(tableName)}, latest_date
+                 WHERE region_name = ${region} AND report_date = latest_date.d - INTERVAL '1 day' ${pihpsFilter}
+               )
+          SELECT 
+            rl.commodity_code, 
+            rl.name,
+            rl.report_date,
+            ROUND(rl.cur_price, 0) as price,
+            ROUND(rl.cur_price - COALESCE(ry.yesterday_price, rl.cur_price), 0) as delta_day,
+            ROUND(((rl.cur_price - COALESCE(rp.prev_price, rl.cur_price)) / NULLIF(rl.cur_price, 0)) * 100, 2) as variation_pct
+          FROM regional_latest rl
+          LEFT JOIN regional_prev rp ON rl.commodity_code = rp.commodity_code
+          LEFT JOIN regional_yesterday ry ON rl.commodity_code = ry.commodity_code
+        `;
+    
+    const results = await dbSecondary.execute(query);
+    res.json(results.rows);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/commodities/stats:
+ *   get:
+ *     summary: Get operational stats filtered by date and region
+ */
+app.get('/api/commodities/stats', async (req, res) => {
+  const region = req.query.region || 'Nasional';
+  const dateStr = req.query.date as string;
+  const { tableName, pihpsFilter } = resolveSource(req.query.source as string);
+  
+  try {
+    const isNasional = region === 'Nasional';
+    const dateQuery = dateStr ? sql`${dateStr}::date` : sql`(SELECT MAX(report_date) FROM ${sql.identifier(tableName)})`;
+    const whereClause = isNasional ? sql`1=1` : sql`region_name = ${region}`;
+    
+    const results = await dbSecondary.execute(sql`
+      WITH target_date AS (SELECT ${dateQuery} as d),
+      current_month_avg AS (
+        SELECT AVG(price::numeric) as avg_price
+        FROM ${sql.identifier(tableName)}, target_date
+        WHERE ${whereClause}
+        AND report_month = EXTRACT(MONTH FROM target_date.d)
+        AND report_year = EXTRACT(YEAR FROM target_date.d)
+        AND report_date <= target_date.d ${pihpsFilter}
+      ),
+      prev_month_avg AS (
+        SELECT AVG(price::numeric) as avg_price
+        FROM ${sql.identifier(tableName)}, target_date
+        WHERE ${whereClause}
+        AND report_month = EXTRACT(MONTH FROM target_date.d - INTERVAL '1 month')
+        AND report_year = EXTRACT(YEAR FROM target_date.d - INTERVAL '1 month') ${pihpsFilter}
+      ),
+      spikes AS (
+        SELECT COUNT(*) as count
+        FROM (
+          SELECT commodity_code, 
+                 AVG(price::numeric) as cur_price,
+                 (SELECT AVG(price::numeric) FROM ${sql.identifier(tableName)} p2, target_date
+                  WHERE p2.commodity_code = p1.commodity_code 
+                  AND p2.report_date = target_date.d - INTERVAL '7 days'
+                  AND ${isNasional ? sql`1=1` : sql`p2.region_name = ${region}`} ${pihpsFilter}) as prev_price
+          FROM ${sql.identifier(tableName)} p1, target_date
+          WHERE ${whereClause} AND report_date = target_date.d ${pihpsFilter}
+          GROUP BY commodity_code
+        ) t
+        WHERE cur_price > (COALESCE(prev_price, 0) * 1.05)
+      )
+      SELECT 
+        (SELECT count FROM spikes) as price_spikes,
+        ROUND(((cm.avg_price - COALESCE(pm.avg_price, cm.avg_price)) / NULLIF(pm.avg_price, 0)) * 100, 2) as mom_inflation,
+        (SELECT COUNT(DISTINCT region_name) FROM ${sql.identifier(tableName)}, target_date WHERE report_date = target_date.d ${pihpsFilter}) as active_nodes
+      FROM current_month_avg cm, prev_month_avg pm
+    `);
+    
+    res.json(results.rows[0]);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/commodities/trend:
+ *   get:
+ *     summary: Get 30-day historical trend based on reference date
+ */
+app.get('/api/commodities/trend', async (req, res) => {
+  const region = req.query.region || 'Nasional';
+  const commodity = req.query.commodity || 'beras-medium';
+  const dateStr = req.query.date as string;
+  const range = (req.query.range as string) || '30d';
+  const { tableName, metadataCol, pihpsFilter } = resolveSource(req.query.source as string);
+
+  try {
+    const isNasional = region === 'Nasional';
+    const dateQuery = dateStr ? sql`${dateStr}::date` : sql`(SELECT MAX(report_date) FROM ${sql.identifier(tableName)})`;
+    
+    let intervalClause = sql`AND report_date > target_date.d - INTERVAL '30 days'`;
+    if (range === '7d') intervalClause = sql`AND report_date > target_date.d - INTERVAL '7 days'`;
+    else if (range === '3m') intervalClause = sql`AND report_date > target_date.d - INTERVAL '3 months'`;
+    else if (range === '1y') intervalClause = sql`AND report_date > target_date.d - INTERVAL '1 year'`;
+    else if (range === 'all') intervalClause = sql``;
+
+    const query = isNasional
+      ? sql`
+          WITH target_date AS (SELECT ${dateQuery} as d)
+          SELECT report_date, ROUND(AVG(price::numeric), 0) as price,
+                 (SELECT ${sql.identifier(metadataCol)} FROM ${sql.identifier(tableName)} p2 
+                  WHERE p2.commodity_code = ${commodity} 
+                  AND p2.region_name = 'Nasional'
+                  AND p2.report_date = p1.report_date LIMIT 1) as additional_info
+          FROM ${sql.identifier(tableName)} p1, target_date
+          WHERE commodity_code = ${commodity}
+          AND report_date <= target_date.d ${pihpsFilter}
+          ${intervalClause}
+          GROUP BY report_date
+          ORDER BY report_date ASC
+        `
+      : sql`
+          WITH target_date AS (SELECT ${dateQuery} as d)
+          SELECT report_date, ROUND(price::numeric, 0) as price, ${sql.identifier(metadataCol)} as additional_info
+          FROM ${sql.identifier(tableName)}, target_date
+          WHERE commodity_code = ${commodity}
+          AND region_name = ${region}
+          AND report_date <= target_date.d ${pihpsFilter}
+          ${intervalClause}
+          ORDER BY report_date ASC
+        `;
+    
+    const results = await dbSecondary.execute(query);
+    res.json(results.rows);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/commodities/crosstab:
+ *   get:
+ *     summary: Get cross-regional price snapshot for a specific commodity and date
+ */
+app.get('/api/commodities/crosstab', async (req, res) => {
+  const commodity = req.query.commodity || 'beras-medium';
+  const dateStr = req.query.date as string;
+  const { tableName, metadataCol, pihpsFilter } = resolveSource(req.query.source as string);
+
+  try {
+    const dateQuery = dateStr ? sql`${dateStr}::date` : sql`(SELECT MAX(report_date) FROM ${sql.identifier(tableName)})`;
+    
+    const query = sql`
+      WITH target_date AS (SELECT ${dateQuery} as d)
+      SELECT 
+        region_name, 
+        ROUND(price::numeric, 0) as price,
+        (${sql.identifier(metadataCol)}->>'delta_harga')::numeric as delta_harga,
+        (${sql.identifier(metadataCol)}->>'persen_perubahan')::numeric as variation_pct
+      FROM ${sql.identifier(tableName)}, target_date
+      WHERE commodity_code = ${commodity}
+      AND report_date = target_date.d ${pihpsFilter}
+      AND region_name != 'Nasional'
+      ORDER BY region_name ASC
+    `;
+    
+    const results = await dbSecondary.execute(query);
     res.json(results.rows);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
