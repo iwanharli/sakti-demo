@@ -357,23 +357,103 @@ export default function Dashboard() {
                   </div>
                 </div>
               </div>
-              <div className="space-y-4 flex-1 flex flex-col justify-center">
-                {[
-                  { label: 'Positif', value: 38, color: 'bg-emerald-500', textColor: 'text-emerald-400' },
-                  { label: 'Netral', value: 38, color: 'bg-cyan-500', textColor: 'text-cyan-400' },
-                  { label: 'Negatif', value: 24, color: 'bg-red-500', textColor: 'text-red-400' },
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center gap-4">
-                    <span className="text-[13px] uppercase font-black text-gray-500 w-24">{item.label}</span>
-                    <div className="flex-1 ews-progress-bar h-2">
-                      <div 
-                        className={`ews-progress-fill ${item.color}`}
-                        style={{ width: `${item.value}%` }}
-                      />
-                    </div>
-                    <span className={`text-[13px] font-mono font-black w-12 text-right ${item.textColor}`}>{item.value}%</span>
+              
+              <div className="flex-1 flex items-center gap-8 py-4">
+                {/* Donut Chart Container */}
+                <div className="relative w-48 h-48 flex-shrink-0">
+                  <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90 overflow-visible">
+                    {/* Definitions for gradients/glows */}
+                    <defs>
+                      <filter id="glow">
+                        <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+                        <feMerge>
+                          <feMergeNode in="coloredBlur" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
+                    </defs>
+
+                    {/* Background Track */}
+                    <circle 
+                      cx="50" cy="50" r="40" 
+                      fill="none" stroke="rgba(255,255,255,0.05)" 
+                      strokeWidth="12" 
+                    />
+
+                    {/* Segments Mapping: 38% Positif, 38% Netral, 24% Negatif */}
+                    {/* Positif (38%) */}
+                    <circle 
+                      cx="50" cy="50" r="40" 
+                      fill="none" 
+                      stroke="#10b981" 
+                      strokeWidth="12" 
+                      strokeDasharray={`${38 * 2.513} 251.3`}
+                      strokeDashoffset="0"
+                      strokeLinecap="round"
+                      filter="url(#glow)"
+                      className="opacity-80 transition-all duration-1000"
+                    />
+
+                    {/* Netral (38%) */}
+                    <circle 
+                      cx="50" cy="50" r="40" 
+                      fill="none" 
+                      stroke="#06b6d4" 
+                      strokeWidth="12" 
+                      strokeDasharray={`${38 * 2.513} 251.3`}
+                      strokeDashoffset={`-${38 * 2.513}`}
+                      strokeLinecap="round"
+                      filter="url(#glow)"
+                      className="opacity-80 transition-all duration-1000"
+                    />
+
+                    {/* Negatif (24%) */}
+                    <circle 
+                      cx="50" cy="50" r="40" 
+                      fill="none" 
+                      stroke="#ef4444" 
+                      strokeWidth="12" 
+                      strokeDasharray={`${24 * 2.513} 251.3`}
+                      strokeDashoffset={`-${(38 + 38) * 2.513}`}
+                      strokeLinecap="round"
+                      filter="url(#glow)"
+                      className="opacity-80 transition-all duration-1000"
+                    />
+                  </svg>
+
+                  {/* Center HUD */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                    <div className="text-[10px] text-gray-500 font-mono font-bold uppercase tracking-widest leading-none mb-1">Status</div>
+                    <div className="text-[16px] text-cyan-400 font-black font-orbitron uppercase tracking-tighter leading-none">Stabil</div>
+                    <div className="text-[9px] text-gray-600 font-mono uppercase mt-1">Normal Pattern</div>
                   </div>
-                ))}
+                </div>
+
+                {/* Legend List */}
+                <div className="flex-1 space-y-4">
+                  {[
+                    { label: 'Positif', value: 38, color: 'bg-emerald-500', textColor: 'text-emerald-400' },
+                    { label: 'Netral', value: 38, color: 'bg-cyan-500', textColor: 'text-cyan-400' },
+                    { label: 'Negatif', value: 24, color: 'bg-red-500', textColor: 'text-red-400' },
+                  ].map((item) => (
+                    <div key={item.label} className="flex items-center justify-between group cursor-pointer">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-2.5 h-2.5 rounded-full ${item.color} shadow-[0_0_8px_rgba(0,0,0,0.5)] group-hover:scale-125 transition-transform`} />
+                        <span className="text-[13px] font-black text-gray-400 uppercase tracking-widest group-hover:text-white transition-colors">
+                          {item.label}
+                        </span>
+                      </div>
+                      <span className={`text-[14px] font-mono font-black ${item.textColor}`}>
+                        {item.value}%
+                      </span>
+                    </div>
+                  ))}
+                  
+                  <div className="pt-4 border-t border-white/5">
+                    <div className="text-[10px] text-cyan-500/60 font-mono uppercase tracking-[0.2em] mb-1">Vector Focus</div>
+                    <div className="text-[12px] text-gray-300 font-bold tracking-wide">Analisis Narasi Domestik</div>
+                  </div>
+                </div>
               </div>
             </div>
 
