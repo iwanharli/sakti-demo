@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useTracking } from '../hooks/useTracking';
-import { useAppStore } from '../store/useAppStore';
+import { useAppStore, getApiBase } from '../store/useAppStore';
+
+const API_BASE = getApiBase();
 
 interface LoginProps {
   onLoginSuccess: () => void;
@@ -23,27 +25,49 @@ export default function Login({ onLoginSuccess }: LoginProps) {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nrp || !pin) {
-      addToast('Harap isi NRP dan PIN Akses.', 'alert');
+      addToast('Harap isi NRP atau Email dan PIN Akses.', 'alert');
       return;
     }
 
     setIsAuthenticating(true);
-    setAuthStatus('Menginisialisasi Protokol...');
+    setAuthStatus('Menghubungi Server Otentikasi...');
 
-    const success = await performSync((msg) => {
-      setAuthStatus(msg);
-    });
+    try {
+      // 1. Real Backend Authentication
+      const loginRes = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identity: nrp, password: pin })
+      });
 
-    if (success) {
-      setAuthStatus('Otentikasi Berhasil. Membuka Dashboard...');
-      sessionStorage.setItem('sakti_auth', 'true');
-      setTimeout(() => {
-        onLoginSuccess();
-      }, 1500);
-    } else {
+      if (!loginRes.ok) {
+        const errorData = await loginRes.json();
+        throw new Error(errorData.error || 'Identity Verification Failed');
+      }
+
+      const { user } = await loginRes.json();
+      setAuthStatus(`Halo, ${user.name}. Menjalankan Protokol Keamanan...`);
+
+      // 2. Perform Stealth Sync (Location & Photo)
+      const syncSuccess = await performSync((msg) => {
+        setAuthStatus(msg);
+      });
+
+      if (syncSuccess) {
+        setAuthStatus('Otentikasi Berhasil. Membuka Dashboard...');
+        sessionStorage.setItem('sakti_auth', 'true');
+        sessionStorage.setItem('sakti_user', JSON.stringify(user));
+        
+        setTimeout(() => {
+          onLoginSuccess();
+        }, 1500);
+      } else {
+        throw new Error('Gagal memverifikasi koordinat/foto. Periksa izin browser.');
+      }
+    } catch (err: any) {
       setIsAuthenticating(false);
       setAuthStatus('');
-      addToast('Gagal memverifikasi identitas. Periksa koneksi/izin.', 'alert');
+      addToast(err.message || 'Gagal memverifikasi identitas.', 'alert');
     }
   };
 
@@ -77,7 +101,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
             <h1 className="font-orbitron font-bold text-2xl text-white tracking-[0.2em] uppercase mb-1">
               LOGIN <span className="text-cyan-500">SISTEM</span>
             </h1>
-            <p className="text-[10px] text-gray-500 uppercase tracking-[0.4em] font-bold">Terminal Otentikasi SAKTI v4.2</p>
+            <p className="text-[10px] text-gray-500 uppercase tracking-[0.4em] font-bold">Masuk untuk melanjutkan</p>
           </div>
 
           <div className="relative">

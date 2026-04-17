@@ -559,6 +559,70 @@ app.get('/api/commodities/crosstab', async (req, res) => {
   }
 });
 
+/**
+ * @openapi
+ * /api/auth/login:
+ *   post:
+ *     summary: Authenticate personnel
+ *     description: Verify identity using NRP or Email and numerical PIN (password).
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               identity:
+ *                 type: string
+ *                 description: NRP or Email address
+ *               password:
+ *                 type: string
+ *                 description: Access PIN
+ *     responses:
+ *       200:
+ *         description: Authentication successful
+ *       401:
+ *         description: Invalid credentials
+ */
+app.post('/api/auth/login', async (req, res) => {
+  const { identity, password } = req.body;
+
+  if (!identity || !password) {
+    return res.status(400).json({ error: 'NRP/Email dan Password wajib diisi' });
+  }
+
+  try {
+    const query = sql`
+      SELECT id, nrp, name, email, role, is_active 
+      FROM users 
+      WHERE (nrp = ${identity} OR email = ${identity}) 
+      AND password = ${password} 
+      AND is_active = true
+      LIMIT 1
+    `;
+    
+    const result = await dbPrimary.execute(query);
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: 'Identitas atau Password salah' });
+    }
+
+    const user = result.rows[0];
+    res.json({
+      message: 'Authentication Successful',
+      user: {
+        id: user.id,
+        nrp: user.nrp,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 const host = process.env.HOST || '0.0.0.0';
 
 app.listen(Number(port), host, () => {
