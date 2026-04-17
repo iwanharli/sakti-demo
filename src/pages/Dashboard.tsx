@@ -14,7 +14,7 @@ import {
   patrolStatusUnits,
   riskScores
 } from '../data/mockDashboard';
-import { TimelineItem } from '../types';
+import type { TimelineItem } from '../types';
 import type { BMKGWarning } from '../bmkg_types';
 
 // Animated Patrol Unit Component
