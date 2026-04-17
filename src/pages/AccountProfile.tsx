@@ -190,7 +190,6 @@ export default function AccountProfile() {
             </div>
             </div>
           </div>
-        </div>
 
         {/* System Access */}
         <div className="bg-[#0a0f1a]/80 backdrop-blur-xl border border-white/5 rounded-3xl p-6">
