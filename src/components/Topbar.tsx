@@ -98,14 +98,7 @@ export default function Topbar({ title, subtitle, currentTime, alertCount, onAle
             {/* Dropdown Menu */}
             {isMenuOpen && (
               <div className="absolute right-0 mt-3 w-56 bg-[#0d1425] border border-gray-800 rounded-xl shadow-2xl overflow-hidden py-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className="px-4 py-3 border-b border-gray-800 mb-2">
-                  <div className="text-xs text-gray-500 uppercase tracking-widest font-black mb-1">Status Keamanan</div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]"></span>
-                    <span className="text-sm font-bold text-emerald-400 uppercase tracking-tight">{user?.name || 'N/A'}</span>
-                  </div>
-                </div>
-                
+
                 <button 
                   onClick={navigateToProfile}
                   className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-all text-left group"
