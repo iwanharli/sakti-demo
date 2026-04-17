@@ -51,9 +51,22 @@ export default function AccountProfile() {
 
     setIsUpdating(true);
     try {
+      let finalName = field === 'name' ? editName : user.name;
+      let finalPhone = field === 'phone' ? editPhone : user.phone;
+
+      // Auto-format phone: replace leading '0' with '62' and remove non-digits
+      if (field === 'phone' && finalPhone) {
+        let cleaned = finalPhone.replace(/\D/g, ''); // hanya angka
+        if (cleaned.startsWith('0')) {
+          cleaned = '62' + cleaned.substring(1);
+        }
+        finalPhone = cleaned;
+        setEditPhone(cleaned); // update UI state also
+      }
+
       const payload = {
-        name: field === 'name' ? editName : user.name,
-        phone: field === 'phone' ? editPhone : user.phone,
+        name: finalName,
+        phone: finalPhone,
       };
 
       const res = await authFetch(`${API_BASE}/auth/update-profile`, {
