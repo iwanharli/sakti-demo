@@ -99,8 +99,8 @@ export default function Dashboard() {
         };
       });
 
-      // Merge with existing security items, priority to new BMKG alerts
-      setTimelineData([...bmkgItems, ...timelineItems.slice(0, 5)]);
+      // Only show real BMKG alerts, remove dummy security items
+      setTimelineData(bmkgItems);
     } catch (err) {
       console.error('BMKG Fetch Error:', err);
       // Fallback to mock if API fails
