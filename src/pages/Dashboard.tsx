@@ -14,7 +14,8 @@ import {
   patrolStatusUnits,
   riskScores
 } from '../data/mockDashboard';
-import { BMKGWarning, TimelineItem } from '../types';
+import { TimelineItem } from '../types';
+import { BMKGWarning } from '../bmkg_types';
 
 // Animated Patrol Unit Component
 const MovingPatrolUnit = ({ path, color, label, duration = 20000 }: { path: [number, number][], color: string, label: string, duration?: number }) => {
