@@ -108,11 +108,11 @@ export const useAppStore = create<AppStore>()((set) => ({
 
     ToastMixin.fire({
       html: `
-        <div className="flex items-center gap-4 px-1 text-left">
-          <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0 border border-white/5 shadow-inner">
-            <span className="text-[20px]">${iconMap[type as keyof typeof iconMap] || iconMap.info}</span>
+        <div class="flex items-center gap-4 px-1 text-left">
+          <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0 border border-white/5 shadow-inner">
+            <span class="text-[20px]">${iconMap[type as keyof typeof iconMap] || iconMap.info}</span>
           </div>
-          <div className="font-rajdhani font-bold text-[14px] text-white tracking-wide leading-tight flex-1">
+          <div class="font-rajdhani font-bold text-[14px] text-white tracking-wide leading-tight flex-1">
             ${message}
           </div>
         </div>
