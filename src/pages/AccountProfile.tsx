@@ -17,15 +17,75 @@ interface UserProfile {
 export default function AccountProfile() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // States for inline editing
+  const [editName, setEditName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [isEditingPhone, setIsEditingPhone] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const addToast = useAppStore((s) => s.addToast);
 
   useEffect(() => {
     const userData = sessionStorage.getItem('sakti_user');
     if (userData) {
-      setUser(JSON.parse(userData));
+      const u = JSON.parse(userData);
+      setUser(u);
+      setEditName(u.name || '');
+      setEditPhone(u.phone || '');
     }
   }, []);
+
+  const handleUpdateProfile = async (field: 'name' | 'phone') => {
+    if (!user) return;
+    
+    // Validation
+    if (field === 'name' && !editName.trim()) {
+      addToast('Nama Lengkap tidak boleh kosong!', 'error');
+      setEditName(user.name);
+      setIsEditingName(false);
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      const payload = {
+        name: field === 'name' ? editName : user.name,
+        phone: field === 'phone' ? editPhone : user.phone,
+      };
+
+      const res = await authFetch(`${API_BASE}/auth/update-profile`, {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Gagal memperbarui profil');
+      }
+
+      // Success
+      const updatedUser = { ...user, ...payload };
+      setUser(updatedUser);
+      sessionStorage.setItem('sakti_user', JSON.stringify(updatedUser));
+      addToast(`Data ${field === 'name' ? 'Nama' : 'Telepon'} berhasil diperbarui`, 'success');
+      
+      // Notify Topbar
+      window.dispatchEvent(new Event('sakti_user_updated'));
+      
+      setIsEditingName(false);
+      setIsEditingPhone(false);
+    } catch (err: any) {
+      addToast(err.message, 'error');
+      // Reset temp values on error
+      if (field === 'name') setEditName(user.name);
+      if (field === 'phone') setEditPhone(user.phone || '');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   const handlePhotoClick = () => {
     fileInputRef.current?.click();
@@ -172,24 +232,81 @@ export default function AccountProfile() {
           </div>
           
           <div className="space-y-4">
-            <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
+            {/* Nama Lengkap - Editable */}
+            <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl group/field relative">
               <div className="text-[10px] text-gray-500 uppercase tracking-[0.2em] mb-1">Nama Lengkap</div>
-              <div className="text-sm font-bold text-gray-200 tracking-wide">{user.name}</div>
+              {isEditingName ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="flex-1 bg-white/5 border border-cyan-500/30 rounded px-2 py-1 text-sm font-bold text-white outline-none focus:border-cyan-500"
+                    autoFocus
+                  />
+                  <button onClick={() => handleUpdateProfile('name')} className="text-emerald-400 hover:text-emerald-300 pointer-events-auto">
+                    <i className="fa-solid fa-check"></i>
+                  </button>
+                  <button onClick={() => { setIsEditingName(false); setEditName(user.name); }} className="text-red-400 hover:text-red-300">
+                    <i className="fa-solid fa-times"></i>
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-bold text-gray-200 tracking-wide">{user.name}</div>
+                  <button 
+                    onClick={() => setIsEditingName(true)}
+                    className="opacity-0 group-hover/field:opacity-100 transition-opacity text-cyan-500 hover:text-cyan-400 p-1"
+                  >
+                    <i className="fa-solid fa-pen-to-square text-xs"></i>
+                  </button>
+                </div>
+              )}
             </div>
+
             <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
               <div className="text-[10px] text-gray-500 uppercase tracking-[0.2em] mb-1">NRP / ID Personel</div>
               <div className="text-sm font-bold text-gray-200 tracking-wide">{user.nrp}</div>
             </div>
+            
             <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
               <div className="text-[10px] text-gray-500 uppercase tracking-[0.2em] mb-1">Email Kedinasan</div>
               <div className="text-sm font-bold text-gray-200 tracking-wide">{user.email || 'Belum diisi'}</div>
             </div>
-            <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
+
+            {/* Nomor Telepon - Editable */}
+            <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl group/field relative">
               <div className="text-[10px] text-gray-500 uppercase tracking-[0.2em] mb-1">Nomor Telepon</div>
-              <div className="text-sm font-bold text-gray-200 tracking-wide">{user.phone || 'Belum diisi'}</div>
-            </div>
+              {isEditingPhone ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={editPhone}
+                    onChange={(e) => setEditPhone(e.target.value)}
+                    className="flex-1 bg-white/5 border border-cyan-500/30 rounded px-2 py-1 text-sm font-bold text-white outline-none focus:border-cyan-500"
+                    autoFocus
+                  />
+                  <button onClick={() => handleUpdateProfile('phone')} className="text-emerald-400 hover:text-emerald-300">
+                    <i className="fa-solid fa-check"></i>
+                  </button>
+                  <button onClick={() => { setIsEditingPhone(false); setEditPhone(user.phone || ''); }} className="text-red-400 hover:text-red-300">
+                    <i className="fa-solid fa-times"></i>
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-bold text-gray-200 tracking-wide">{user.phone || 'Belum diisi'}</div>
+                  <button 
+                    onClick={() => setIsEditingPhone(true)}
+                    className="opacity-0 group-hover/field:opacity-100 transition-opacity text-cyan-500 hover:text-cyan-400 p-1"
+                  >
+                    <i className="fa-solid fa-pen-to-square text-xs"></i>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
+        </div>
 
         {/* System Access */}
         <div className="bg-[#0a0f1a]/80 backdrop-blur-xl border border-white/5 rounded-3xl p-6">

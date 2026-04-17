@@ -651,7 +651,31 @@ app.post('/api/auth/upload-profile', authenticateToken, upload.single('photo'), 
 
 /**
  * @openapi
- * /api/auth/login:
+ * /api/auth/update-profile:
+ *   put:
+ *     summary: Update profile details
+ *     description: Updates the user's full name and phone number.
+ */
+app.put('/api/auth/update-profile', authenticateToken, async (req, res) => {
+  const { name, phone } = req.body;
+  const userId = (req as any).user.id;
+
+  if (!name) {
+    return res.status(400).json({ error: 'Nama Lengkap tidak boleh kosong' });
+  }
+
+  try {
+    await dbPrimary.execute(sql`
+      UPDATE users 
+      SET name = ${name}, phone = ${phone}, updated_at = NOW() 
+      WHERE id = ${userId}
+    `);
+
+    res.json({ message: 'Profil berhasil diperbarui' });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
  *   post:
  *     summary: Authenticate personnel
  *     description: Verify identity using NRP or Email and numerical PIN (password). Includes Rate Limiting.
