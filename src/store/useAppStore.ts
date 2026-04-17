@@ -75,32 +75,44 @@ export const useAppStore = create<AppStore>()((set) => ({
       alert: 'border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.2)]'
     };
 
+    const progressColorMap = {
+      success: '#10b981',
+      info: '#06b6d4',
+      warning: '#f59e0b',
+      error: '#ef4444',
+      alert: '#f59e0b'
+    };
+
     const ToastMixin = Swal.mixin({
       toast: true,
       position: "top",
       showConfirmButton: false,
-      timer: 3000,
-      timerProgressBar: false,
-      background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(10, 15, 26, 0.98) 100%)',
+      timer: 4000,
+      timerProgressBar: true,
+      background: 'rgba(15, 23, 42, 0.7)',
       color: '#ffffff',
-      // backdrop: 'transparent', // REMOVED: Incompatible with toasts
       didOpen: (toast: HTMLElement) => {
         toast.onmouseenter = Swal.stopTimer;
         toast.onmouseleave = Swal.resumeTimer;
+        const progressBar = toast.querySelector('.swal2-timer-progress-bar') as HTMLElement;
+        if (progressBar) {
+          progressBar.style.backgroundColor = progressColorMap[type as keyof typeof progressColorMap] || '#06b6d4';
+        }
       },
       customClass: {
-        popup: `border backdrop-blur-xl rounded-xl p-3 w-auto min-w-[260px] ${borderMap[type as keyof typeof borderMap] || borderMap.info}`,
+        popup: `border border-white/10 backdrop-blur-2xl rounded-2xl p-4 w-auto min-w-[320px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] ${borderMap[type as keyof typeof borderMap] || borderMap.info}`,
         htmlContainer: 'm-0 p-0 w-full',
+        timerProgressBar: 'rounded-b-2xl h-1 opacity-80'
       }
     });
 
     ToastMixin.fire({
       html: `
-        <div class="flex items-center gap-3 px-1 text-left">
-          <div class="text-[20px] flex-shrink-0 flex items-center justify-center">
-            ${iconMap[type as keyof typeof iconMap] || iconMap.info}
+        <div className="flex items-center gap-4 px-1 text-left">
+          <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0 border border-white/5 shadow-inner">
+            <span className="text-[20px]">${iconMap[type as keyof typeof iconMap] || iconMap.info}</span>
           </div>
-          <div class="font-rajdhani font-bold text-[13px] text-white tracking-wide leading-tight flex-1">
+          <div className="font-rajdhani font-bold text-[14px] text-white tracking-wide leading-tight flex-1">
             ${message}
           </div>
         </div>
