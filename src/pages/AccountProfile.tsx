@@ -126,9 +126,6 @@ export default function AccountProfile() {
     try {
       const res = await authFetch(`${API_BASE}/auth/upload-profile`, {
         method: 'POST',
-        headers: {
-          // Note: fetch will set the correct Content-Type for FormData automatically
-        },
         body: formData
       } as any);
 
@@ -139,14 +136,11 @@ export default function AccountProfile() {
 
       const { photoUrl } = await res.json();
       
-      // Update local state and session storage
       if (user) {
         const updatedUser = { ...user, picture: photoUrl };
         setUser(updatedUser);
         sessionStorage.setItem('sakti_user', JSON.stringify(updatedUser));
         addToast('Foto profil berhasil diperbarui', 'success');
-        
-        // Custom event to notify Topbar
         window.dispatchEvent(new Event('sakti_user_updated'));
       }
     } catch (err: any) {
@@ -154,6 +148,14 @@ export default function AccountProfile() {
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const formatPhoneNumber = (phone?: string) => {
+    if (!phone) return 'N/A';
+    if (phone.startsWith('62')) {
+      return `(+62) ${phone.substring(2)}`;
+    }
+    return phone;
   };
 
   if (!user) {
@@ -166,16 +168,8 @@ export default function AccountProfile() {
 
   const avatarUrl = user.picture ? `${SERVER_URL}${user.picture}` : null;
 
-  const formatPhoneNumber = (phone?: string) => {
-    if (!phone) return 'N/A';
-    if (phone.startsWith('62')) {
-      return `(+62) ${phone.substring(2)}`;
-    }
-    return phone;
-  };
-
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000">
       <input 
         type="file" 
         ref={fileInputRef} 
@@ -184,184 +178,246 @@ export default function AccountProfile() {
         accept="image/*"
       />
 
-      {/* Header Profile Section */}
-      <div className="relative overflow-hidden bg-[#0a0f1a] border border-white/5 rounded-3xl p-8 shadow-2xl group">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 group-hover:bg-cyan-500/10 transition-colors duration-1000" />
-        
-        <div className="relative flex flex-col md:flex-row items-center gap-8">
-          <div className="relative group/avatar cursor-pointer" onClick={handlePhotoClick}>
-            <div className="w-32 h-32 rounded-3xl bg-gradient-to-br from-blue-900 to-blue-700 border-2 border-cyan-400/50 flex items-center justify-center overflow-hidden shadow-[0_0_30px_rgba(6,182,212,0.2)]">
-              {avatarUrl ? (
-                <img src={avatarUrl} alt={user.name} className="w-full h-full object-cover transition-transform duration-500 group-hover/avatar:scale-110" />
-              ) : (
-                <span className="text-4xl font-orbitron font-black text-white">{user.name.charAt(0)}</span>
-              )}
-              
-              {/* Overlay with Camera Icon */}
-              <div className={`absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-300 ${isUploading ? 'opacity-100' : ''}`}>
-                {isUploading ? (
-                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent"></div>
+      {/* Hero Header Section - High Fidelity */}
+      <div className="relative h-80 overflow-hidden rounded-[2.5rem] border border-white/10 shadow-2xl group">
+        {/* Background Layer */}
+        <div className="absolute inset-0">
+          <img 
+            src="/profile-bg.png" 
+            className="w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-105" 
+            alt="Tactical Background"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0f1a] via-[#0a0f1a]/60 to-transparent" />
+          <div className="absolute inset-0 bg-[#0a0f1a]/20 backdrop-blur-[2px]" />
+        </div>
+
+        {/* HUD Decoration */}
+        <div className="absolute top-8 right-8 flex gap-4">
+          <div className="px-4 py-2 bg-black/40 backdrop-blur-xl border border-white/10 rounded-full flex items-center gap-3">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]" />
+            <span className="text-[10px] font-orbitron font-bold text-white tracking-[0.2em] uppercase">Status: ACTIVE</span>
+          </div>
+          <div className="px-4 py-2 bg-black/40 backdrop-blur-xl border border-white/10 rounded-full flex items-center gap-3">
+             <i className="fa-solid fa-server text-cyan-400 text-[10px]"></i>
+            <span className="text-[10px] font-orbitron font-bold text-white tracking-[0.2em] uppercase">Server: JKT-01</span>
+          </div>
+        </div>
+
+        {/* Profile Identity Overlay */}
+        <div className="absolute inset-x-0 bottom-0 p-10 flex flex-col md:flex-row items-end gap-8">
+          <div className="relative shrink-0 group/avatar cursor-pointer" onClick={handlePhotoClick}>
+            <div className="w-40 h-40 rounded-[2rem] bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-950 p-[2px] shadow-2xl overflow-hidden group-hover/avatar:shadow-cyan-500/20 transition-all duration-500">
+              <div className="w-full h-full rounded-[2rem] overflow-hidden bg-[#0a0f1a] relative flex items-center justify-center">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt={user.name} className="w-full h-full object-cover transition-transform duration-700 group-hover/avatar:scale-110" />
                 ) : (
-                  <i className="fa-solid fa-camera text-white text-2xl"></i>
+                  <span className="text-6xl font-orbitron font-black text-white/20">{user.name.charAt(0)}</span>
                 )}
+                
+                {/* Upload Overlay */}
+                <div className={`absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-all duration-300 ${isUploading ? 'opacity-100' : ''}`}>
+                  {isUploading ? (
+                    <div className="animate-spin rounded-full h-8 w-8 border-2 border-cyan-500 border-t-transparent"></div>
+                  ) : (
+                    <>
+                      <i className="fa-solid fa-camera text-white text-3xl mb-2 translate-y-2 group-hover/avatar:translate-y-0 transition-transform"></i>
+                      <span className="text-[10px] font-bold text-white tracking-widest uppercase">Ganti Foto</span>
+                    </>
+                  )}
+                </div>
               </div>
-              
-              <div className="absolute inset-0 bg-white/5 backdrop-blur-[1px] pointer-events-none" />
-            </div>
-            <div className="absolute -bottom-2 -right-2 bg-emerald-500 border-4 border-[#0a0f1a] w-8 h-8 rounded-full shadow-[0_0_15px_rgba(16,185,129,0.5)] flex items-center justify-center">
-              <i className="fa-solid fa-check text-[10px] text-white"></i>
             </div>
           </div>
 
-          <div className="text-center md:text-left flex-1">
-            <h1 className="text-3xl font-orbitron font-black text-white tracking-tight mb-2 uppercase flex items-center gap-3 justify-center md:justify-start">
+          <div className="flex-1 pb-2">
+            <div className="flex flex-wrap items-center gap-4 mb-3">
+              <span className="px-4 py-1 bg-cyan-500/20 border border-cyan-500/30 rounded-lg text-[10px] font-orbitron font-black text-cyan-400 tracking-[0.3em] uppercase">
+                {user.role}
+              </span>
+              <span className="px-4 py-1 bg-emerald-500/20 border border-emerald-500/30 rounded-lg text-[10px] font-orbitron font-black text-emerald-400 tracking-[0.3em] uppercase flex items-center gap-2">
+                <i className="fa-solid fa-shield-halved"></i> Verified Personnel
+              </span>
+            </div>
+            <h1 className="text-5xl font-orbitron font-black text-white tracking-tighter uppercase mb-4 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">
               {user.name}
-              <span className="px-3 py-0.5 bg-cyan-500/10 border border-cyan-500/30 rounded text-[10px] tracking-[0.2em] text-cyan-400">VERIFIED</span>
             </h1>
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
-              <div className="flex items-center gap-2 text-gray-400">
-                <i className="fa-solid fa-id-card-clip text-cyan-500"></i>
-                <span className="text-xs font-bold tracking-widest uppercase">NRP: {user.nrp}</span>
+            <div className="flex flex-wrap gap-6 text-white/50">
+              <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl border border-white/5 backdrop-blur-lg">
+                <i className="fa-solid fa-fingerprint text-cyan-500 text-xs"></i>
+                <span className="text-xs font-bold font-orbitron tracking-widest">{user.nrp}</span>
               </div>
-              <div className="w-1 h-1 rounded-full bg-gray-700 hidden md:block" />
-              <div className="flex items-center gap-2 text-gray-400">
-                <i className="fa-solid fa-envelope text-cyan-500"></i>
-                <span className="text-xs font-bold tracking-widest uppercase">{user.email || 'N/A'}</span>
-              </div>
-              <div className="w-1 h-1 rounded-full bg-gray-700 hidden md:block" />
-              <div className="flex items-center gap-2 text-gray-400">
-                <i className="fa-solid fa-phone text-cyan-500"></i>
-                <span className="text-xs font-bold tracking-widest uppercase">{formatPhoneNumber(user.phone)}</span>
-              </div>
-              <div className="w-1 h-1 rounded-full bg-gray-700 hidden md:block" />
-              <div className="flex items-center gap-2 text-gray-400 font-bold">
-                <i className="fa-solid fa-user-shield text-cyan-500"></i>
-                <span className="text-xs tracking-widest uppercase">{user.role}</span>
+              <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl border border-white/5 backdrop-blur-lg">
+                <i className="fa-solid fa-envelope text-cyan-500 text-xs"></i>
+                <span className="text-xs font-bold tracking-wider">{user.email}</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Profile Details Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Account Info */}
-        <div className="bg-[#0a0f1a]/80 backdrop-blur-xl border border-white/5 rounded-3xl p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="font-orbitron font-bold text-sm text-white tracking-widest uppercase">Identitas Akun</h3>
-            <i className="fa-solid fa-fingerprint text-cyan-500/50 text-xl"></i>
+      {/* Main Pillars Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* Pillar 1: Bio-Data Personel */}
+        <div className="space-y-6">
+          <div className="flex items-center gap-3 px-2">
+             <div className="w-1 h-6 bg-cyan-500 rounded-full" />
+             <h3 className="font-orbitron font-black text-sm text-white tracking-[0.2em] uppercase">Identitas Personel</h3>
           </div>
           
-          <div className="space-y-4">
-            {/* Nama Lengkap - Editable */}
-            <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl group/field relative">
-              <div className="text-[10px] text-gray-500 uppercase tracking-[0.2em] mb-1">Nama Lengkap</div>
+          <div className="bg-[#0a0f1a]/60 backdrop-blur-2xl border border-white/5 rounded-[2rem] p-6 space-y-4 shadow-xl">
+            {/* Nama Lengkap Editable */}
+            <div className="p-5 bg-white/[0.03] border border-white/5 rounded-2xl group/field relative hover:bg-white/[0.05] transition-colors">
+              <div className="text-[10px] text-gray-500 uppercase tracking-[0.2em] mb-2 font-bold">Nama Lengkap SAKTI</div>
               {isEditingName ? (
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    className="flex-1 bg-white/5 border border-cyan-500/30 rounded px-2 py-1 text-sm font-bold text-white outline-none focus:border-cyan-500"
+                    className="flex-1 bg-black/40 border border-cyan-500/50 rounded-lg px-3 py-2 text-sm font-bold text-white outline-none focus:shadow-[0_0_15px_rgba(6,182,212,0.1)] transition-all"
                     autoFocus
                   />
-                  <button onClick={() => handleUpdateProfile('name')} className="text-emerald-400 hover:text-emerald-300 pointer-events-auto">
-                    <i className="fa-solid fa-check"></i>
+                  <button onClick={() => handleUpdateProfile('name')} className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all">
+                    <i className="fa-solid fa-check text-xs"></i>
                   </button>
-                  <button onClick={() => { setIsEditingName(false); setEditName(user.name); }} className="text-red-400 hover:text-red-300">
-                    <i className="fa-solid fa-times"></i>
+                  <button onClick={() => { setIsEditingName(false); setEditName(user.name); }} className="w-8 h-8 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all">
+                    <i className="fa-solid fa-times text-xs"></i>
                   </button>
                 </div>
               ) : (
                 <div className="flex items-center justify-between">
-                  <div className="text-sm font-bold text-gray-200 tracking-wide">{user.name}</div>
-                  <button 
-                    onClick={() => setIsEditingName(true)}
-                    className="opacity-0 group-hover/field:opacity-100 transition-opacity text-cyan-500 hover:text-cyan-400 p-1"
-                  >
+                  <div className="text-sm font-black text-gray-100 tracking-wide uppercase">{user.name}</div>
+                  <button onClick={() => setIsEditingName(true)} className="opacity-0 group-hover/field:opacity-100 transition-all text-cyan-500 hover:bg-cyan-500/10 p-2 rounded-lg">
                     <i className="fa-solid fa-pen-to-square text-xs"></i>
                   </button>
                 </div>
               )}
             </div>
 
-            <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
-              <div className="text-[10px] text-gray-500 uppercase tracking-[0.2em] mb-1">NRP / ID Personel</div>
-              <div className="text-sm font-bold text-gray-200 tracking-wide">{user.nrp}</div>
-            </div>
-            
-            <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
-              <div className="text-[10px] text-gray-500 uppercase tracking-[0.2em] mb-1">Email Kedinasan</div>
-              <div className="text-sm font-bold text-gray-200 tracking-wide">{user.email || 'Belum diisi'}</div>
-            </div>
-
-            {/* Nomor Telepon - Editable */}
-            <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl group/field relative">
-              <div className="text-[10px] text-gray-500 uppercase tracking-[0.2em] mb-1">Nomor Telepon</div>
+            {/* Nomor Telepon Editable */}
+            <div className="p-5 bg-white/[0.03] border border-white/5 rounded-2xl group/field relative hover:bg-white/[0.05] transition-colors">
+              <div className="text-[10px] text-gray-500 uppercase tracking-[0.2em] mb-2 font-bold">Nomor Telepon</div>
               {isEditingPhone ? (
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
                     value={editPhone}
                     onChange={(e) => setEditPhone(e.target.value)}
-                    className="flex-1 bg-white/5 border border-cyan-500/30 rounded px-2 py-1 text-sm font-bold text-white outline-none focus:border-cyan-500"
+                    className="flex-1 bg-black/40 border border-cyan-500/50 rounded-lg px-3 py-2 text-sm font-bold text-white outline-none focus:shadow-[0_0_15px_rgba(6,182,212,0.1)] transition-all"
                     autoFocus
                   />
-                  <button onClick={() => handleUpdateProfile('phone')} className="text-emerald-400 hover:text-emerald-300">
-                    <i className="fa-solid fa-check"></i>
+                  <button onClick={() => handleUpdateProfile('phone')} className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all">
+                    <i className="fa-solid fa-check text-xs"></i>
                   </button>
-                  <button onClick={() => { setIsEditingPhone(false); setEditPhone(user.phone || ''); }} className="text-red-400 hover:text-red-300">
-                    <i className="fa-solid fa-times"></i>
+                  <button onClick={() => { setIsEditingPhone(false); setEditPhone(user.phone || ''); }} className="w-8 h-8 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all">
+                    <i className="fa-solid fa-times text-xs"></i>
                   </button>
                 </div>
               ) : (
                 <div className="flex items-center justify-between">
-                  <div className="text-sm font-bold text-gray-200 tracking-wide">{formatPhoneNumber(user.phone)}</div>
-                  <button 
-                    onClick={() => setIsEditingPhone(true)}
-                    className="opacity-0 group-hover/field:opacity-100 transition-opacity text-cyan-500 hover:text-cyan-400 p-1"
-                  >
+                  <div className="text-sm font-black text-gray-100 tracking-wide">{formatPhoneNumber(user.phone)}</div>
+                  <button onClick={() => setIsEditingPhone(true)} className="opacity-0 group-hover/field:opacity-100 transition-all text-cyan-500 hover:bg-cyan-500/10 p-2 rounded-lg">
                     <i className="fa-solid fa-pen-to-square text-xs"></i>
                   </button>
                 </div>
               )}
             </div>
+
+            <div className="p-5 bg-white/[0.03] border border-white/5 rounded-2xl">
+              <div className="text-[10px] text-gray-500 uppercase tracking-[0.2em] mb-2 font-bold">Email Kedinasan</div>
+              <div className="text-sm font-bold text-white/90 break-all">{user.email || 'N/A'}</div>
+            </div>
           </div>
         </div>
 
-        {/* System Access */}
-        <div className="bg-[#0a0f1a]/80 backdrop-blur-xl border border-white/5 rounded-3xl p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="font-orbitron font-bold text-sm text-white tracking-widest uppercase">Akses & Keamanan</h3>
-            <i className="fa-solid fa-lock text-cyan-500/50 text-xl"></i>
+        {/* Pillar 2: Otoritas & Penugasan */}
+        <div className="space-y-6">
+          <div className="flex items-center gap-3 px-2">
+             <div className="w-1 h-6 bg-purple-500 rounded-full" />
+             <h3 className="font-orbitron font-black text-sm text-white tracking-[0.2em] uppercase">Otoritas & Tugas</h3>
           </div>
 
-          <div className="space-y-4">
-            <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center justify-between">
-              <div>
-                <div className="text-[10px] text-gray-500 uppercase tracking-[0.2em] mb-1">Tingkatan Akses</div>
-                <div className="text-sm font-bold text-cyan-400 tracking-widest uppercase">{user.role}</div>
+          <div className="bg-[#0a0f1a]/60 backdrop-blur-2xl border border-white/5 rounded-[2rem] p-6 space-y-4 shadow-xl">
+            <div className="p-6 bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-500/20 rounded-2xl relative overflow-hidden group/role">
+              <div className="relative z-10">
+                <div className="text-[10px] text-purple-400 uppercase tracking-[0.2em] mb-4 font-black">Level Otoritas</div>
+                <div className="text-2xl font-orbitron font-black text-white mb-2 uppercase tracking-tighter">{user.role}</div>
+                <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Akses Komando Penuh</div>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center">
-                <i className="fa-solid fa-key text-cyan-500"></i>
+              <i className="fa-solid fa-user-shield absolute top-6 right-6 text-purple-500/20 text-5xl group-hover/role:scale-110 transition-transform"></i>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-5 bg-white/[0.03] border border-white/5 rounded-2xl">
+                <div className="text-[10px] text-gray-500 uppercase tracking-[0.2em] mb-2 font-bold">Wilayah</div>
+                <div className="text-xs font-black text-white uppercase tracking-widest">Nasional</div>
+              </div>
+              <div className="p-5 bg-white/[0.03] border border-white/5 rounded-2xl">
+                <div className="text-[10px] text-gray-500 uppercase tracking-[0.2em] mb-2 font-bold">Unit Kerja</div>
+                <div className="text-xs font-black text-white uppercase tracking-widest">Sakti-01</div>
               </div>
             </div>
-            
-            <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center justify-between">
+
+            <div className="p-5 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl flex items-center justify-between">
               <div>
-                <div className="text-[10px] text-gray-500 uppercase tracking-[0.2em] mb-1">Status Keamanan</div>
-                <div className="text-sm font-bold text-emerald-400 tracking-widest uppercase">Fully Encrypted</div>
+                <div className="text-[10px] text-emerald-500/70 uppercase tracking-[0.2em] mb-1 font-bold">Kepatuhan Data</div>
+                <div className="text-sm font-black text-emerald-400 uppercase">100% Compliant</div>
               </div>
               <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                <i className="fa-solid fa-user-shield text-emerald-500"></i>
+                 <i className="fa-solid fa-check-double text-emerald-500"></i>
               </div>
             </div>
-
-            <button className="w-full py-4 mt-2 bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 rounded-2xl text-xs font-bold text-gray-300 tracking-[0.2em] uppercase transition-all">
-              Ubah Password SAKTI
-            </button>
           </div>
         </div>
+
+        {/* Pillar 3: Benteng Keamanan */}
+        <div className="space-y-6">
+          <div className="flex items-center gap-3 px-2">
+             <div className="w-1 h-6 bg-amber-500 rounded-full" />
+             <h3 className="font-orbitron font-black text-sm text-white tracking-[0.2em] uppercase">Benteng Keamanan</h3>
+          </div>
+
+          <div className="bg-[#0a0f1a]/60 backdrop-blur-2xl border border-white/5 rounded-[2rem] p-6 space-y-4 shadow-xl">
+             <div className="p-5 bg-white/[0.03] border border-white/5 rounded-2xl flex items-center justify-between group/sec">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20 group-hover/sec:bg-cyan-500/20 transition-all">
+                     <i className="fa-solid fa-lock-open text-cyan-400"></i>
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-bold">Sandi Keamanan</div>
+                    <div className="text-sm font-bold text-white tracking-[0.3em]">********</div>
+                  </div>
+                </div>
+                <button className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-[10px] font-bold text-white uppercase tracking-widest border border-white/10 transition-all">
+                  Update
+                </button>
+             </div>
+
+             <div className="p-5 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                   <i className="fa-solid fa-shield-virus text-emerald-500"></i>
+                </div>
+                <div>
+                  <div className="text-[10px] text-emerald-500/70 uppercase tracking-[0.2em] font-bold">Enkripsi SAKTI</div>
+                  <div className="text-xs font-black text-white uppercase tracking-widest">End-to-End active</div>
+                </div>
+             </div>
+
+             <div className="p-8 mt-4 border-2 border-dashed border-white/5 rounded-3xl flex flex-col items-center justify-center text-center">
+                <div className="w-16 h-16 rounded-full bg-cyan-500/5 flex items-center justify-center mb-4">
+                   <i className="fa-solid fa-user-gear text-cyan-500 text-2xl"></i>
+                </div>
+                <h4 className="text-xs font-bold text-white uppercase tracking-[0.2em] mb-2">Konfigurasi Lanjutan</h4>
+                <p className="text-[10px] text-gray-500 max-w-[150px] leading-relaxed mb-6 italic">Kelola preferensi login dan kunci otentikasi biometrik Anda</p>
+                <div className="w-full h-[2px] bg-white/5 mb-6" />
+                <button className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.3em] hover:text-cyan-300 transition-colors">
+                  Buka Pengaturan Keamanan
+                </button>
+             </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );

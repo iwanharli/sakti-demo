@@ -676,6 +676,10 @@ app.put('/api/auth/update-profile', authenticateToken, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+/**
+ * @openapi
+ * /api/auth/login:
  *   post:
  *     summary: Authenticate personnel
  *     description: Verify identity using NRP or Email and numerical PIN (password). Includes Rate Limiting.
