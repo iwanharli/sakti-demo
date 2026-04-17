@@ -296,8 +296,15 @@ export default function AccountProfile() {
             </div>
 
             {/* Nomor Telepon Editable */}
-            <div className="p-5 bg-white/[0.03] border border-white/5 rounded-2xl group/field relative hover:bg-white/[0.05] transition-colors">
-              <div className="text-[10px] text-gray-500 uppercase tracking-[0.2em] mb-2 font-bold">Nomor Telepon</div>
+            <div className="p-5 bg-white/[0.03] border border-white/5 rounded-2xl group/field relative hover:bg-white/[0.02] transition-colors">
+              <div className="flex justify-between items-center mb-2">
+                <div className="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-bold">Nomor Telepon</div>
+                {!user.phone && (
+                  <span className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 rounded text-[8px] font-black text-amber-500 tracking-widest animate-pulse">
+                    LENGKAPI SEKARANG
+                  </span>
+                )}
+              </div>
               {isEditingPhone ? (
                 <div className="flex items-center gap-2">
                   <input
@@ -324,8 +331,15 @@ export default function AccountProfile() {
               )}
             </div>
 
-            <div className="p-5 bg-white/[0.03] border border-white/5 rounded-2xl">
-              <div className="text-[10px] text-gray-500 uppercase tracking-[0.2em] mb-2 font-bold">Email Kedinasan</div>
+            <div className="p-5 bg-white/[0.03] border border-white/5 rounded-2xl relative">
+              <div className="flex justify-between items-center mb-2">
+                <div className="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-bold">Email Kedinasan</div>
+                {!user.email && (
+                  <span className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 rounded text-[8px] font-black text-amber-500 tracking-widest animate-pulse">
+                    LENGKAPI SEKARANG
+                  </span>
+                )}
+              </div>
               <div className="text-sm font-bold text-white/90 break-all">{user.email || 'N/A'}</div>
             </div>
           </div>
