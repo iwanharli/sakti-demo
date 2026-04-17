@@ -360,9 +360,8 @@ export default function Dashboard() {
               <div className="space-y-4 flex-1 flex flex-col justify-center">
                 {[
                   { label: 'Positif', value: 38, color: 'bg-emerald-500', textColor: 'text-emerald-400' },
-                  { label: 'Netral', value: 29, color: 'bg-cyan-500', textColor: 'text-cyan-400' },
+                  { label: 'Netral', value: 38, color: 'bg-cyan-500', textColor: 'text-cyan-400' },
                   { label: 'Negatif', value: 24, color: 'bg-red-500', textColor: 'text-red-400' },
-                  { label: 'Provokasi', value: 9, color: 'bg-purple-500', textColor: 'text-purple-400' },
                 ].map((item) => (
                   <div key={item.label} className="flex items-center gap-4">
                     <span className="text-[13px] uppercase font-black text-gray-500 w-24">{item.label}</span>
@@ -375,10 +374,6 @@ export default function Dashboard() {
                     <span className={`text-[13px] font-mono font-black w-12 text-right ${item.textColor}`}>{item.value}%</span>
                   </div>
                 ))}
-              </div>
-              <div className="mt-4 p-3 bg-amber-500/5 border border-amber-500/10 rounded-lg">
-                <div className="text-[11px] text-amber-500 font-black uppercase tracking-widest">⚠️ Massa Terdeteksi</div>
-                <div className="text-[12px] text-gray-500 mt-1 leading-tight">Area Monas & Patung Kuda +120% pergerakan aktif</div>
               </div>
             </div>
 
