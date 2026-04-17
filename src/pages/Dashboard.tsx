@@ -179,7 +179,7 @@ export default function Dashboard() {
       </div>
 
       {/* Main Map Container - Full Width */}
-      <div className="ews-card flex flex-col h-[800px]">
+      <div className="ews-card flex flex-col h-[720px]">
         <div className="flex items-center justify-between p-6 relative z-10 border-b border-gray-800">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
@@ -470,6 +470,23 @@ export default function Dashboard() {
                       <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
                       Active Security Index
                     </span>
+                  </div>
+                </div>
+
+                {/* Province Dropdown (Dummy) */}
+                <div className="relative group/select">
+                  <select 
+                    className="appearance-none bg-white/[0.03] border border-white/10 rounded-lg px-3 py-1.5 text-[10px] font-black text-gray-400 uppercase tracking-widest cursor-pointer outline-none hover:border-cyan-500/30 hover:text-cyan-400 transition-all pr-8"
+                    defaultValue="DKI JAKARTA"
+                  >
+                    <option value="DKI JAKARTA">DKI JAKARTA</option>
+                    <option value="JAWA BARAT">JAWA BARAT</option>
+                    <option value="JAWA TENGAH">JAWA TENGAH</option>
+                    <option value="JAWA TIMUR">JAWA TIMUR</option>
+                    <option value="BALI">BALI</option>
+                  </select>
+                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-[8px] text-gray-600 group-hover/select:text-cyan-500 transition-colors">
+                    <i className="fa-solid fa-chevron-down"></i>
                   </div>
                 </div>
               </div>
