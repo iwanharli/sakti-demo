@@ -1,13 +1,10 @@
 import { useState, useEffect } from 'react';
-import type { Toast } from '../types';
-
-interface KolaborasiProps {
-  addToast: (message: string, type: Toast['type']) => void;
-}
+import { useAppStore } from '../store/useAppStore';
 
 import { instansiList, permintaanData, insights } from '../data/mockSectoralCollaboration';
 
-export default function SectoralCollaboration({ addToast }: KolaborasiProps) {
+export default function SectoralCollaboration() {
+  const addToast = useAppStore((s) => s.addToast);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -42,9 +39,24 @@ export default function SectoralCollaboration({ addToast }: KolaborasiProps) {
 
   return (
     <div className={`space-y-5 ${mounted ? 'ews-animate-fade-in' : ''}`}>
-      {/* Section Title */}
-      <div className="ews-section-title">
-        🤝 MODUL 5 — KOLABORASI SEKTORAL (DUAL-USE TECHNOLOGY)
+      {/* DATA SOURCE & METHODOLOGY SECTION */}
+      <div className="ews-card p-6 border-l-4 border-cyan-500 bg-cyan-500/5 mb-8 relative overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+        <div className="flex items-start justify-between relative z-10">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(6,211,234,0.1)]">
+              <i className="fa-solid fa-handshake text-xl"></i>
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-orbitron font-bold text-xs text-white uppercase tracking-widest">DATA SOURCE & TEKNIK PENGOLAHAN</h3>
+              </div>
+              <p className="text-[13px] text-gray-400 leading-relaxed font-rajdhani max-w-4xl">
+                Portal pertukaran data lintas instansi menggunakan teknologi Dual-Use untuk koordinasi operasional bersama dan transparansi informasi strategis antar lembaga negara.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Stats Grid */}

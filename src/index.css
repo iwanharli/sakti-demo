@@ -1,5 +1,5 @@
 @import url('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -48,7 +48,7 @@
   }
   body {
     @apply bg-[#070a12] text-foreground antialiased;
-    font-family: 'Rajdhani', sans-serif;
+    font-family: 'Inter', sans-serif;
   }
 }
 
@@ -181,18 +181,45 @@
   animation: ews-ticker 30s linear infinite;
 }
 
-/* Typography */
+/* Typography — Inter Optimization */
 .font-orbitron {
-  font-family: 'Orbitron', monospace;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .font-rajdhani {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
 .font-mono {
   font-family: 'JetBrains Mono', monospace;
 }
+
+/* Inter renders thicker than display fonts — normalize heavy weights */
+.font-black {
+  font-weight: 700 !important;
+}
+
+/* Prevent illegible micro-text — enforce 11px minimum */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Tighten letter-spacing for Inter (naturally wider than Rajdhani) */
+.tracking-widest {
+  letter-spacing: 0.08em !important;
+}
+
+.tracking-wider {
+  letter-spacing: 0.04em !important;
+}
+
+/* Micro-text size bumps — Inter needs larger sizes than Rajdhani for readability */
+[class*="text-\[8px\]"] { font-size: 10px !important; }
+[class*="text-\[9px\]"] { font-size: 11px !important; }
+[class*="text-\[10px\]"] { font-size: 11px !important; }
 
 /* Card Styles */
 .ews-card {
@@ -439,13 +466,9 @@
 
 /* Timeline */
 .ews-timeline {
-  @apply relative pl-5;
+  @apply relative;
 }
 
-.ews-timeline::before {
-  content: '';
-  @apply absolute left-1.5 top-0 bottom-0 w-px bg-gray-800;
-}
 
 .ews-timeline-item {
   @apply relative pb-4;
@@ -613,4 +636,71 @@
     10px 100%, 
     0 calc(100% - 10px)
   );
+}
+
+/* Tactical Animations */
+@keyframes ews-dash {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+.ews-animate-dash {
+  animation: ews-dash 1s linear infinite;
+}
+
+@keyframes ews-spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.ews-animate-spin-slow {
+  animation: ews-spin-slow 12s linear infinite;
+}
+
+@keyframes ews-pulse-glow {
+  0%, 100% { filter: drop-shadow(0 0 5px rgba(239, 68, 68, 0.4)); opacity: 1; }
+  50% { filter: drop-shadow(0 0 15px rgba(239, 68, 68, 0.8)); opacity: 0.8; }
+}
+.ews-animate-pulse-glow {
+  animation: ews-pulse-glow 2s ease-in-out infinite;
+}
+
+/* Tactical Pulse for Map Markers */
+@keyframes ews-pulse-ring {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.1); opacity: 0.3; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+.ews-tactical-pulse {
+  animation: ews-pulse-ring 2s infinite ease-in-out;
+}
+
+.ews-animate-pulse-red {
+    animation: ews-pulse-ring 1.5s infinite ease-in-out !important;
+    filter: drop-shadow(0 0 5px #ef4444);
+}
+
+.ews-animate-pulse-cyan {
+    animation: ews-pulse-ring 2.5s infinite ease-in-out !important;
+    filter: drop-shadow(0 0 5px #06b6d4);
+}
+
+/* Tactical Map Tooltips */
+.tactical-tooltip {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    color: inherit !important;
+}
+
+.tactical-tooltip::before {
+    display: none !important;
+}
+
+.tactical-tooltip.leaflet-tooltip-top:before,
+.tactical-tooltip.leaflet-tooltip-bottom:before,
+.tactical-tooltip.leaflet-tooltip-left:before,
+.tactical-tooltip.leaflet-tooltip-right:before {
+    display: none !important;
 }

@@ -19,8 +19,8 @@ export const begalPredictions = [
 ];
 
 export const dataSources = [
-  { name: '📋 SPKT', description: '247 laporan · sinkron 5 menit lalu' },
-  { name: '📊 BPS Daerah', description: 'Data sosio-ekonomi · Triwulan IV' },
-  { name: '🌧 BMKG', description: 'Cuaca · hujan lebat malam ini' },
-  { name: '📡 STAMAOPS', description: 'EWS aktif · 3 peristiwa terdeteksi' },
+  { name: 'SPKT', description: '247 laporan · sinkron 5 menit lalu' },
+  { name: 'BPS Daerah', description: 'Data sosio-ekonomi · Triwulan IV' },
+  { name: 'BMKG', description: 'Cuaca · hujan lebat malam ini' },
+  { name: 'STAMAOPS', description: 'EWS aktif · 3 peristiwa terdeteksi' },
 ];

@@ -87,10 +87,10 @@ export const path3: [number, number][] = [
 ];
 
 export const tickerItems = [
-  { icon: '🔴', text: 'Laporan 110 — Kecelakaan Beruntun Jl. Gajah Mada KM 3 · 14:32', color: 'text-red-400' },
-  { icon: '🟡', text: 'Spike keywords "demo" +410% · Area Monas & Harmoni', color: 'text-amber-400' },
-  { icon: '🟢', text: 'Patrol Unit SKT-01 sampai di titik rawan Tanah Abang · 14:28', color: 'text-emerald-400' },
-  { icon: '🔵', text: 'Sinkronisasi Data CCTV Jakarta Smart City Berhasil · 1,240 titik aktif', color: 'text-cyan-400' },
+  { icon: 'fa-solid fa-circle-dot', text: 'Laporan 110 — Kecelakaan Beruntun Jl. Gajah Mada KM 3 · 14:32', color: 'text-red-400' },
+  { icon: 'fa-solid fa-triangle-exclamation', text: 'Spike keywords "demo" +410% · Area Monas & Harmoni', color: 'text-amber-400' },
+  { icon: 'fa-solid fa-circle-check', text: 'Patrol Unit SKT-01 sampai di titik rawan Tanah Abang · 14:28', color: 'text-emerald-400' },
+  { icon: 'fa-solid fa-circle-info', text: 'Sinkronisasi Data CCTV Jakarta Smart City Berhasil · 1,240 titik aktif', color: 'text-cyan-400' },
 ];
 
 export const timelineItems = [

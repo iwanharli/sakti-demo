@@ -30,7 +30,7 @@ export default function AlertModal({ isOpen, onClose, alerts }: AlertModalProps)
       <div className="ews-modal max-w-xl" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-5">
           <h3 className="font-orbitron font-bold text-lg text-red-400 flex items-center gap-2">
-            🚨 SIAGA AKTIF — {alerts.length} INSIDEN
+            <i className="fa-solid fa-triangle-exclamation"></i> SIAGA AKTIF — {alerts.length} INSIDEN
           </h3>
           <button 
             onClick={onClose}
@@ -46,7 +46,9 @@ export default function AlertModal({ isOpen, onClose, alerts }: AlertModalProps)
               key={alert.id}
               className={`flex gap-3 p-4 rounded-lg ${priorityClasses[alert.priority]}`}
             >
-              <div className="text-2xl flex-shrink-0">{alert.icon}</div>
+              <div className="text-2xl flex-shrink-0 text-white/80">
+                <i className={alert.icon}></i>
+              </div>
               <div className="flex-1 min-w-0">
                 <h4 className="font-semibold text-white text-sm mb-1">{alert.title}</h4>
                 <p className="text-xs text-gray-400 mb-2 leading-relaxed">{alert.description}</p>
