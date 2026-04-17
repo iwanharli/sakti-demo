@@ -349,7 +349,7 @@ export default function Dashboard() {
                     <i className="fa-solid fa-satellite-dish text-lg"></i>
                   </div>
                   <div>
-                    <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">SENTIMEN PUBLIK JKT</span>
+                    <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">SENTIMEN PUBLIK</span>
                     <span className="text-[10px] text-cyan-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
                       Social Sensing • Pattern Recognition
@@ -457,57 +457,54 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* KAMTIBMAS Summary Section */}
-            <div className="ews-card p-6 flex flex-col">
-              <div className="flex items-center justify-between mb-8">
+            {/* KAMTIBMAS Summary Section - Minimalist Refinement */}
+            <div className="ews-card p-5 flex flex-col">
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
-                    <i className="fa-solid fa-shield-halved text-lg"></i>
+                  <div className="w-8 h-8 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+                    <i className="fa-solid fa-shield-halved text-sm"></i>
                   </div>
                   <div>
-                    <span className="font-orbitron font-bold text-[18px] text-gray-100 uppercase tracking-[0.10em] block">INDEX KERAWANAN KAMTIBMAS</span>
-                    <span className="text-[10px] text-gray-500 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      Active Security Index • Jakarta JKT
+                    <span className="font-orbitron font-bold text-[14px] text-gray-100 uppercase tracking-wider block">INDEX KERAWANAN KAMTIBMAS</span>
+                    <span className="text-[9px] text-gray-500 font-mono uppercase tracking-widest flex items-center gap-1.5">
+                      <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                      Active Security Index
                     </span>
                   </div>
                 </div>
               </div>
               
-              <div className="flex-1 space-y-6">
-                {/* Hero Stats Card */}
-                <div className="relative p-7 rounded-[2rem] bg-gradient-to-br from-white/[0.03] to-transparent border border-white/[0.05] overflow-hidden group hover:border-red-500/30 transition-all duration-500 shadow-2xl">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 blur-[50px] -mr-16 -mt-16 group-hover:bg-red-500/10 transition-all" />
-                  
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex flex-col">
-                      <div className="font-orbitron text-6xl font-black text-white leading-none tracking-tighter mb-2">2.221</div>
-                      <div className="text-[12px] text-gray-500 font-black uppercase tracking-[0.3em] font-mono">INSIDEN</div>
+              <div className="space-y-4">
+                {/* Compact Stats Row */}
+                <div className="flex items-end justify-between p-4 rounded-2xl bg-white/[0.02] border border-white/[0.05] relative overflow-hidden group hover:border-red-500/20 transition-all">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/5 blur-3xl -mr-12 -mt-12" />
+                  <div>
+                    <div className="font-orbitron text-4xl font-black text-white leading-none tracking-tighter">2.221</div>
+                    <div className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] mt-1">TOTAL INSIDEN</div>
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    <div className="px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/20 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]" />
+                      <span className="text-[9px] font-black text-white uppercase tracking-widest">TINGGI</span>
                     </div>
-                    <div className="flex flex-col items-end gap-3">
-                      <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-500/10 border border-red-500/20">
-                        <span className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444]" />
-                        <span className="text-[11px] font-black text-white uppercase tracking-widest">TINGGI</span>
-                      </div>
-                      <div className="px-4 py-3 rounded-2xl bg-gray-900/60 border border-white/5 flex flex-col items-end backdrop-blur-sm">
-                        <div className="text-[9px] text-gray-500 font-black uppercase tracking-widest mb-1">INDEX RISK</div>
-                        <div className="text-[18px] font-orbitron font-bold text-cyan-400">26.51</div>
-                      </div>
+                    <div className="text-right">
+                      <div className="text-[9px] text-gray-600 font-black uppercase tracking-widest">RISK INDEX</div>
+                      <div className="text-[15px] font-orbitron font-bold text-cyan-400">26.51</div>
                     </div>
                   </div>
                 </div>
 
-                {/* Sub-Stats Grid */}
-                <div className="grid grid-cols-2 gap-4">
+                {/* Condensed Sub-Stats Grid */}
+                <div className="grid grid-cols-2 gap-3">
                   {[
-                    { label: 'KEJAHATAN', value: '2.008', color: 'text-white' },
-                    { label: 'GANGGUAN', value: '110', color: 'text-white' },
-                    { label: 'PELANGGARAN', value: '90', color: 'text-white' },
-                    { label: 'BENCANA', value: '13', color: 'text-white' },
+                    { label: 'KEJAHATAN', value: '2.008' },
+                    { label: 'GANGGUAN', value: '110' },
+                    { label: 'PELANGGARAN', value: '90' },
+                    { label: 'BENCANA', value: '13' },
                   ].map((item) => (
-                    <div key={item.label} className="p-5 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between hover:bg-white/[0.05] transition-all group/sub">
-                      <span className="text-[11px] font-black text-gray-500 uppercase tracking-widest group-hover/sub:text-gray-300 transition-colors">{item.label}</span>
-                      <span className={`font-orbitron text-[22px] font-black ${item.color} tracking-tighter`}>{item.value}</span>
+                    <div key={item.label} className="py-2.5 px-3.5 rounded-xl bg-white/[0.01] border border-white/[0.03] flex items-center justify-between hover:bg-white/[0.04] transition-all group/sub">
+                      <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest group-hover/sub:text-gray-400 transition-colors">{item.label}</span>
+                      <span className="font-orbitron text-[15px] font-bold text-gray-200">{item.value}</span>
                     </div>
                   ))}
                 </div>
