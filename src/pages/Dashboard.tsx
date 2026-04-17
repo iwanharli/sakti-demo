@@ -179,7 +179,7 @@ export default function Dashboard() {
       </div>
 
       {/* Main Map Container - Full Width */}
-      <div className="ews-card flex flex-col h-[600px]">
+      <div className="ews-card flex flex-col h-[800px]">
         <div className="flex items-center justify-between p-6 relative z-10 border-b border-gray-800">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
@@ -451,7 +451,7 @@ export default function Dashboard() {
                   
                   <div className="pt-4 border-t border-white/5">
                     <div className="text-[10px] text-cyan-500/60 font-mono uppercase tracking-[0.2em] mb-1">Vector Focus</div>
-                    <div className="text-[12px] text-gray-300 font-bold tracking-wide">Analisis Narasi Domestik</div>
+                    <div className="text-[12px] text-gray-300 font-bold tracking-wide">Analisis Narasi</div>
                   </div>
                 </div>
               </div>
