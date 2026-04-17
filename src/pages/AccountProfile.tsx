@@ -40,8 +40,8 @@ export default function AccountProfile() {
       return;
     }
 
-    if (file.size > 2 * 1024 * 1024) {
-      addToast('Ukuran file maksimal 2MB!', 'error');
+    if (file.size > 10 * 1024 * 1024) {
+      addToast('Ukuran file maksimal 10MB!', 'error');
       return;
     }
 

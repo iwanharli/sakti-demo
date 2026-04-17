@@ -46,7 +46,8 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Static files for uploads
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
@@ -611,7 +612,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
   storage,
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|webp/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
@@ -647,6 +648,11 @@ app.post('/api/auth/upload-profile', authenticateToken, upload.single('photo'), 
     res.status(500).json({ error: error.message });
   }
 });
+
+/**
+ * @openapi
+ * /api/auth/login:
+ *   post:
  *     summary: Authenticate personnel
  *     description: Verify identity using NRP or Email and numerical PIN (password). Includes Rate Limiting.
  *     requestBody:

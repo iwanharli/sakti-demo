@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { getApiBase } from '../store/useAppStore';
 
 interface TopbarProps {
   title: string;
