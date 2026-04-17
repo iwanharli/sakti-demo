@@ -102,7 +102,7 @@ export default function Topbar({ title, subtitle, currentTime, alertCount, onAle
                   <div className="text-xs text-gray-500 uppercase tracking-widest font-black mb-1">Status Keamanan</div>
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]"></span>
-                    <span className="text-sm font-bold text-emerald-400 lowercase italic tracking-tight">{user?.email || 'N/A'}</span>
+                    <span className="text-sm font-bold text-emerald-400 uppercase tracking-tight">{user?.name || 'N/A'}</span>
                   </div>
                 </div>
                 
