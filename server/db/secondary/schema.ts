@@ -535,3 +535,14 @@ export const nasionalBpsUnemployedData = pgTable("nasional_bps_unemployed_data",
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 });
+
+export const nasionalBmkgWarningData = pgTable("nasional_bmkg_warning_data", {
+	id: serial().notNull(),
+	warningType: varchar("warning_type", { length: 255 }),
+	warningEvent: text("warning_event"),
+	warningTitle: text("warning_title"),
+	warningDescription: text("warning_description"),
+	additionalData: jsonb("additional_data"),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+});

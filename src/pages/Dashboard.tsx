@@ -14,6 +14,7 @@ import {
   patrolStatusUnits,
   riskScores
 } from '../data/mockDashboard';
+import { BMKGWarning, TimelineItem } from '../types';
 
 // Animated Patrol Unit Component
 const MovingPatrolUnit = ({ path, color, label, duration = 20000 }: { path: [number, number][], color: string, label: string, duration?: number }) => {
@@ -66,10 +67,44 @@ export default function Dashboard() {
   const addToast = useAppStore((s) => s.addToast);
   const [mounted, setMounted] = useState(false);
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
+  const [timelineData, setTimelineData] = useState<TimelineItem[]>(timelineItems);
 
   useEffect(() => {
     setMounted(true);
+    fetchBMKGWarnings();
   }, []);
+
+  const fetchBMKGWarnings = async () => {
+    try {
+      const token = localStorage.getItem('sakti_token');
+      const response = await fetch('http://localhost:8440/api/bmkg/warnings', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (!response.ok) throw new Error('Gagal mengambil data BMKG');
+      
+      const data: BMKGWarning[] = await response.json();
+      
+      // Map BMKG data to TimelineItem format
+      const bmkgItems: TimelineItem[] = data.map(item => {
+        const date = new Date(item.created_at);
+        const timeStr = date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        
+        return {
+          time: timeStr,
+          content: item.warning_title,
+          tags: [item.warning_type.toUpperCase(), 'BMKG_ALERT'],
+          color: item.warning_type.toLowerCase() === 'gempa' ? 'red' : 'amber'
+        };
+      });
+
+      // Merge with existing security items, priority to new BMKG alerts
+      setTimelineData([...bmkgItems, ...timelineItems.slice(0, 5)]);
+    } catch (err) {
+      console.error('BMKG Fetch Error:', err);
+      // Fallback to mock if API fails
+    }
+  };
 
   const crimeTrendData = useMemo(() => {
     const days = ['SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB', 'MIN'];
@@ -465,7 +500,7 @@ export default function Dashboard() {
                     <i className="fa-solid fa-shield-halved text-sm"></i>
                   </div>
                   <div>
-                    <span className="font-orbitron font-bold text-[14px] text-gray-100 uppercase tracking-wider block">INDEX KERAWANAN KAMTIBMAS</span>
+                    <span className="font-orbitron font-bold text-[14px] text-gray-100 uppercase tracking-wider block">INDEX KAMTIBMAS</span>
                     <span className="text-[9px] text-gray-500 font-mono uppercase tracking-widest flex items-center gap-1.5">
                       <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
                       Active Security Index
@@ -695,7 +730,7 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="flex-1 ews-timeline overflow-auto ews-scrollbar space-y-3">
-              {timelineItems.map((item, idx) => {
+              {timelineData.map((item, idx) => {
                 // Get dynamic icon based on content/tags
                 const icon = item.tags.includes('LANTAS') ? 'fa-solid fa-car-burst' : 
                              item.tags.includes('RESKRIM') ? 'fa-solid fa-fingerprint' : 

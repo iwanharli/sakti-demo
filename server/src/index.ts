@@ -317,6 +317,37 @@ app.get('/api/weather/map-cities', async (req, res) => {
   }
 });
 
+/**
+ * @openapi
+ * /api/bmkg/warnings:
+ *   get:
+ *     summary: Get latest BMKG disaster warnings
+ *     description: Returns the most recent 10 disaster warnings (e.g., earthquakes) from the secondary database.
+ *     responses:
+ *       200:
+ *         description: Array of BMKG warnings.
+ */
+app.get('/api/bmkg/warnings', authenticateToken, async (req, res) => {
+  try {
+    const results = await dbSecondary.execute(sql`
+      SELECT 
+        id, 
+        warning_type, 
+        warning_event, 
+        warning_title, 
+        warning_description, 
+        additional_data, 
+        created_at 
+      FROM nasional_bmkg_warning_data 
+      ORDER BY created_at DESC 
+      LIMIT 10
+    `);
+    res.json(results.rows);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 const API_BASE = 'http://localhost:3001/api';
 
 // Helper for resolving data source table and metadata columns
