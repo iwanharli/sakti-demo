@@ -77,7 +77,7 @@ export default function Dashboard() {
 
   const fetchBMKGWarnings = async () => {
     try {
-      const token = localStorage.getItem('sakti_token');
+      const token = sessionStorage.getItem('sakti_token');
       const response = await fetch('http://localhost:8440/api/bmkg/warnings', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
