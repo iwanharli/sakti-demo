@@ -77,7 +77,7 @@ export const useAppStore = create<AppStore>()((set) => ({
 
     const ToastMixin = Swal.mixin({
       toast: true,
-      position: "top-end",
+      position: "top",
       showConfirmButton: false,
       timer: 3000,
       timerProgressBar: false,
@@ -106,10 +106,10 @@ export const useAppStore = create<AppStore>()((set) => ({
         </div>
       `,
       showClass: {
-        popup: 'animate__animated animate__fadeInRight animate__faster'
+        popup: 'animate__animated animate__fadeInDown animate__faster'
       },
       hideClass: {
-        popup: 'animate__animated animate__fadeOutRight animate__faster'
+        popup: 'animate__animated animate__fadeOutUp animate__faster'
       }
     });
   },
