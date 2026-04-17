@@ -465,7 +465,7 @@ export default function Dashboard() {
                     <i className="fa-solid fa-shield-halved text-lg"></i>
                   </div>
                   <div>
-                    <span className="font-orbitron font-bold text-[18px] text-gray-100 uppercase tracking-[0.15em] block">KAMTIBMAS</span>
+                    <span className="font-orbitron font-bold text-[18px] text-gray-100 uppercase tracking-[0.10em] block">INDEX KERAWANAN KAMTIBMAS</span>
                     <span className="text-[10px] text-gray-500 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                       Active Security Index • Jakarta JKT
