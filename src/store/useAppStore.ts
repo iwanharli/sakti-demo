@@ -89,7 +89,7 @@ export const useAppStore = create<AppStore>()((set) => ({
       showConfirmButton: false,
       timer: 4000,
       timerProgressBar: true,
-      background: 'rgba(15, 23, 42, 0.7)',
+      background: 'rgba(255, 255, 255, 0.1)',
       color: '#ffffff',
       didOpen: (toast: HTMLElement) => {
         toast.onmouseenter = Swal.stopTimer;
