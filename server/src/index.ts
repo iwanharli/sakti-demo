@@ -559,7 +559,9 @@ app.get('/api/commodities/crosstab', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`🚀 Sakti Backend running at http://localhost:${port}`);
-  console.log(`📡 OpenAPI Spec available at http://localhost:${port}/openapi.json`);
+const host = process.env.HOST || '0.0.0.0';
+
+app.listen(Number(port), host, () => {
+  console.log(`🚀 Sakti Backend running at http://${host}:${port}`);
+  console.log(`📡 OpenAPI Spec available at http://${host}:${port}/openapi.json`);
 });
