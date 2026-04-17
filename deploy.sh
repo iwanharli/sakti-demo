@@ -1,32 +1,23 @@
 #!/usr/bin/env sh
 
-# SAKTI - Deployment & Sync Script
-# Mengotomatisasi proses build dan pembaruan repositori git
+# SAKTI - Server Deployment Script
+# Digunakan untuk menarik kode terbaru dan build di lingkungan server
 
 # Abort on errors
 set -e
 
-echo "🚀 Memulai proses Deployment SAKTI..."
+echo "🚀 Memulai proses update di server..."
 
-# 1. Build Project
-echo "🏗️ Melakukan build aplikasi (Vite + TypeScript)..."
+# 1. Pull latest code
+echo "📡 Menarik kode terbaru dari repositori..."
+git pull origin main
+
+# 2. Install dependencies (jika ada perubahan package.json)
+echo "📦 Menyinkronkan dependensi..."
+npm install
+
+# 3. Build for production
+echo "🏗️ Membangun ulang aplikasi (Production Build)..."
 npm run build
 
-# 2. Git Synchronization
-echo "📦 Menyinkronkan perubahan ke Git..."
-git add .
-
-# Pastikan ada pesan commit, jika tidak gunakan default
-if [ -z "$1" ]
-  then
-    MESSAGE="deploy: auto-sync $(date +'%Y-%m-%d %H:%M:%S')"
-  else
-    MESSAGE="$1"
-fi
-
-git commit -m "$MESSAGE"
-
-echo "📡 Melakukan Push ke remote repository..."
-git push
-
-echo "✅ Proses selesai! SAKTI telah diperbarui."
+echo "✅ Update Server Berhasil! Aplikasi SAKTI telah diperbarui."
