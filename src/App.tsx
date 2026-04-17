@@ -13,6 +13,7 @@ import CommoditiesPrice from './pages/CommoditiesPrice';
 import CommodityDetail from './pages/CommodityDetail';
 import SecurityMitigation from './pages/SecurityMitigation';
 import ApiDocs from './pages/ApiDocs';
+import AccountProfile from './pages/AccountProfile';
 import Login from './pages/Login';
 import AlertModal from './components/AlertModal';
 import { useAppStore } from './store/useAppStore';
@@ -32,6 +33,7 @@ export type PageType =
   | 'sp2kp'
   | 'pihps'
   | 'security-mitigation'
+  | 'account-profile'
   | 'api-docs';
 
 const pageTitles: Record<PageType, string> = {
@@ -48,6 +50,7 @@ const pageTitles: Record<PageType, string> = {
   'sp2kp': 'DETAIL ANALITIK KOMODITAS',
   'pihps': 'DETAIL ANALITIK KOMODITAS',
   'security-mitigation': 'MITIGASI KEAMANAN',
+  'account-profile': 'PROFIL PERSONEL',
   'api-docs': 'API DOCUMENTATION'
 };
 
@@ -65,6 +68,7 @@ const pageSubtitles: Record<PageType, string> = {
   'sp2kp': 'Visualisasi Tren Historis & Analitik Harga Mendalam',
   'pihps': 'Visualisasi Tren Historis & Analitik Harga Mendalam',
   'security-mitigation': 'Strategi Pencegahan & Mitigasi Kejahatan',
+  'account-profile': 'Detail Identitas & Otoritas Personel SAKTI',
   'api-docs': 'Referensi Teknis & Dokumentasi Endpoint SAKTI'
 };
 
@@ -204,6 +208,7 @@ function App() {
       case 'pihps': 
         return <CommodityDetail commodityCode={commodityParam} />;
       case 'security-mitigation': return <SecurityMitigation />;
+      case 'account-profile': return <AccountProfile />;
       case 'api-docs': return <ApiDocs />;
       default: return <Dashboard />;
     }
