@@ -180,6 +180,7 @@ function App() {
   };
 
   const isLoginPage = currentPage === 'login';
+  const isStandalonePage = currentPage === 'login' || currentPage === 'api-docs';
 
   return (
     <div className="min-h-screen bg-[#070a12] text-gray-100 font-rajdhani ews-grid-bg ews-scanline">
