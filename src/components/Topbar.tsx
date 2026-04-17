@@ -8,16 +8,27 @@ interface TopbarProps {
   onAlertClick: () => void;
 }
 
+const API_BASE = getApiBase();
+const SERVER_URL = API_BASE.replace('/api', '');
+
 export default function Topbar({ title, subtitle, currentTime, alertCount, onAlertClick }: TopbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  const loadUser = () => {
     const userData = sessionStorage.getItem('sakti_user');
     if (userData) {
       setUser(JSON.parse(userData));
     }
+  };
+
+  useEffect(() => {
+    loadUser();
+
+    // Listen for profile updates
+    window.addEventListener('sakti_user_updated', loadUser);
+    return () => window.removeEventListener('sakti_user_updated', loadUser);
   }, []);
 
   const formatTime = (date: Date) => {
@@ -52,6 +63,8 @@ export default function Topbar({ title, subtitle, currentTime, alertCount, onAle
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const avatarUrl = user?.picture ? `${SERVER_URL}${user.picture}` : null;
+
   return (
     <header className="sticky top-0 z-40 bg-[#0a0f1a]/95 backdrop-blur-xl border-b border-gray-800 px-6 py-3">
       <div className="flex items-center justify-between">
@@ -83,8 +96,12 @@ export default function Topbar({ title, subtitle, currentTime, alertCount, onAle
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className={`flex items-center gap-3 cursor-pointer transition-all duration-300 p-1 rounded-xl ${isMenuOpen ? 'bg-white/5 shadow-[0_0_15px_rgba(255,255,255,0.05)]' : 'hover:bg-white/5'}`}
             >
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-800 to-blue-600 border-2 border-cyan-500 flex items-center justify-center">
-                <span className="text-xs font-bold text-cyan-400">{user?.name ? user.name.charAt(0) : 'U'}</span>
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-800 to-blue-600 border-2 border-cyan-500 flex items-center justify-center overflow-hidden">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt={user?.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-xs font-bold text-cyan-400">{user?.name ? user.name.charAt(0) : 'U'}</span>
+                )}
               </div>
               <div className="hidden sm:block mr-2 text-left">
                 <div className="text-sm font-semibold text-white flex items-center gap-2">

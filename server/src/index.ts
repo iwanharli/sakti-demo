@@ -8,6 +8,12 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
+import multer from 'multer';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const port = process.env.PORT || 8440;
@@ -36,9 +42,14 @@ const swaggerDocs = swaggerJsdoc(swaggerOptions);
 
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.use(cors());
 app.use(express.json());
+
+// Static files for uploads
+app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 
 // JWT Authentication Middleware
 const authenticateToken = (req: any, res: any, next: any) => {
@@ -582,8 +593,60 @@ app.get('/api/commodities/crosstab', async (req, res) => {
 
 /**
  * @openapi
- * /api/auth/login:
+ * /api/auth/upload-profile:
  *   post:
+ *     summary: Upload profile photo
+ *     description: Uploads a JPG/PNG image and updates the user's profile picture URL.
+ */
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../public/uploads/profiles'));
+  },
+  filename: (req, file, cb) => {
+    const userId = (req as any).user?.id || 'unknown';
+    const ext = path.extname(file.originalname);
+    cb(null, `profile-${userId}-${Date.now()}${ext}`);
+  }
+});
+
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|webp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    if (extname && mimetype) {
+      return cb(null, true);
+    }
+    cb(new Error('Hanya diperbolehkan format gambar (JPG/PNG/WebP)!'));
+  }
+});
+
+app.post('/api/auth/upload-profile', authenticateToken, upload.single('photo'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Tidak ada file yang diunggah' });
+    }
+
+    const userId = (req as any).user.id;
+    const photoUrl = `/uploads/profiles/${req.file.filename}`;
+
+    // Update users table
+    await dbPrimary.execute(sql`
+      UPDATE users 
+      SET picture = ${photoUrl}, updated_at = NOW() 
+      WHERE id = ${userId}
+    `);
+
+    res.json({ 
+      message: 'Foto profil berhasil diperbarui',
+      photoUrl 
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
  *     summary: Authenticate personnel
  *     description: Verify identity using NRP or Email and numerical PIN (password). Includes Rate Limiting.
  *     requestBody:
