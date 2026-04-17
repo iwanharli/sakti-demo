@@ -704,3 +704,23 @@
 .tactical-tooltip.leaflet-tooltip-right:before {
     display: none !important;
 }
+
+/* SAKTI Premium Capsule Notification Overrides */
+.swal2-popup.ews-capsule-toast {
+  border-radius: 9999px !important;
+  overflow: hidden !important;
+  padding: 0px 2.5rem !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8) !important;
+}
+
+.swal2-popup.ews-capsule-toast .swal2-html-container {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.swal2-popup.ews-capsule-toast .swal2-timer-progress-bar {
+  border-radius: 9999px !important;
+  height: 2px !important;
+  bottom: 0 !important;
+  opacity: 0.5 !important;
+}

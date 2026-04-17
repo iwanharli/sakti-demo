@@ -100,19 +100,19 @@ export const useAppStore = create<AppStore>()((set) => ({
         }
       },
       customClass: {
-        popup: `!rounded-full border border-white/10 backdrop-blur-2xl py-2.5 px-8 !w-auto !max-w-none !min-w-max shadow-[0_20px_50px_rgba(0,0,0,0.7)] ${borderMap[type as keyof typeof borderMap] || borderMap.info}`,
+        popup: `ews-capsule-toast border border-white/10 backdrop-blur-2xl !w-auto !max-w-none !min-w-max ${borderMap[type as keyof typeof borderMap] || borderMap.info}`,
         htmlContainer: '!m-0 !p-0',
-        timerProgressBar: '!rounded-full !h-[2px] !opacity-40 !bottom-0'
+        timerProgressBar: '!opacity-40'
       }
     });
 
     ToastMixin.fire({
       html: `
-        <div class="flex items-center gap-5 text-left">
+        <div class="flex items-center gap-5 text-left py-1">
           <div class="flex items-center justify-center flex-shrink-0">
-            <span class="text-[16px] leading-none">${iconMap[type as keyof typeof iconMap] || iconMap.info}</span>
+            <span class="text-[16px]">${iconMap[type as keyof typeof iconMap] || iconMap.info}</span>
           </div>
-          <div class="font-rajdhani font-bold text-[14px] text-white/90 tracking-wider leading-none whitespace-nowrap uppercase">
+          <div class="font-rajdhani font-bold text-[14px] text-white/90 tracking-wider whitespace-nowrap uppercase">
             ${message}
           </div>
         </div>
