@@ -1,7 +1,7 @@
 export interface Toast {
   id: string;
   message: string;
-  type: 'info' | 'alert' | 'success';
+  type: 'info' | 'alert' | 'success' | 'error' | 'warning';
 }
 
 export interface AlertItem {
