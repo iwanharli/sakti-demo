@@ -136,26 +136,28 @@ export default function Sidebar({ currentPage }: SidebarProps) {
 
       {/* Bottom Status Section */}
       <div className="p-5 border-t border-gray-800/50 bg-[#05080f]/80 backdrop-blur-md">
-        <button
-          onClick={() => navigateTo('security-integrity')}
-          className={`
-            w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 group relative mb-5
-            ${currentPage === 'security-integrity' 
-              ? 'bg-cyan-500/10 border border-cyan-500/40 shadow-[inset_0_0_15px_rgba(6,182,212,0.1)]' 
-              : 'hover:bg-gray-800/30 border-b border-white/[0.03]'
-            }
-          `}
-        >
-          {currentPage === 'security-integrity' && (
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-cyan-400 rounded-r-full shadow-[0_0_10px_#22d3ee]" />
-          )}
-          <div className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 ${currentPage === 'security-integrity' ? 'bg-cyan-500/20 text-cyan-400' : 'text-gray-500 group-hover:text-gray-300'}`}>
-            <i className="fa-solid fa-shield-halved"></i>
-          </div>
-          <span className={`text-sm font-bold tracking-wide flex-1 text-left ${currentPage === 'security-integrity' ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>
-            Integritas & Keamanan
-          </span>
-        </button>
+        {JSON.parse(sessionStorage.getItem('sakti_user') || '{}')?.role === 'admin' && (
+          <button
+            onClick={() => navigateTo('security-integrity')}
+            className={`
+              w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 group relative mb-5
+              ${currentPage === 'security-integrity' 
+                ? 'bg-cyan-500/10 border border-cyan-500/40 shadow-[inset_0_0_15px_rgba(6,182,212,0.1)]' 
+                : 'hover:bg-gray-800/30 border-b border-white/[0.03]'
+              }
+            `}
+          >
+            {currentPage === 'security-integrity' && (
+              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-cyan-400 rounded-r-full shadow-[0_0_10px_#22d3ee]" />
+            )}
+            <div className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 ${currentPage === 'security-integrity' ? 'bg-cyan-500/20 text-cyan-400' : 'text-gray-500 group-hover:text-gray-300'}`}>
+              <i className="fa-solid fa-shield-halved"></i>
+            </div>
+            <span className={`text-sm font-bold tracking-wide flex-1 text-left ${currentPage === 'security-integrity' ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>
+              Integritas & Keamanan
+            </span>
+          </button>
+        )}
 
         <div className="space-y-2 mb-4">
           <div className="flex items-center justify-between">

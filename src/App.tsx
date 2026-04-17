@@ -134,6 +134,16 @@ function App() {
         return;
       }
 
+      // Role-based Access Control (RBAC)
+      if (hash === 'security-integrity') {
+        const user = JSON.parse(sessionStorage.getItem('sakti_user') || '{}');
+        if (user.role !== 'admin') {
+          addToast('Akses ditolak: Area terbatas untuk ADMIN saja.', 'error');
+          window.location.hash = '#/dashboard';
+          return;
+        }
+      }
+
       setCurrentPage(hash as PageType);
     };
 
