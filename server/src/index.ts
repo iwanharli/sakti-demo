@@ -691,7 +691,7 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
 
   try {
     const query = sql`
-      SELECT id, nrp, name, email, password, role, is_active 
+      SELECT id, nrp, name, email, password, role, is_active, phone, picture 
       FROM users 
       WHERE (nrp = ${identity} OR email = ${identity}) 
       AND is_active = true

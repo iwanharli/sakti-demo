@@ -11,6 +11,7 @@ interface UserProfile {
   email: string;
   role: string;
   picture?: string;
+  phone?: string;
 }
 
 export default function AccountProfile() {
@@ -147,6 +148,11 @@ export default function AccountProfile() {
                 <span className="text-xs font-bold tracking-widest uppercase">{user.email || 'N/A'}</span>
               </div>
               <div className="w-1 h-1 rounded-full bg-gray-700 hidden md:block" />
+              <div className="flex items-center gap-2 text-gray-400">
+                <i className="fa-solid fa-phone text-cyan-500"></i>
+                <span className="text-xs font-bold tracking-widest uppercase">{user.phone || 'N/A'}</span>
+              </div>
+              <div className="w-1 h-1 rounded-full bg-gray-700 hidden md:block" />
               <div className="flex items-center gap-2 text-gray-400 font-bold">
                 <i className="fa-solid fa-user-shield text-cyan-500"></i>
                 <span className="text-xs tracking-widest uppercase">{user.role}</span>
@@ -177,6 +183,11 @@ export default function AccountProfile() {
             <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
               <div className="text-[10px] text-gray-500 uppercase tracking-[0.2em] mb-1">Email Kedinasan</div>
               <div className="text-sm font-bold text-gray-200 tracking-wide">{user.email || 'Belum diisi'}</div>
+            </div>
+            <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
+              <div className="text-[10px] text-gray-500 uppercase tracking-[0.2em] mb-1">Nomor Telepon</div>
+              <div className="text-sm font-bold text-gray-200 tracking-wide">{user.phone || 'Belum diisi'}</div>
+            </div>
             </div>
           </div>
         </div>
