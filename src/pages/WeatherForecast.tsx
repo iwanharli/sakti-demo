@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useAppStore, getApiBase } from '../store/useAppStore';
+import { useAppStore, getApiBase, authFetch } from '../store/useAppStore';
 
 const API_BASE = getApiBase();
 import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
@@ -128,7 +128,7 @@ export default function WeatherForecast() {
 
   const fetchCities = async () => {
     try {
-      const res = await fetch(`${API_BASE}/weather/cities`);
+      const res = await authFetch(`${API_BASE}/weather/cities`);
       const data = await res.json();
       setCities(data);
     } catch (err) {
@@ -138,7 +138,7 @@ export default function WeatherForecast() {
 
   const fetchMapCities = async () => {
     try {
-      const res = await fetch(`${API_BASE}/weather/map-cities`);
+      const res = await authFetch(`${API_BASE}/weather/map-cities`);
       const data = await res.json();
       setMapCities(data);
     } catch (err) {
@@ -149,7 +149,7 @@ export default function WeatherForecast() {
   const fetchForecast = async (city: string) => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/weather/forecast?city=${encodeURIComponent(city)}`);
+      const res = await authFetch(`${API_BASE}/weather/forecast?city=${encodeURIComponent(city)}`);
       const data = await res.json();
       setWeatherData(data);
     } catch (err) {

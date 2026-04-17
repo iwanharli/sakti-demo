@@ -4,8 +4,14 @@ import swaggerJsdoc from 'swagger-jsdoc';
 import { dbPrimary, dbSecondary } from './db.ts';
 import { sql } from 'drizzle-orm';
 
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import helmet from 'helmet';
+import { rateLimit } from 'express-rate-limit';
+
 const app = express();
 const port = process.env.PORT || 8440;
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_for_dev_only';
 
 // Swagger definition
 const swaggerOptions = {
@@ -30,8 +36,23 @@ const swaggerDocs = swaggerJsdoc(swaggerOptions);
 
 
 // Middleware
+app.use(helmet());
 app.use(cors());
 app.use(express.json());
+
+// JWT Authentication Middleware
+const authenticateToken = (req: any, res: any, next: any) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) return res.status(401).json({ error: 'Sesi kedaluwarsa, silakan login kembali' });
+
+  jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
+    if (err) return res.status(403).json({ error: 'Akses ditolak: Token tidak valid' });
+    req.user = user;
+    next();
+  });
+};
 
 // Serve OpenAPI Specification for Scalar
 app.get('/openapi.json', (req, res) => {
@@ -107,7 +128,7 @@ app.get('/api/health', async (req, res) => {
  *                   table_name:
  *                     type: string
  */
-app.get('/api/metadata/secondary', async (req, res) => {
+app.get('/api/metadata/secondary', authenticateToken, async (req, res) => {
   try {
     const tables = await dbSecondary.execute(sql`
       SELECT table_name 
@@ -130,7 +151,7 @@ app.get('/api/metadata/secondary', async (req, res) => {
  *       200:
  *         description: A list of city names.
  */
-app.get('/api/weather/cities', async (req, res) => {
+app.get('/api/weather/cities', authenticateToken, async (req, res) => {
   try {
     const cities = await dbSecondary.execute(sql`
       SELECT DISTINCT city_name 
@@ -158,7 +179,7 @@ app.get('/api/weather/cities', async (req, res) => {
  *       200:
  *         description: Detailed 7-day forecast and current stats.
  */
-app.get('/api/weather/forecast', async (req, res) => {
+app.get('/api/weather/forecast', authenticateToken, async (req, res) => {
   const city = req.query.city || 'JAKARTA PUSAT';
   try {
     const forecast = await dbSecondary.execute(sql`
@@ -284,7 +305,7 @@ function resolveSource(source?: string) {
  *   get:
  *     summary: Get unique regions from commodity data
  */
-app.get('/api/commodities/regions', async (req, res) => {
+app.get('/api/commodities/regions', authenticateToken, async (req, res) => {
   const { tableName, pihpsFilter } = resolveSource(req.query.source as string);
   try {
     const results = await dbSecondary.execute(sql`
@@ -413,7 +434,7 @@ app.get('/api/commodities/matrix', async (req, res) => {
  *   get:
  *     summary: Get operational stats filtered by date and region
  */
-app.get('/api/commodities/stats', async (req, res) => {
+app.get('/api/commodities/stats', authenticateToken, async (req, res) => {
   const region = req.query.region || 'Nasional';
   const dateStr = req.query.date as string;
   const { tableName, pihpsFilter } = resolveSource(req.query.source as string);
@@ -474,7 +495,7 @@ app.get('/api/commodities/stats', async (req, res) => {
  *   get:
  *     summary: Get 30-day historical trend based on reference date
  */
-app.get('/api/commodities/trend', async (req, res) => {
+app.get('/api/commodities/trend', authenticateToken, async (req, res) => {
   const region = req.query.region || 'Nasional';
   const commodity = req.query.commodity || 'beras-medium';
   const dateStr = req.query.date as string;
@@ -564,7 +585,7 @@ app.get('/api/commodities/crosstab', async (req, res) => {
  * /api/auth/login:
  *   post:
  *     summary: Authenticate personnel
- *     description: Verify identity using NRP or Email and numerical PIN (password).
+ *     description: Verify identity using NRP or Email and numerical PIN (password). Includes Rate Limiting.
  *     requestBody:
  *       required: true
  *       content:
@@ -583,8 +604,16 @@ app.get('/api/commodities/crosstab', async (req, res) => {
  *         description: Authentication successful
  *       401:
  *         description: Invalid credentials
+ *       429:
+ *         description: Too many requests
  */
-app.post('/api/auth/login', async (req, res) => {
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Max 10 attempts
+  message: { error: 'Terlalu banyak percobaan login, silakan coba lagi dalam 15 menit' },
+});
+
+app.post('/api/auth/login', loginLimiter, async (req, res) => {
   const { identity, password } = req.body;
 
   if (!identity || !password) {
@@ -593,10 +622,9 @@ app.post('/api/auth/login', async (req, res) => {
 
   try {
     const query = sql`
-      SELECT id, nrp, name, email, role, is_active 
+      SELECT id, nrp, name, email, password, role, is_active 
       FROM users 
       WHERE (nrp = ${identity} OR email = ${identity}) 
-      AND password = ${password} 
       AND is_active = true
       LIMIT 1
     `;
@@ -608,8 +636,23 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     const user = result.rows[0];
+
+    // Verify Password with Bcrypt
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Identitas atau Password salah' });
+    }
+
+    // Generate JWT
+    const token = jwt.sign(
+      { id: user.id, nrp: user.nrp, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
     res.json({
       message: 'Authentication Successful',
+      token,
       user: {
         id: user.id,
         nrp: user.nrp,

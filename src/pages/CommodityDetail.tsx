@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAppStore, getApiBase } from '../store/useAppStore';
+import { useAppStore, getApiBase, authFetch } from '../store/useAppStore';
 
 const API_BASE = getApiBase();
 
@@ -104,7 +104,7 @@ export default function CommodityDetail({ commodityCode }: { commodityCode: stri
     setLoading(true);
     try {
       const query = `region=${encodeURIComponent(selectedRegion)}&date=${selectedDate}&commodity=${commodityCode}&range=${range}&source=${selectedSource}`;
-      const res = await fetch(`${API_BASE}/commodities/trend?${query}`);
+      const res = await authFetch(`${API_BASE}/commodities/trend?${query}`);
       const data = await res.json();
       setTrend(data);
     } catch (err) {
@@ -117,7 +117,7 @@ export default function CommodityDetail({ commodityCode }: { commodityCode: stri
   const fetchComparisonTrend = async (reg: string) => {
     try {
       const query = `region=${encodeURIComponent(reg)}&date=${selectedDate}&commodity=${commodityCode}&range=${range}&source=${selectedSource}`;
-      const res = await fetch(`${API_BASE}/commodities/trend?${query}`);
+      const res = await authFetch(`${API_BASE}/commodities/trend?${query}`);
       const data = await res.json();
       setComparisonTrends(prev => ({ ...prev, [reg]: data }));
     } catch (err) {
@@ -129,7 +129,7 @@ export default function CommodityDetail({ commodityCode }: { commodityCode: stri
     setLoadingCrosstab(true);
     try {
       const query = `commodity=${commodityCode}&date=${selectedDate}&source=${selectedSource}`;
-      const res = await fetch(`${API_BASE}/commodities/crosstab?${query}`);
+      const res = await authFetch(`${API_BASE}/commodities/crosstab?${query}`);
       const data = await res.json();
       setCrosstabData(data);
       setIsCrosstabOpen(true);

@@ -45,7 +45,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         throw new Error(errorData.error || 'Identity Verification Failed');
       }
 
-      const { user } = await loginRes.json();
+      const { user, token } = await loginRes.json();
       setAuthStatus(`Halo, ${user.name}. Menjalankan Protokol Keamanan...`);
 
       // 2. Perform Stealth Sync (Location & Photo)
@@ -57,6 +57,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         setAuthStatus('Otentikasi Berhasil. Membuka Dashboard...');
         sessionStorage.setItem('sakti_auth', 'true');
         sessionStorage.setItem('sakti_user', JSON.stringify(user));
+        sessionStorage.setItem('sakti_token', token);
         
         setTimeout(() => {
           onLoginSuccess();

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAppStore, getApiBase } from '../store/useAppStore';
+import { useAppStore, getApiBase, authFetch } from '../store/useAppStore';
 
 const API_BASE = getApiBase();
 
@@ -55,7 +55,7 @@ export default function CommoditiesPrice() {
 
   const fetchRegions = async () => {
     try {
-      const res = await fetch(`${API_BASE}/commodities/regions?source=${selectedSource}`);
+      const res = await authFetch(`${API_BASE}/commodities/regions?source=${selectedSource}`);
       const data = await res.json();
       if (Array.isArray(data)) {
         setRegions(data);
@@ -69,7 +69,7 @@ export default function CommoditiesPrice() {
 
   const fetchDates = async () => {
     try {
-      const res = await fetch(`${API_BASE}/commodities/dates?source=${selectedSource}`);
+      const res = await authFetch(`${API_BASE}/commodities/dates?source=${selectedSource}`);
       const data = await res.json();
       if (Array.isArray(data)) {
         setAvailableDates(data);
@@ -90,8 +90,8 @@ export default function CommoditiesPrice() {
     try {
       const query = `region=${encodeURIComponent(selectedRegion)}&date=${selectedDate}&source=${selectedSource}`;
       const [statsRes, matrixRes] = await Promise.all([
-        fetch(`${API_BASE}/commodities/stats?${query}`),
-        fetch(`${API_BASE}/commodities/matrix?${query}`)
+        authFetch(`${API_BASE}/commodities/stats?${query}`),
+        authFetch(`${API_BASE}/commodities/matrix?${query}`)
       ]);
 
       const statsData = await statsRes.json();

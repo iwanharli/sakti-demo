@@ -26,6 +26,27 @@ export const getApiBase = () => {
   return import.meta.env.VITE_API_BASE_URL || 'http://localhost:8440/api';
 };
 
+export const authFetch = async (url: string, options: RequestInit = {}) => {
+  const token = sessionStorage.getItem('sakti_token');
+  const headers = {
+    ...options.headers,
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
+
+  const response = await fetch(url, { ...options, headers });
+  
+  if (response.status === 401 || response.status === 403) {
+    // Session expired or invalid
+    sessionStorage.removeItem('sakti_auth');
+    sessionStorage.removeItem('sakti_token');
+    window.location.href = '/#/login'; 
+    throw new Error('Sesi Berakhir. Silakan Login Kembali.');
+  }
+
+  return response;
+};
+
 export const useAppStore = create<AppStore>()((set) => ({
   selectedRegion: 'Nasional',
   selectedDate: '',
