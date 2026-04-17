@@ -179,7 +179,6 @@ function App() {
     }
   };
 
-  const isLoginPage = currentPage === 'login';
   const isStandalonePage = currentPage === 'login' || currentPage === 'api-docs';
 
   return (
