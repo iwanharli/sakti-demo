@@ -89,7 +89,7 @@ export const useAppStore = create<AppStore>()((set) => ({
       showConfirmButton: false,
       timer: 4000,
       timerProgressBar: true,
-      background: 'rgba(255, 255, 255, 0.1)',
+      background: 'rgba(15, 23, 42, 0.8)',
       color: '#ffffff',
       didOpen: (toast: HTMLElement) => {
         toast.onmouseenter = Swal.stopTimer;
@@ -100,19 +100,19 @@ export const useAppStore = create<AppStore>()((set) => ({
         }
       },
       customClass: {
-        popup: `border border-white/10 backdrop-blur-2xl rounded-full py-1 px-6 w-fit min-w-[450px] max-w-[700px] shadow-[0_20px_50px_rgba(0,0,0,0.6)] ${borderMap[type as keyof typeof borderMap] || borderMap.info}`,
-        htmlContainer: 'm-0 p-0 w-full',
-        timerProgressBar: 'rounded-b-full h-[2px] opacity-50'
+        popup: `!rounded-full border border-white/10 backdrop-blur-2xl py-2 px-6 !w-auto shadow-[0_20px_50px_rgba(0,0,0,0.7)] ${borderMap[type as keyof typeof borderMap] || borderMap.info}`,
+        htmlContainer: '!m-0 !p-0',
+        timerProgressBar: '!rounded-full !h-[2px] !opacity-40 !bottom-0'
       }
     });
 
     ToastMixin.fire({
       html: `
-        <div class="flex items-center gap-4 px-1 text-left">
+        <div class="flex items-center gap-4 text-left">
           <div class="flex items-center justify-center flex-shrink-0">
-            <span class="text-[14px]">${iconMap[type as keyof typeof iconMap] || iconMap.info}</span>
+            <span class="text-[14px] leading-none">${iconMap[type as keyof typeof iconMap] || iconMap.info}</span>
           </div>
-          <div class="font-rajdhani font-bold text-[12px] text-white/90 tracking-wider leading-tight flex-1 uppercase">
+          <div class="font-rajdhani font-bold text-[13px] text-white/90 tracking-wider leading-none whitespace-nowrap uppercase">
             ${message}
           </div>
         </div>
