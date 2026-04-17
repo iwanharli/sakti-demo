@@ -166,6 +166,14 @@ export default function AccountProfile() {
 
   const avatarUrl = user.picture ? `${SERVER_URL}${user.picture}` : null;
 
+  const formatPhoneNumber = (phone?: string) => {
+    if (!phone) return 'N/A';
+    if (phone.startsWith('62')) {
+      return `(+62) ${phone.substring(2)}`;
+    }
+    return phone;
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <input 
@@ -223,7 +231,7 @@ export default function AccountProfile() {
               <div className="w-1 h-1 rounded-full bg-gray-700 hidden md:block" />
               <div className="flex items-center gap-2 text-gray-400">
                 <i className="fa-solid fa-phone text-cyan-500"></i>
-                <span className="text-xs font-bold tracking-widest uppercase">{user.phone || 'N/A'}</span>
+                <span className="text-xs font-bold tracking-widest uppercase">{formatPhoneNumber(user.phone)}</span>
               </div>
               <div className="w-1 h-1 rounded-full bg-gray-700 hidden md:block" />
               <div className="flex items-center gap-2 text-gray-400 font-bold">
@@ -308,7 +316,7 @@ export default function AccountProfile() {
                 </div>
               ) : (
                 <div className="flex items-center justify-between">
-                  <div className="text-sm font-bold text-gray-200 tracking-wide">{user.phone || 'Belum diisi'}</div>
+                  <div className="text-sm font-bold text-gray-200 tracking-wide">{formatPhoneNumber(user.phone)}</div>
                   <button 
                     onClick={() => setIsEditingPhone(true)}
                     className="opacity-0 group-hover/field:opacity-100 transition-opacity text-cyan-500 hover:text-cyan-400 p-1"
