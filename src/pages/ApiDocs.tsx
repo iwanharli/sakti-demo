@@ -3,9 +3,6 @@ import '@scalar/api-reference-react/style.css';
 
 
 export default function ApiDocs() {
-  const goBack = () => {
-    window.location.hash = '#/dashboard';
-  };
 
   return (
     <div className="min-h-screen w-full bg-[#070a12] relative overflow-x-hidden">

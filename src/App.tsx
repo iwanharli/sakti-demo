@@ -6,7 +6,6 @@ import Osint from './pages/Osint';
 import PredictiveAnalytics from './pages/PredictiveAnalytics';
 import CrimeMapping from './pages/CrimeMapping';
 import InvestigationManagement from './pages/InvestigationManagement';
-import SectoralCollaboration from './pages/SectoralCollaboration';
 import SecurityIntegrity from './pages/SecurityIntegrity';
 import DisasterMitigation from './pages/DisasterMitigation';
 import WeatherForecast from './pages/WeatherForecast';
@@ -181,7 +180,6 @@ function App() {
   };
 
   const isLoginPage = currentPage === 'login';
-  const isStandalonePage = currentPage === 'login' || currentPage === 'api-docs';
 
   return (
     <div className="min-h-screen bg-[#070a12] text-gray-100 font-rajdhani ews-grid-bg ews-scanline">

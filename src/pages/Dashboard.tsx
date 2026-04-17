@@ -604,7 +604,6 @@ export default function Dashboard() {
                                       item.color === 'amber' ? 'border-amber-500' : 
                                       item.color === 'green' ? 'border-emerald-500' : 'border-cyan-500';
                 
-                const glowColor = item.color === 'red' ? 'shadow-[0_0_10px_rgba(239,68,68,0.15)]' : 
                                   item.color === 'amber' ? 'shadow-[0_0_10px_rgba(245,158,11,0.15)]' : 
                                   'shadow-[0_0_10px_rgba(6,182,212,0.15)]';
 

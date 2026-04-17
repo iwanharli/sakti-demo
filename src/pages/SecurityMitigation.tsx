@@ -11,9 +11,6 @@ export default function SecurityMitigation() {
     setMounted(true);
   }, []);
 
-  const getStatusClass = (status: string) => {
-    switch (status) {
-      case 'safe':
         return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25';
       case 'warning':
         return 'bg-amber-500/10 text-amber-400 border-amber-500/25';

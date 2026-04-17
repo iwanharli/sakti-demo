@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAppStore } from '../store/useAppStore';
-import { MapContainer, TileLayer, GeoJSON, Tooltip, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 // Import the high-resolution city boundary data
 import cityBoundaries from '../assets/gadm41_IDN_2.json';
 
-import { weatherForecast, correlations } from '../data/mockWeatherForecast';
+import { correlations } from '../data/mockWeatherForecast';
 
 // Weather icon mapping for BMKG conditions
 const getConditionIcon = (condition: string) => {
@@ -342,7 +342,7 @@ export default function WeatherForecast() {
                     mouseover: () => {
                       layer.setStyle({ fillOpacity: 0.7, weight: 2, color: '#06b6d4' });
                     },
-                    mouseout: (e: any) => {
+                    mouseout: () => {
                       const isSelected = selectedCity === cityData.city;
                       layer.setStyle({ 
                         fillOpacity: 0.4, 
