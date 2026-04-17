@@ -18,6 +18,7 @@ export default function AccountProfile() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [loginLogs, setLoginLogs] = useState<any[]>([]);
 
   // States for inline editing
   const [editName, setEditName] = useState('');
@@ -36,7 +37,20 @@ export default function AccountProfile() {
       setEditName(u.name || '');
       setEditPhone(u.phone || '');
     }
+    fetchLoginLogs();
   }, []);
+
+  const fetchLoginLogs = async () => {
+    try {
+      const res = await authFetch(`${API_BASE}/auth/login-logs`);
+      if (res.ok) {
+        const data = await res.json();
+        setLoginLogs(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch login logs:', err);
+    }
+  };
 
   const handleUpdateProfile = async (field: 'name' | 'phone') => {
     if (!user) return;
@@ -385,11 +399,11 @@ export default function AccountProfile() {
           </div>
         </div>
 
-        {/* Pillar 3: Benteng Keamanan */}
+        {/* Pillar 3: Keamanan */}
         <div className="space-y-6">
           <div className="flex items-center gap-3 px-2">
              <div className="w-1 h-6 bg-amber-500 rounded-full" />
-             <h3 className="font-orbitron font-black text-sm text-white tracking-[0.2em] uppercase">Benteng Keamanan</h3>
+             <h3 className="font-orbitron font-black text-sm text-white tracking-[0.2em] uppercase">Keamanan</h3>
           </div>
 
           <div className="bg-[#0a0f1a]/60 backdrop-blur-2xl border border-white/5 rounded-[2rem] p-6 space-y-4 shadow-xl">
@@ -428,6 +442,40 @@ export default function AccountProfile() {
                 <button className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.3em] hover:text-cyan-300 transition-colors">
                   Buka Pengaturan Keamanan
                 </button>
+             </div>
+
+             {/* Login Activity Feed */}
+             <div className="mt-8 space-y-4">
+               <div className="flex items-center justify-between px-2">
+                 <h4 className="text-[10px] font-black text-white/50 uppercase tracking-[0.2em]">Aktivitas Sesi Terakhir</h4>
+                 <div className="w-12 h-[1px] bg-white/10"></div>
+               </div>
+
+               <div className="space-y-3">
+                 {loginLogs.length > 0 ? (
+                   loginLogs.map((log) => (
+                     <div key={log.id} className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center justify-between group/log hover:bg-white/[0.04] transition-all">
+                       <div className="flex items-center gap-4">
+                         <div className="w-10 h-10 rounded-xl bg-black/40 flex items-center justify-center border border-white/5 group-hover/log:border-cyan-500/30 transition-all">
+                            <i className={`${getDeviceIcon(log.user_agent)} text-sm`}></i>
+                         </div>
+                         <div>
+                           <div className="text-[11px] font-black text-gray-200 uppercase tracking-tight">{getDeviceName(log.user_agent)}</div>
+                           <div className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">{log.ip_address} • {log.location}</div>
+                         </div>
+                       </div>
+                       <div className="text-right">
+                         <div className="text-[9px] font-black text-cyan-500/70 uppercase">{new Date(log.created_at).toLocaleTimeString()}</div>
+                         <div className="text-[8px] text-gray-600 font-bold uppercase">{new Date(log.created_at).toLocaleDateString()}</div>
+                       </div>
+                     </div>
+                   ))
+                 ) : (
+                   <div className="py-8 text-center bg-white/[0.01] border border-dashed border-white/5 rounded-2xl">
+                     <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">Belum ada riwayat aktivitas</p>
+                   </div>
+                 )}
+               </div>
              </div>
           </div>
         </div>

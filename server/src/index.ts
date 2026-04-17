@@ -19,6 +19,26 @@ const app = express();
 const port = process.env.PORT || 8440;
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_for_dev_only';
 
+// Initialize Database Tables
+async function initDb() {
+  try {
+    await dbPrimary.execute(sql`
+      CREATE TABLE IF NOT EXISTS user_login_logs (
+        id SERIAL PRIMARY KEY,
+        user_id UUID NOT NULL,
+        ip_address VARCHAR(45),
+        user_agent TEXT,
+        location VARCHAR(255) DEFAULT 'Unknown Location',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log('Database initialized: user_login_logs table ready.');
+  } catch (err) {
+    console.error('Database initialization error:', err);
+  }
+}
+initDb();
+
 // Swagger definition
 const swaggerOptions = {
   definition: {
@@ -679,6 +699,31 @@ app.put('/api/auth/update-profile', authenticateToken, async (req, res) => {
 
 /**
  * @openapi
+ * /api/auth/login-logs:
+ *   get:
+ *     summary: Get recent login activity
+ *     description: Returns the last 10 login sessions for the authenticated user.
+ */
+app.get('/api/auth/login-logs', authenticateToken, async (req, res) => {
+  const userId = (req as any).user.id;
+
+  try {
+    const logs = await dbPrimary.execute(sql`
+      SELECT id, ip_address, user_agent, location, created_at
+      FROM user_login_logs
+      WHERE user_id = ${userId}
+      ORDER BY created_at DESC
+      LIMIT 10
+    `);
+
+    res.json(logs.rows);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
  * /api/auth/login:
  *   post:
  *     summary: Authenticate personnel
@@ -740,22 +785,37 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
       return res.status(401).json({ error: 'Identitas atau Password salah' });
     }
 
-    // Generate JWT
+    // Generate JWT Token
     const token = jwt.sign(
       { id: user.id, nrp: user.nrp, role: user.role },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
 
+    // Record Login Log
+    try {
+      const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+      const ua = req.headers['user-agent'];
+      await dbPrimary.execute(sql`
+        INSERT INTO user_login_logs (user_id, ip_address, user_agent, location)
+        VALUES (${user.id}, ${ip as string}, ${ua}, 'Jakarta, Indonesia')
+      `);
+    } catch (logErr) {
+      console.error('Failed to record login log:', logErr);
+      // Don't fail the login if logging fails
+    }
+
     res.json({
-      message: 'Authentication Successful',
+      message: 'Login berhasil',
       token,
       user: {
         id: user.id,
         nrp: user.nrp,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        phone: user.phone,
+        picture: user.picture
       }
     });
   } catch (error: any) {
