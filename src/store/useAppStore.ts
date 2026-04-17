@@ -83,14 +83,41 @@ export const useAppStore = create<AppStore>()((set) => ({
       alert: '#f59e0b'
     };
 
+    // Direct CSS Injection to bypass any cache/specificity issues
+    if (!document.getElementById('sakti-toast-styles')) {
+      const style = document.createElement('style');
+      style.id = 'sakti-toast-styles';
+      style.innerHTML = `
+        .swal2-popup.ews-capsule-toast {
+          border-radius: 9999px !important;
+          padding: 8px 32px !important;
+          overflow: hidden !important;
+          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8) !important;
+          border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          margin-top: 1rem !important;
+        }
+        .swal2-popup.ews-capsule-toast .swal2-html-container {
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 100% !important;
+        }
+        .swal2-timer-progress-bar-container {
+          border-radius: 9999px !important;
+          overflow: hidden !important;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
     const ToastMixin = Swal.mixin({
       toast: true,
       position: "top",
       showConfirmButton: false,
       timer: 4000,
       timerProgressBar: true,
-      background: 'rgba(15, 23, 42, 0.8)',
+      background: 'rgba(15, 23, 42, 0.95)',
       color: '#ffffff',
+      width: 'auto', // Force content-based width
       didOpen: (toast: HTMLElement) => {
         toast.onmouseenter = Swal.stopTimer;
         toast.onmouseleave = Swal.resumeTimer;
@@ -100,9 +127,8 @@ export const useAppStore = create<AppStore>()((set) => ({
         }
       },
       customClass: {
-        popup: `ews-capsule-toast border border-white/10 backdrop-blur-2xl !w-auto !max-w-none !min-w-max ${borderMap[type as keyof typeof borderMap] || borderMap.info}`,
+        popup: `ews-capsule-toast backdrop-blur-2xl !max-w-none ${borderMap[type as keyof typeof borderMap] || borderMap.info}`,
         htmlContainer: '!m-0 !p-0',
-        timerProgressBar: '!opacity-40'
       }
     });
 
