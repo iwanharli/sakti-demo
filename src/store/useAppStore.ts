@@ -100,7 +100,7 @@ export const useAppStore = create<AppStore>()((set) => ({
         }
       },
       customClass: {
-        popup: `border border-white/10 backdrop-blur-2xl rounded-2xl p-4 w-auto min-w-[320px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] ${borderMap[type as keyof typeof borderMap] || borderMap.info}`,
+        popup: `border border-white/10 backdrop-blur-2xl rounded-2xl p-4 w-auto min-w-[480px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] ${borderMap[type as keyof typeof borderMap] || borderMap.info}`,
         htmlContainer: 'm-0 p-0 w-full',
         timerProgressBar: 'rounded-b-2xl h-1 opacity-80'
       }
