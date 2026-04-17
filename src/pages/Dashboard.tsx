@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Circle, Polyline } from 'react-leaflet';
 import L from 'leaflet';
-import { useAppStore } from '../store/useAppStore';
+import { useAppStore, getApiBase, authFetch } from '../store/useAppStore';
 
 import {
   JAKARTA_CENTER,
@@ -77,12 +77,8 @@ export default function Dashboard() {
 
   const fetchBMKGWarnings = async () => {
     try {
-      const token = sessionStorage.getItem('sakti_token');
-      const response = await fetch('http://localhost:8440/api/bmkg/warnings', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      
-      if (!response.ok) throw new Error('Gagal mengambil data BMKG');
+      const apiBase = getApiBase();
+      const response = await authFetch(`${apiBase}/bmkg/warnings`);
       
       const data: BMKGWarning[] = await response.json();
       
@@ -103,7 +99,6 @@ export default function Dashboard() {
       setTimelineData(bmkgItems);
     } catch (err) {
       console.error('BMKG Fetch Error:', err);
-      // Fallback to mock if API fails
     }
   };
 
