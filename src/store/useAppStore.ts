@@ -100,19 +100,19 @@ export const useAppStore = create<AppStore>()((set) => ({
         }
       },
       customClass: {
-        popup: `border border-white/10 backdrop-blur-2xl rounded-xl py-2 px-5 w-fit min-w-[400px] max-w-[650px] shadow-[0_20px_50px_rgba(0,0,0,0.6)] ${borderMap[type as keyof typeof borderMap] || borderMap.info}`,
+        popup: `border border-white/10 backdrop-blur-2xl rounded-full py-1 px-6 w-fit min-w-[450px] max-w-[700px] shadow-[0_20px_50px_rgba(0,0,0,0.6)] ${borderMap[type as keyof typeof borderMap] || borderMap.info}`,
         htmlContainer: 'm-0 p-0 w-full',
-        timerProgressBar: 'rounded-b-xl h-[2px] opacity-60'
+        timerProgressBar: 'rounded-b-full h-[2px] opacity-50'
       }
     });
 
     ToastMixin.fire({
       html: `
         <div class="flex items-center gap-4 px-1 text-left">
-          <div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0 border border-white/5 shadow-inner">
-            <span class="text-[16px]">${iconMap[type as keyof typeof iconMap] || iconMap.info}</span>
+          <div class="flex items-center justify-center flex-shrink-0">
+            <span class="text-[14px]">${iconMap[type as keyof typeof iconMap] || iconMap.info}</span>
           </div>
-          <div class="font-rajdhani font-bold text-[13px] text-white tracking-wide leading-tight flex-1">
+          <div class="font-rajdhani font-bold text-[12px] text-white/90 tracking-wider leading-tight flex-1 uppercase">
             ${message}
           </div>
         </div>
