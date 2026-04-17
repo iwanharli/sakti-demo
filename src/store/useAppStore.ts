@@ -28,11 +28,15 @@ export const getApiBase = () => {
 
 export const authFetch = async (url: string, options: RequestInit = {}) => {
   const token = sessionStorage.getItem('sakti_token');
-  const headers = {
-    ...options.headers,
+  const headers: Record<string, string> = {
+    ...options.headers as Record<string, string>,
     'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json',
   };
+
+  // Only set application/json if not uploading files (FormData)
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   const response = await fetch(url, { ...options, headers });
   
