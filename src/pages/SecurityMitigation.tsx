@@ -11,15 +11,6 @@ export default function SecurityMitigation() {
     setMounted(true);
   }, []);
 
-        return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25';
-      case 'warning':
-        return 'bg-amber-500/10 text-amber-400 border-amber-500/25';
-      case 'critical':
-        return 'bg-red-500/10 text-red-400 border-red-500/25';
-      default:
-        return 'bg-gray-500/10 text-gray-400';
-    }
-  };
 
   return (
     <div className={`space-y-6 ${mounted ? 'ews-animate-fade-in' : ''}`}>
