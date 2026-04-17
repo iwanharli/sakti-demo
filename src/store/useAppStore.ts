@@ -95,7 +95,7 @@ export const useAppStore = create<AppStore>()((set) => ({
           box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8) !important;
           border: 1px solid rgba(255, 255, 255, 0.1) !important;
           margin-top: 0.75rem !important;
-          margin-right: 20rem !important; /* Shifting to the right for Topbar empty space */
+          margin-left: 15rem !important; /* Shifting to the right from the center */
         }
         .swal2-popup.ews-capsule-toast .swal2-html-container {
           margin: 0 !important;
@@ -112,7 +112,7 @@ export const useAppStore = create<AppStore>()((set) => ({
 
     const ToastMixin = Swal.mixin({
       toast: true,
-      position: "top-end",
+      position: "top",
       showConfirmButton: false,
       timer: 4000,
       timerProgressBar: true,
