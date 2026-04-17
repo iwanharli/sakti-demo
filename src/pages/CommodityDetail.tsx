@@ -1,7 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
 
-const API_BASE = 'http://localhost:3001/api';
+const getApiBase = () => {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:3001/api';
+    }
+    // Default to the current hostname but use port 3001
+    return `http://${hostname}:3001/api`;
+  }
+  return import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+};
+
+const API_BASE = getApiBase();
 
 const hetNumbers: Record<string, number> = {
   'beras-medium': 10900,
