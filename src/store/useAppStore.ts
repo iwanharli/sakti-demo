@@ -11,6 +11,11 @@ interface AppStore {
   setSelectedRegion: (region: string) => void;
   setSelectedDate: (date: string) => void;
   setSelectedSource: (source: string) => void;
+  // Network Tracking
+  activeRequests: string[];
+  addRequest: (label: string) => void;
+  removeRequest: (label: string) => void;
+  updateRequest: (oldLabel: string, newLabel: string) => void;
 }
 
 export const getApiBase = () => {
@@ -38,26 +43,73 @@ export const authFetch = async (url: string, options: RequestInit = {}) => {
     headers['Content-Type'] = 'application/json';
   }
 
-  const response = await fetch(url, { ...options, headers });
-  
-  if (response.status === 401 || response.status === 403) {
-    // Session expired or invalid
-    sessionStorage.removeItem('sakti_auth');
-    sessionStorage.removeItem('sakti_token');
-    window.location.href = '/#/login'; 
-    throw new Error('Sesi Berakhir. Silakan Login Kembali.');
-  }
+  // Tactical Label Extraction for Loading UX
+  const urlParts = url.split('/');
+  const endpoint = urlParts[urlParts.length - 1]?.split('?')[0]?.toUpperCase() || 'DATA';
+  const method = (options.method || 'GET').toUpperCase();
+  const baseLabel = `${method}_${endpoint}`;
+  let currentLabel = baseLabel;
 
-  return response;
+  // Register request in store
+  useAppStore.getState().addRequest(currentLabel);
+
+  let attempts = 0;
+  const maxRetries = 3;
+
+  try {
+    while (attempts < maxRetries) {
+      try {
+        const response = await fetch(url, { ...options, headers });
+        
+        if (response.status === 401 || response.status === 403) {
+          // Session expired or invalid
+          sessionStorage.removeItem('sakti_auth');
+          sessionStorage.removeItem('sakti_token');
+          window.location.href = '/#/login'; 
+          throw new Error('Sesi Berakhir. Silakan Login Kembali.');
+        }
+
+        return response;
+      } catch (err) {
+        attempts++;
+        if (attempts >= maxRetries) {
+          useAppStore.getState().updateRequest(currentLabel, `${baseLabel} [CRITICAL ERROR]`);
+          throw err;
+        }
+
+        // Tactical feedback: update label to show retry status
+        const nextLabel = `${baseLabel} [RETRYING ${attempts}/${maxRetries - 1}]`;
+        useAppStore.getState().updateRequest(currentLabel, nextLabel);
+        currentLabel = nextLabel;
+
+        // Exponential-ish backoff or fixed tactical delay
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
+    }
+    throw new Error('Gagal menghubungi server setelah beberapa percobaan.');
+  } finally {
+    // Un-register the final version of the request label always
+    useAppStore.getState().removeRequest(currentLabel);
+  }
 };
 
 export const useAppStore = create<AppStore>()((set) => ({
   selectedRegion: 'Nasional',
   selectedDate: '',
   selectedSource: 'SP2KP',
+  activeRequests: [],
   setSelectedRegion: (region) => set({ selectedRegion: region }),
   setSelectedDate: (date) => set({ selectedDate: date }),
   setSelectedSource: (source) => set({ selectedSource: source }),
+  addRequest: (label) => set((state) => ({ 
+    activeRequests: [...state.activeRequests, label] 
+  })),
+  removeRequest: (label) => set((state) => ({ 
+    activeRequests: state.activeRequests.filter(r => r !== label) 
+  })),
+  updateRequest: (oldLabel, newLabel) => set((state) => ({
+    activeRequests: state.activeRequests.map(r => r === oldLabel ? newLabel : r)
+  })),
   addToast: (message: string, type: Toast['type'] = 'info') => {
     const iconMap = {
       success: '<i class="fa-solid fa-circle-check text-emerald-400"></i>',

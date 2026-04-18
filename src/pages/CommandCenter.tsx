@@ -1,70 +1,95 @@
 import { useState, useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Circle, Polyline, ZoomControl } from 'react-leaflet';
-import L from 'leaflet';
 import { useAppStore, getApiBase, authFetch } from '../store/useAppStore';
-import { useMap } from 'react-leaflet';
-
+import CountUp from '../components/CountUp';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import {
-  JAKARTA_CENTER,
-  vulnerabilityZones,
-  path1,
-  path2,
-  path3,
   tickerItems,
   timelineItems,
   riskScores
 } from '../data/mockDashboard';
+import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
+import provinceBoundaries from '../assets/gadm41_IDN_1.json';
 import type { 
   TimelineItem 
 } from '../types';
 import type { BMKGWarning } from '../bmkg_types';
 
-// Animated Patrol Unit Component
-const MovingPatrolUnit = ({ path, color, label, duration = 20000 }: { path: [number, number][], color: string, label: string, duration?: number }) => {
-  const [pos, setPos] = useState<[number, number]>(path[0]);
-  
-  useEffect(() => {
-    let startTime = Date.now();
-    
-    const animate = () => {
-      const now = Date.now();
-      const elapsed = (now - startTime) % duration;
-      const progress = elapsed / duration;
-      
-      const totalPoints = path.length - 1;
-      const step = progress * totalPoints;
-      const index = Math.floor(step);
-      const nextIndex = (index + 1) % path.length;
-      const stepProgress = step - index;
-      
-      const p1 = path[index];
-      const p2 = path[nextIndex];
-      
-      const currentLat = p1[0] + (p2[0] - p1[0]) * stepProgress;
-      const currentLng = p1[1] + (p2[1] - p1[1]) * stepProgress;
-      
-      setPos([currentLat, currentLng]);
-      requestAnimationFrame(animate);
-    };
-    
-    const animId = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animId);
-  }, [path, duration]);
-
-  const unitIcon = useMemo(() => L.divIcon({
-    className: 'custom-unit-icon',
-    html: `
-      <div class="ews-patrol-marker">
-        <div style="color: ${color}; background-color: ${color};" class="ews-marker-dot"></div>
-        <div class="ews-marker-label">${label}</div>
-      </div>
-    `,
-    iconSize: [20, 20],
-    iconAnchor: [10, 10]
-  }), [color, label]);
-
-  return <Marker position={pos} icon={unitIcon} />;
+// Weather icon mapping for BMKG conditions
+const getConditionIcon = (condition: string) => {
+  const c = condition?.toLowerCase() || '';
+  if (c.includes('petir')) return { icon: 'fa-cloud-bolt', color: 'text-purple-400', hex: '#a855f7', pulse: true };
+  if (c.includes('lebat') || c.includes('deras')) return { icon: 'fa-cloud-showers-water', color: 'text-blue-500', hex: '#3b82f6', pulse: true };
+  if (c.includes('hujan') && c.includes('sedang')) return { icon: 'fa-cloud-showers-heavy', color: 'text-cyan-400', hex: '#22d3ee', pulse: false };
+  if (c.includes('hujan')) return { icon: 'fa-cloud-rain', color: 'text-cyan-300', hex: '#67e8f9', pulse: false };
+  if (c.includes('cerah berawan')) return { icon: 'fa-cloud-sun', color: 'text-amber-300', hex: '#fcd34d', pulse: false };
+  if (c.includes('cerah')) return { icon: 'fa-sun', color: 'text-amber-400', hex: '#fbbf24', pulse: false };
+  if (c.includes('berawan')) return { icon: 'fa-cloud', color: 'text-gray-400', hex: '#9ca3af', pulse: false };
+  if (c.includes('kabut') || c.includes('asap')) return { icon: 'fa-smog', color: 'text-gray-300', hex: '#d1d5db', pulse: false };
+  return { icon: 'fa-cloud-sun', color: 'text-amber-200', hex: '#fde68a', pulse: false };
 };
+
+// Robust Name Normalizer for DB <-> GeoJSON matching
+const normalizeName = (name: string) => {
+  if (!name) return '';
+  return name.toUpperCase()
+    .replace(/[^A-Z0-9]/g, '') // Remove all non-alphanumeric chars (spaces, dots, etc.)
+    .replace(/^KOTA/g, '')     // Remove prefixes
+    .replace(/^KAB/g, '')      
+    .replace(/^ADMINISTRASI/g, '')
+    .trim();
+};
+
+// Internal component to handle zoom synchronization
+function MapZoomControls() {
+  const map = useMap();
+  useEffect(() => {
+    const handleIn = () => map.zoomIn();
+    const handleOut = () => map.zoomOut();
+    window.addEventListener('map-zoom-in', handleIn);
+    window.addEventListener('map-zoom-out', handleOut);
+    return () => {
+      window.removeEventListener('map-zoom-in', handleIn);
+      window.removeEventListener('map-zoom-out', handleOut);
+    };
+  }, [map]);
+  return null;
+}
+
+// Internal component to focus map on selected city
+function MapFocusHandler({ selectedCity, cityBoundaries }: { selectedCity: string, cityBoundaries: any }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!selectedCity) {
+      const handleNationalFirst = () => map.flyTo([-2.5489, 118.0149], 5, { duration: 1.5 });
+      window.addEventListener('map-national-view', handleNationalFirst);
+      return () => window.removeEventListener('map-national-view', handleNationalFirst);
+    }
+    
+    const handleNational = () => {
+      map.flyTo([-2.5489, 118.0149], 5, { duration: 1.5 });
+    };
+
+    window.addEventListener('map-national-view', handleNational);
+
+    const normalizedSelected = normalizeName(selectedCity);
+    const feature = cityBoundaries?.features.find((f: any) => 
+      normalizeName(f.properties.NAME_2) === normalizedSelected
+    );
+
+    if (feature) {
+      const geoJsonLayer = L.geoJSON(feature);
+      const bounds = geoJsonLayer.getBounds();
+      map.flyToBounds(bounds, { padding: [120, 120], duration: 1.5, maxZoom: 11 });
+    }
+    return () => {
+      window.removeEventListener('map-national-view', handleNational);
+    };
+  }, [selectedCity, map]);
+
+  return null;
+}
  
 // Force-disable scroll zoom to prevent interference with page scrolling
 const TacticalMapLock = () => {
@@ -84,7 +109,7 @@ const TacticalMapLock = () => {
 };
 
 
-export default function Dashboard() {
+export default function CommandCenter() {
   const addToast = useAppStore((s) => s.addToast);
   const [mounted, setMounted] = useState(false);
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
@@ -98,6 +123,24 @@ export default function Dashboard() {
   const [isKamtibmasLoading, setIsKamtibmasLoading] = useState(false);
   const [nationalKamtibmasStats, setNationalKamtibmasStats] = useState<{today: number, yesterday: number, trend_pct: number} | null>(null);
   const [commodityHetStats, setCommodityHetStats] = useState<{sp2kp: number, pihps: number} | null>(null);
+  
+  // Map Geospatial State
+  const [mapCities, setMapCities] = useState<any[]>([]);
+  const [selectedCity, setSelectedCity] = useState('');
+  const [cities, setCities] = useState<string[]>([]);
+  const [weatherData, setWeatherData] = useState<any>(null);
+  const [isLoadingWeather, setIsLoadingWeather] = useState(false);
+  const [activeMapMode, setActiveMapMode] = useState<'situational' | 'weather' | 'test'>('situational');
+  const [cityBoundaries, setCityBoundaries] = useState<any>(null);
+  const [isLoadingBoundaries, setIsLoadingBoundaries] = useState(false);
+
+  // RainViewer Radar States
+  const [radarFrames, setRadarFrames] = useState<any[]>([]);
+  const [radarIndex, setRadarIndex] = useState(0);
+  const [isRadarPlaying, setIsRadarPlaying] = useState(true);
+  const [isSatelliteMode, setIsSatelliteMode] = useState(false);
+  const [isRainViewerActive, setIsRainViewerActive] = useState(false);
+  const [isWeatherHeatmapVisible, setIsWeatherHeatmapVisible] = useState(true);
 
   const filteredTimeline = useMemo(() => {
     if (filter === 'all') return timelineData;
@@ -118,11 +161,98 @@ export default function Dashboard() {
     fetchKamtibmasIndex();
     fetchNationalKamtibmasStats();
     fetchCommodityHetStats();
+    fetchMapCities();
+    fetchCities();
+    fetchMapBoundaries();
   }, []);
+
+  const fetchMapBoundaries = async () => {
+    setIsLoadingBoundaries(true);
+    try {
+      const res = await authFetch(`${getApiBase()}/weather/boundaries`);
+      if (res.ok) {
+        const data = await res.json();
+        setCityBoundaries(data);
+      }
+    } catch (err) {
+      console.error('Failed to load map boundaries:', err);
+    } finally {
+      setIsLoadingBoundaries(false);
+    }
+  };
 
   useEffect(() => {
     fetchKamtibmasIndex();
   }, [kamtibmasRegion]);
+
+  useEffect(() => {
+    if (selectedCity) {
+      fetchForecast(selectedCity);
+    }
+  }, [selectedCity]);
+
+  useEffect(() => {
+    if (activeMapMode === 'weather' && isRainViewerActive) {
+      fetch('https://api.rainviewer.com/public/weather-maps.json')
+        .then(res => res.json())
+        .then(data => {
+          if (data.radar && data.radar.past) {
+            setRadarFrames(data.radar.past);
+            setRadarIndex(0);
+          }
+        })
+        .catch(err => console.error('RainViewer Fetch Error:', err));
+    }
+  }, [activeMapMode, isRainViewerActive]);
+
+  useEffect(() => {
+    let interval: any;
+    if (activeMapMode === 'weather' && isRainViewerActive && isRadarPlaying && radarFrames.length > 0) {
+      interval = setInterval(() => {
+        setRadarIndex(prev => (prev + 1) % radarFrames.length);
+      }, 800);
+    }
+    return () => clearInterval(interval);
+  }, [activeMapMode, isRainViewerActive, isRadarPlaying, radarFrames]);
+
+  const fetchCities = async () => {
+    try {
+      const res = await authFetch(`${getApiBase()}/weather/cities`);
+      if (res.ok) {
+        const data = await res.json();
+        setCities(data);
+      }
+    } catch (err) {
+      console.error('Cities Fetch Error:', err);
+    }
+  };
+
+  const fetchForecast = async (city: string) => {
+    setIsLoadingWeather(true);
+    try {
+      const res = await authFetch(`${getApiBase()}/weather/forecast?city=${encodeURIComponent(city)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setWeatherData(data);
+      }
+    } catch (err) {
+      console.error('Forecast Fetch Error:', err);
+    } finally {
+      setIsLoadingWeather(false);
+    }
+  };
+
+  const fetchMapCities = async () => {
+    try {
+      const response = await authFetch(`${getApiBase()}/weather/map-cities`);
+      if (response.ok) {
+        const data = await response.json();
+        setMapCities(data);
+      }
+    } catch (err) {
+      console.error('Map Cities Fetch Error:', err);
+    }
+  };
 
   const fetchAvailableRegions = async () => {
     try {
@@ -329,10 +459,13 @@ export default function Dashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-4 gap-4">
         {/* Total Kejadian Kamtibmas */}
-        <div className="ews-stat-card red cursor-pointer" onClick={() => addToast('Membuka detail kejadian kamtibmas', 'info')}>
+        <div className="ews-stat-card red cursor-pointer" onClick={() => {
+          window.location.hash = '#/kamtibmas-management';
+          addToast('Membuka Manajemen Kamtibmas', 'info');
+        }}>
           <div className="text-[14px] text-gray-500 uppercase tracking-wider mb-2 font-bold">Total Kejadian Kamtibmas</div>
           <div className="font-orbitron text-4xl font-bold text-red-400 mb-1">
-            {nationalKamtibmasStats?.today.toLocaleString('id-ID') || '0'}
+            <CountUp value={nationalKamtibmasStats?.today || 0} />
           </div>
           <div className="flex items-center gap-2 text-sm">
             <span className={!nationalKamtibmasStats || nationalKamtibmasStats.trend_pct > 0 ? 'text-red-400' : 'text-emerald-400'}>
@@ -350,7 +483,7 @@ export default function Dashboard() {
         <div className="ews-stat-card amber cursor-pointer" onClick={() => addToast('Membuka rincian harga komoditas', 'info')}>
           <div className="text-[14px] text-gray-500 uppercase tracking-wider mb-2 font-bold">Jumlah Komoditas diatas HET</div>
           <div className="font-orbitron text-4xl font-bold text-amber-400 mb-1">
-            {commodityHetStats ? (commodityHetStats.sp2kp + commodityHetStats.pihps) : '0'}
+            <CountUp value={commodityHetStats ? (commodityHetStats.sp2kp + commodityHetStats.pihps) : 0} />
           </div>
           <div className="flex items-center gap-2 text-sm">
             <span className="text-amber-400 font-bold uppercase tracking-tighter text-[10px]">
@@ -366,7 +499,9 @@ export default function Dashboard() {
         {/* Sentimen Negatif */}
         <div className="ews-stat-card red cursor-pointer" onClick={() => addToast('Membuka analisis sentimen', 'info')}>
           <div className="text-[14px] text-gray-500 uppercase tracking-wider mb-2 font-bold">Sentimen Negatif</div>
-          <div className="font-orbitron text-4xl font-bold text-red-400 mb-1">24.5%</div>
+          <div className="font-orbitron text-4xl font-bold text-red-400 mb-1">
+            <CountUp value={24.5} formatter={(v) => `${v.toFixed(1)}%`} />
+          </div>
           <div className="flex items-center gap-2 text-sm text-red-400">
             <span className="w-2 h-2 rounded-full bg-red-500 ews-animate-blink" />
             <span>High Awareness Alert</span>
@@ -379,7 +514,9 @@ export default function Dashboard() {
         {/* Total Data Kecelakaan */}
         <div className="ews-stat-card cyan cursor-pointer" onClick={() => addToast('Membuka data kecelakaan lalin', 'info')}>
           <div className="text-[14px] text-gray-500 uppercase tracking-wider mb-2 font-bold">Total Data Kecelakaan</div>
-          <div className="font-orbitron text-4xl font-bold text-cyan-400 mb-1">42</div>
+          <div className="font-orbitron text-4xl font-bold text-cyan-400 mb-1">
+            <CountUp value={42} />
+          </div>
           <div className="flex items-center gap-2 text-sm text-cyan-400">
             <span><i className="fa-solid fa-car-burst"></i> TERDATA HARI INI</span>
           </div>
@@ -405,6 +542,39 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-4">
+            {/* MAP MODE SELECTOR */}
+            <div className="flex items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/10 backdrop-blur-3xl shadow-2xl">
+              <button 
+                onClick={() => {
+                  setActiveMapMode('situational');
+                  setIsRainViewerActive(false);
+                  addToast('Mode: Situational Awareness Active', 'info');
+                }}
+                className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2 ${
+                  activeMapMode === 'situational' 
+                  ? 'bg-cyan-500 text-gray-900 shadow-[0_0_20px_rgba(6,182,212,0.4)]' 
+                  : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
+                }`}
+              >
+                <i className={`fa-solid fa-shield-halved ${activeMapMode === 'situational' ? 'animate-pulse' : ''}`}></i>
+                Situational Awareness
+              </button>
+              <button 
+                onClick={() => {
+                  setActiveMapMode('weather');
+                  addToast('Mode: Weather Monitoring Active', 'info');
+                }}
+                className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2 ${
+                  activeMapMode === 'weather' 
+                  ? 'bg-cyan-500 text-gray-900 shadow-[0_0_20px_rgba(6,182,212,0.4)]' 
+                  : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
+                }`}
+              >
+                <i className={`fa-solid fa-cloud-bolt ${activeMapMode === 'weather' ? 'animate-pulse' : ''}`}></i>
+                Weather
+              </button>
+            </div>
+
             <span className="ews-live-badge red">
               <span className="ews-live-dot" />
               LIVE
@@ -412,83 +582,391 @@ export default function Dashboard() {
           </div>
         </div>
         
-        <div className="relative flex-1 bg-[#070a12] overflow-hidden">
+        <div className="relative flex-1 bg-[#070a12] overflow-hidden group">
+          {activeMapMode === 'weather' && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-6 bg-gray-900/45 backdrop-blur-xl border border-white/10 px-6 py-2.5 rounded-full shadow-2xl backdrop-saturate-150 pointer-events-none transition-all group-hover:bg-gray-900/60 font-orbitron">
+              <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest">
+                <span className="w-2 h-2 rounded-full bg-amber-400" /> 
+                <span className="text-gray-300">Cerah</span>
+              </div>
+              <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest">
+                <span className="w-2 h-2 rounded-full bg-gray-400" /> 
+                <span className="text-gray-300">Berawan</span>
+              </div>
+              <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest">
+                <span className="w-2 h-2 rounded-full bg-cyan-400" /> 
+                <span className="text-gray-300">Hujan</span>
+              </div>
+              <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest">
+                <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" /> 
+                <span className="text-gray-300">Ekstrem</span>
+              </div>
+            </div>
+          )}
+
           <MapContainer 
-            center={JAKARTA_CENTER} 
-            zoom={14} 
+            center={[-2.5489, 118.0149]} 
+            zoom={5} 
             scrollWheelZoom={false}
-            doubleClickZoom={false}
-            touchZoom={false}
             className="w-full h-full z-0"
             zoomControl={false}
             attributionControl={false}
           >
-            <TacticalMapLock />
-            {/* Dark Theme Tile Layer (CartoDB Dark Matter) */}
             <TileLayer
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+              url={activeMapMode === 'weather' && isRainViewerActive && isSatelliteMode 
+                ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                : "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              }
             />
-            <ZoomControl position="bottomright" />
+            
+            <MapZoomControls />
+            <MapFocusHandler selectedCity={selectedCity} cityBoundaries={cityBoundaries} />
 
-            {/* Vulnerability Circles */}
-            {vulnerabilityZones.map((zone, idx) => (
-              <Circle 
-                key={idx}
-                center={zone.pos as [number, number]}
-                radius={zone.radius}
-                pathOptions={{ color: zone.color, fillColor: zone.color, fillOpacity: 0.2, weight: 1 }}
+            {/* FLOATING SECTOR SELECTION HUD (TOP RIGHT) - Reused from WeatherForecast */}
+            {activeMapMode === 'weather' && (
+              <div className="absolute top-6 right-6 z-[1000] pointer-events-none">
+                <div className="flex flex-col gap-3 items-end">
+                  <div className="bg-black/60 backdrop-blur-3xl border border-cyan-500/30 p-5 rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.6)] pointer-events-auto group/selector transition-all hover:border-cyan-500/60 w-[260px]">
+                    <div className="flex flex-col gap-3">
+                      <div className="relative">
+                        <select 
+                          value={selectedCity} 
+                          onChange={(e) => setSelectedCity(e.target.value)} 
+                          className="bg-cyan-500/10 border border-cyan-500/20 text-white font-orbitron font-bold text-xs py-2.5 px-3 rounded focus:outline-none cursor-pointer hover:bg-cyan-500/20 hover:border-cyan-500/50 transition-all appearance-none pr-10 w-full"
+                        >
+                          <option disabled value="">Pilih Kota...</option>
+                          {cities.map(city => (<option key={city} value={city} className="bg-gray-900 text-white">{city}</option>))}
+                        </select>
+                        <i className="fa-solid fa-crosshairs absolute right-3 top-1/2 -translate-y-1/2 text-sm text-cyan-500 group-hover/selector:rotate-90 transition-transform duration-500"></i>
+                      </div>
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => {
+                            setIsRainViewerActive(!isRainViewerActive);
+                            addToast(isRainViewerActive ? 'Rain Viewer Off' : 'Rain Viewer On', 'info');
+                          }} 
+                          className={`flex-1 border font-orbitron font-bold text-[9px] py-1.5 rounded flex items-center justify-center gap-2 transition-all uppercase tracking-widest outline-none ${
+                            isRainViewerActive 
+                            ? 'bg-cyan-500 border-cyan-400 text-gray-900 shadow-[0_0_15px_rgba(6,182,212,0.4)]' 
+                            : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:text-white'
+                          }`}
+                        >
+                          <i className={`fa-solid fa-cloud-bolt ${isRainViewerActive ? 'animate-pulse' : ''}`}></i>
+                          <span>Rain Viewer</span>
+                        </button>
+                        <button 
+                          onClick={() => setIsWeatherHeatmapVisible(!isWeatherHeatmapVisible)}
+                          className={`w-10 border flex items-center justify-center transition-all outline-none rounded ${
+                            isWeatherHeatmapVisible 
+                            ? 'bg-amber-500/20 border-amber-500/40 text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.2)]' 
+                            : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
+                          }`}
+                          title={isWeatherHeatmapVisible ? 'Hide Heatmap' : 'Show Heatmap'}
+                        >
+                          <i className="fa-solid fa-layer-group"></i>
+                        </button>
+                        <button 
+                          onClick={() => window.dispatchEvent(new CustomEvent("map-national-view"))} 
+                          className="w-10 bg-white/5 border border-white/10 text-gray-400 hover:bg-cyan-500/20 hover:text-white hover:border-cyan-500/50 font-orbitron font-bold text-[9px] py-1.5 rounded flex items-center justify-center transition-all outline-none group/nasional"
+                          title="Reset to National"
+                        >
+                          <i className="fa-solid fa-globe-asia group-hover/nasional:animate-spin-slow"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeMapMode === 'weather' && isRainViewerActive && radarFrames.length > 0 && (
+              <TileLayer
+                key={`radar-${radarFrames[radarIndex].path}`}
+                url={`https://tilecache.rainviewer.com${radarFrames[radarIndex].path}/256/{z}/{x}/{y}/8/1_1.png`}
+                opacity={0.6}
               />
-            ))}
+            )}
 
-            {/* Patrol Paths */}
-            <Polyline positions={path1} pathOptions={{ color: '#10b981', weight: 1, dashArray: '5, 10', opacity: 0.5 }} />
-            <Polyline positions={path2} pathOptions={{ color: '#06b6d4', weight: 1, dashArray: '5, 10', opacity: 0.5 }} />
-            <Polyline positions={path3} pathOptions={{ color: '#f59e0b', weight: 1, dashArray: '5, 10', opacity: 0.5 }} />
+            {activeMapMode !== 'test' && (
+              <GeoJSON 
+                data={activeMapMode === 'situational' ? (provinceBoundaries as any) : cityBoundaries}
+              key={`${activeMapMode}-${cityBoundaries?.features?.length || 0}`}
+              style={(feature: any) => {
+                const cityName = feature.properties.NAME_2 || feature.properties.NAME_1;
+                const normalized = normalizeName(cityName);
+                const cityData = activeMapMode === 'weather' ? mapCities.find(c => normalizeName(c.city) === normalized) : null;
+                
+                const { hex } = cityData ? getConditionIcon(cityData.condition) : { hex: '#1f2937' };
+                const isSelected = cityData && selectedCity === cityData.city;
 
-            {/* Animated Patrol Units */}
-            <MovingPatrolUnit path={path1} color="#10b981" label="5123-VII" duration={120000} />
-            <MovingPatrolUnit path={path2} color="#06b6d4" label="4152-VII" duration={90000} />
-            <MovingPatrolUnit path={path3} color="#f59e0b" label="Unit Sabhara P-01" duration={150000} />
+                const isRainActive = activeMapMode === 'weather' && isRainViewerActive;
+
+                return {
+                  fillColor: activeMapMode === 'situational' ? 'rgba(6, 182, 212, 0.1)' : hex,
+                  weight: isSelected ? 2 : 1,
+                  opacity: isRainActive ? 0 : 1,
+                  color: isSelected ? '#06b6d4' : 'rgba(255,255,255,0.4)',
+                  fillOpacity: isRainActive ? 0 : (activeMapMode === 'situational' ? 0.4 : (cityData ? (isWeatherHeatmapVisible ? 0.4 : 0) : 0.05))
+                };
+              }}
+              onEachFeature={(feature: any, layer: any) => {
+                const cityName = feature.properties.NAME_2 || feature.properties.NAME_1;
+                const provName = feature.properties.NAME_1;
+                const normalized = normalizeName(cityName);
+                const cityData = activeMapMode === 'weather' ? mapCities.find(c => normalizeName(c.city) === normalized) : null;
+
+                layer.bindTooltip(`
+                  <div class="bg-gray-900/95 border border-white/10 p-5 rounded-2xl backdrop-blur-2xl shadow-[0_25px_60px_rgba(0,0,0,0.6)] min-w-[240px] pointer-events-none relative overflow-hidden group">
+                    <!-- Corner Brackets -->
+                    <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-cyan-500/40 rounded-tl-xl"></div>
+                    <div class="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-cyan-500/40 rounded-tr-xl"></div>
+                    <div class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-cyan-500/40 rounded-bl-xl"></div>
+                    <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-cyan-500/40 rounded-br-xl"></div>
+                    
+                    <div class="text-[17px] font-orbitron font-black text-white uppercase tracking-[0.1em] mb-4 pb-3 border-b border-white/10 flex items-center justify-between mt-1">
+                      ${cityName}
+                      <i class="fa-solid fa-satellite text-[12px] text-cyan-500/40"></i>
+                    </div>
+
+                    ${activeMapMode === 'weather' ? (cityData ? `
+                    <div class="space-y-3.5">
+                      <div class="flex justify-between items-center bg-white/5 px-4 py-3 rounded-xl border border-white/10 shadow-inner group/row hover:bg-white/10 transition-all">
+                        <span class="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em] group-hover/row:text-cyan-500/80 transition-colors">Temperature</span>
+                        <span class="text-white font-orbitron text-[15px] font-black">${cityData.temp}°C</span>
+                      </div>
+                      <div class="flex justify-between items-center bg-white/5 px-4 py-3 rounded-xl border border-white/10 shadow-inner group/row hover:bg-white/10 transition-all">
+                        <span class="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em] group-hover/row:text-amber-500/80 transition-colors">Condition</span>
+                        <span class="${getConditionIcon(cityData.condition).color} uppercase font-orbitron text-[11px] font-black tracking-tight">${cityData.condition}</span>
+                      </div>
+                    </div>
+                    ` : `
+                    <div class="flex items-center gap-4 bg-red-500/10 p-4 rounded-xl border border-red-500/20 text-red-500">
+                      <div class="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
+                        <i class="fa-solid fa-plug-circle-xmark text-lg animate-pulse"></i>
+                      </div>
+                      <div>
+                        <div class="text-[10px] font-black uppercase tracking-widest">Link Failure</div>
+                        <div class="text-[8px] font-mono opacity-60">ERR_CONNECTION_OFFLINE</div>
+                      </div>
+                    </div>
+                    `) : `
+                    <div class="space-y-2">
+                      <div class="text-[10px] text-cyan-400 font-bold tracking-wider uppercase">Situational Awareness</div>
+                      <div class="text-[12px] text-white/80 font-medium">Provinsi: ${provName}</div>
+                      <div class="text-[9px] text-gray-500 font-mono mt-1">Status: Monitoring Aktif</div>
+                    </div>
+                    `}
+                    
+                    <div class="mt-5 flex flex-col gap-1.5">
+                      <div class="flex justify-between text-[7px] font-mono text-gray-600 uppercase tracking-widest">
+                        <span>Sync Status: Nominal</span>
+                        <span>0.04ms</span>
+                      </div>
+                      <div class="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                        <div class="h-full bg-cyan-500/40 animate-[ews-ticker_3s_linear_infinite]" style="width: 60%"></div>
+                      </div>
+                    </div>
+                  </div>
+                `, { sticky: true, direction: 'top', className: 'tactical-tooltip', offset: [0, -15] });
+
+                if (cityData) {
+                  layer.on({
+                    click: () => {
+                      setSelectedCity(cityData.city);
+                      addToast(`Map focus: ${cityData.city}`, 'info');
+                    },
+                    mouseover: () => {
+                      layer.setStyle({ fillOpacity: 0.7, weight: 2, color: '#06b6d4' });
+                    },
+                    mouseout: () => {
+                      const isSelected = selectedCity === cityData.city;
+                      layer.setStyle({ 
+                        fillOpacity: 0.4, 
+                        weight: isSelected ? 2 : 1, 
+                        color: isSelected ? '#06b6d4' : 'rgba(255,255,255,0.4)' 
+                      });
+                    }
+                  });
+                }
+              }}
+            />
+          )}
+
+            {/* COMPACT TACTICAL HUD OVERLAY (BOTTOM LEFT) - Reused from WeatherForecast */}
+            {activeMapMode === 'weather' && weatherData && (
+              <div className="absolute bottom-6 left-6 z-[1000] grid grid-cols-2 gap-3 w-[440px] pointer-events-none">
+                {/* Suhu Rata-rata */}
+                <div className="bg-gray-900/40 backdrop-blur-xl border border-white/10 rounded-xl p-3 shadow-2xl backdrop-saturate-150 group/hud relative overflow-hidden pointer-events-auto hover:bg-gray-900/60 transition-all">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-cyan-500/50" />
+                  <div className="text-[9px] text-gray-500 uppercase tracking-widest mb-1 font-bold">SUHU AVG</div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-orbitron text-[22px] font-black text-cyan-400 leading-none">{weatherData.forecast?.[0]?.temp_average || '--'}</span>
+                    <span className="text-[10px] font-bold text-cyan-500/60 font-orbitron">°C</span>
+                  </div>
+                  <div className="text-[9px] text-gray-500 mt-1 font-mono">
+                    L: {weatherData.forecast?.[0]?.additional_data?.temp_min || '--'}° · H: {weatherData.forecast?.[0]?.additional_data?.temp_max || '--'}°
+                  </div>
+                  <div className="absolute right-3 bottom-2 text-2xl opacity-10 text-cyan-500">
+                    <i className="fa-solid fa-temperature-high"></i>
+                  </div>
+                </div>
+
+                {/* Kondisi Dominan */}
+                <div className="bg-gray-900/40 backdrop-blur-xl border border-white/10 rounded-xl p-3 shadow-2xl backdrop-saturate-150 group/hud relative overflow-hidden pointer-events-auto hover:bg-gray-900/60 transition-all">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-amber-500/50" />
+                  <div className="text-[9px] text-gray-500 uppercase tracking-widest mb-1 font-bold">KONDISI</div>
+                  <div className={`font-orbitron text-[22px] font-black uppercase truncate leading-none ${getConditionIcon(weatherData.forecast?.[0]?.condition || '').color}`}>
+                    {weatherData.forecast?.[0]?.condition || '--'}
+                  </div>
+                  <div className="text-[9px] text-gray-500 mt-1 font-mono uppercase">Status: Nominal</div>
+                  <div className="absolute right-3 bottom-2 text-2xl opacity-10 text-amber-500">
+                    <i className={`fa-solid ${getConditionIcon(weatherData.forecast?.[0]?.condition || '').icon}`}></i>
+                  </div>
+                </div>
+
+                {/* Kelembapan Avg */}
+                <div className="bg-gray-900/40 backdrop-blur-xl border border-white/10 rounded-xl p-3 shadow-2xl backdrop-saturate-150 group/hud relative overflow-hidden pointer-events-auto hover:bg-gray-900/60 transition-all">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-blue-500/50" />
+                  <div className="text-[9px] text-gray-500 uppercase tracking-widest mb-1 font-bold">KELEMBAPAN</div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-orbitron text-[22px] font-black text-cyan-400 leading-none">{weatherData.forecast?.[0]?.humidity_average || '--'}</span>
+                    <span className="text-[10px] font-bold text-cyan-500/60 font-orbitron">%</span>
+                  </div>
+                  <div className="text-[9px] text-gray-500 mt-1 font-mono">RH SENSOR ACTIVE</div>
+                  <div className="absolute right-3 bottom-2 text-2xl opacity-10 text-blue-500">
+                    <i className="fa-solid fa-droplet-slash"></i>
+                  </div>
+                </div>
+
+                {/* Analisis Risiko */}
+                <div className="bg-gray-900/40 backdrop-blur-xl border border-white/10 rounded-xl p-3 shadow-2xl backdrop-saturate-150 group/hud relative overflow-hidden pointer-events-auto hover:bg-gray-900/60 transition-all">
+                  <div className={`absolute top-0 left-0 w-1 h-full ${weatherData.forecast?.[0]?.condition?.toLowerCase().includes('hujan') ? 'bg-red-500/50' : 'bg-emerald-500/50'}`} />
+                  <div className="text-[9px] text-gray-500 uppercase tracking-widest mb-1 font-bold">RISIKO</div>
+                  <div className={`font-orbitron text-[22px] font-black leading-none ${weatherData.forecast?.[0]?.condition?.toLowerCase().includes('hujan') ? 'text-red-400' : 'text-emerald-400'}`}>
+                    {weatherData.forecast?.[0]?.condition?.toLowerCase().includes('hujan') ? 'WASPADA' : 'LOW RISK'}
+                  </div>
+                  <div className="text-[9px] text-gray-500 mt-1 font-mono">MATRIX v2.0</div>
+                  <div className={`absolute right-3 bottom-2 text-2xl opacity-10 ${weatherData.forecast?.[0]?.condition?.toLowerCase().includes('hujan') ? 'text-red-500' : 'text-purple-500'}`}>
+                    <i className="fa-solid fa-shield-virus"></i>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* MINIMALIST ZOOM HUD */}
+            <div className="absolute bottom-8 right-8 z-[1000] flex flex-col gap-2">
+              <button 
+                onClick={() => window.dispatchEvent(new CustomEvent('map-zoom-in'))}
+                className="w-10 h-10 bg-black/60 backdrop-blur-xl border border-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:text-cyan-400 hover:border-cyan-500/30 hover:bg-cyan-500/10 transition-all duration-300 shadow-xl pointer-events-auto outline-none"
+              >
+                <i className="fa-solid fa-plus text-sm"></i>
+              </button>
+              <button 
+                onClick={() => window.dispatchEvent(new CustomEvent('map-zoom-out'))}
+                className="w-10 h-10 bg-black/60 backdrop-blur-xl border border-white/10 rounded-lg flex items-center justify-center text-gray-400 hover:text-cyan-400 hover:border-cyan-500/30 hover:bg-cyan-500/10 transition-all duration-300 shadow-xl pointer-events-auto outline-none"
+              >
+                <i className="fa-solid fa-minus text-sm"></i>
+              </button>
+            </div>
+
+            {/* TOP LEFT STATS */}
+            <div className="absolute top-4 left-4 z-[1000] pointer-events-none">
+              <div className="bg-black/70 backdrop-blur-md border border-cyan-500/30 p-3 rounded-xl flex flex-col gap-1 shadow-xl">
+                 <span className="text-[9px] text-cyan-500 font-bold uppercase tracking-widest">Cakupan Wilayah</span>
+                 <span className="text-[14px] text-white font-orbitron font-bold">
+                   {activeMapMode === 'situational' ? `${provinceBoundaries.features.length} PROVINSI` : `${cities.length} KOTA / KAB`}
+                 </span>
+              </div>
+            </div>
           </MapContainer>
 
-          {/* Map Overlay HUD */}
-          <div className="absolute top-4 left-4 z-[1000]">
-            <div className="bg-black/60 backdrop-blur-md border border-gray-700/50 p-3 rounded-lg flex flex-col gap-2">
-              <div className="text-[10px] text-amber-400 font-bold font-orbitron tracking-tighter mb-1 uppercase">Zone Categories</div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]" />
-                <span className="text-[10px] text-gray-400">Zona Kerawanan (Kritis)</span>
+          {/* RADAR MINIMALIST HUD (BOTTOM CENTER) */}
+          {activeMapMode === 'weather' && isRainViewerActive && radarFrames.length > 0 && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[2000] w-[540px] pointer-events-auto flex flex-col gap-3">
+              {/* RADAR INTENSITY LEGEND */}
+              <div className="flex justify-center translate-y-2">
+                <div className="bg-black/30 backdrop-blur-xl border border-white/5 px-4 py-1.5 rounded-full flex items-center gap-4 shadow-lg scale-90">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#000033] border border-white/10" />
+                    <span className="text-[7px] font-black text-gray-500 uppercase tracking-widest">Light</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#0000ff] shadow-[0_0_5px_rgba(0,0,255,0.3)]" />
+                    <span className="text-[7px] font-black text-gray-500 uppercase tracking-widest">Medium</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#00ffff] shadow-[0_0_8px_rgba(0,255,255,0.4)]" />
+                    <span className="text-[7px] font-black text-gray-500 uppercase tracking-widest">Heavy</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#ffffff] shadow-[0_0_10px_rgba(255,255,255,0.6)]" />
+                    <span className="text-[7px] font-black text-cyan-400 uppercase tracking-widest">Extreme</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_#f59e0b]" />
-                <span className="text-[10px] text-gray-400">Zona Waspada</span>
+
+              <div className="bg-black/40 backdrop-blur-3xl border border-white/5 p-4 rounded-3xl shadow-[0_25px_80px_rgba(0,0,0,0.6)] flex items-center gap-5 transition-all hover:bg-black/50 hover:border-white/10 group/hud">
+                {/* Controls Section */}
+                <div className="flex items-center gap-1.5">
+                  <button 
+                    onClick={() => setIsRadarPlaying(!isRadarPlaying)}
+                    className="w-10 h-10 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center text-white hover:bg-cyan-500 hover:text-gray-900 hover:shadow-[0_0_20px_rgba(6,182,212,0.4)] transition-all active:scale-95 group/btn"
+                    title={isRadarPlaying ? 'Pause' : 'Play'}
+                  >
+                    <i className={`fa-solid ${isRadarPlaying ? 'fa-pause' : 'fa-play'} text-xs`}></i>
+                  </button>
+
+                  <button 
+                    onClick={() => setIsSatelliteMode(!isSatelliteMode)}
+                    className={`w-10 h-10 rounded-2xl border flex items-center justify-center transition-all active:scale-95 ${
+                      isSatelliteMode 
+                      ? 'bg-cyan-500 border-cyan-400 text-gray-900 shadow-[0_0_15px_rgba(6,182,212,0.4)]' 
+                      : 'bg-white/5 border-white/5 text-white/60 hover:text-white hover:bg-white/10'
+                    }`}
+                    title="Satellite Mode"
+                  >
+                    <i className="fa-solid fa-earth-asia text-xs"></i>
+                  </button>
+                </div>
+
+                {/* Info & Slider Section */}
+                <div className="flex-1 flex flex-col gap-1.5 pt-0.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                       <span className="text-[10px] font-orbitron font-bold text-white tracking-widest">
+                         {new Date(radarFrames[radarIndex].time * 1000).toLocaleString('id-ID', { 
+                           hour: '2-digit', 
+                           minute: '2-digit',
+                           day: '2-digit',
+                           month: 'short'
+                         })}
+                       </span>
+                       <span className="w-1 h-1 rounded-full bg-white/20" />
+                       <span className="text-[8px] font-mono text-cyan-500/50 uppercase tracking-widest">Live Radar</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 opacity-60">
+                      <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="text-[8px] font-mono text-gray-500 uppercase">Sync</span>
+                    </div>
+                  </div>
+
+                  <div className="relative h-1.5 flex items-center group/slider">
+                    <input 
+                      type="range" 
+                      min="0" 
+                      max={radarFrames.length - 1} 
+                      value={radarIndex}
+                      onChange={(e) => {
+                        setRadarIndex(parseInt(e.target.value));
+                        setIsRadarPlaying(false);
+                      }}
+                      className="w-full h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-cyan-500 hover:h-1.5 transition-all"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-
-          <div className="absolute top-4 right-4 z-[1000] pointer-events-none">
-          <div className="bg-black/60 backdrop-blur-md border border-gray-700/50 p-3.5 rounded-xl flex flex-col gap-2.5 shadow-2xl">
-            <div className="text-[11px] text-cyan-400 font-bold font-orbitron tracking-tighter mb-1 uppercase tracking-[0.1em]">Unit Identification</div>
-            <div className="flex items-center gap-2.5">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
-              <span className="text-[12px] text-gray-300 font-mono font-medium tracking-tight">5123-VII (PATROLI 1)</span>
-            </div>
-            <div className="flex items-center gap-2.5">
-              <div className="w-2 h-2 rounded-full bg-cyan-500 shadow-[0_0_8px_#06b6d4]" />
-              <span className="text-[12px] text-gray-300 font-mono font-medium tracking-tight">4152-VII (PATROLI 2)</span>
-            </div>
-            <div className="flex items-center gap-2.5">
-              <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_#f59e0b]" />
-              <span className="text-[12px] text-gray-300 font-mono font-medium tracking-tight">P-01 (PATROLI 3)</span>
-            </div>
-          </div>
-          </div>
-
-          <div className="absolute bottom-4 left-4 z-[1000] pointer-events-none">
-             <div className="font-orbitron text-[10px] text-gray-600 tracking-[0.4em] uppercase">SEKTOR : JAKARTA PUSAT - SELATAN</div>
-          </div>
-
+          )}
         </div>
       </div>
 
@@ -699,14 +1177,16 @@ export default function Dashboard() {
                   <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/5 blur-3xl -mr-12 -mt-12" />
                   <div className={isKamtibmasLoading ? 'animate-pulse' : ''}>
                     <div className="font-orbitron text-4xl font-black text-white leading-none tracking-tighter">
-                      {(
-                        (kamtibmasIndex?.additional_data?.case_detail?.kejahatan_total?.[0]?.kasus_mingguan || 0) +
-                        (kamtibmasIndex?.additional_data?.case_detail?.gangguan_total?.[0]?.kasus_mingguan || 0) +
-                        (kamtibmasIndex?.additional_data?.case_detail?.pelanggaran_total?.[0]?.kasus_mingguan || 0) +
-                        (kamtibmasIndex?.additional_data?.case_detail?.bencana_total?.[0]?.kasus_mingguan || 0)
-                      ).toLocaleString('id-ID')}
+                      <CountUp 
+                        value={
+                          (kamtibmasIndex?.additional_data?.case_detail?.kejahatan_total?.[0]?.kasus_mingguan || 0) +
+                          (kamtibmasIndex?.additional_data?.case_detail?.gangguan_total?.[0]?.kasus_mingguan || 0) +
+                          (kamtibmasIndex?.additional_data?.case_detail?.pelanggaran_total?.[0]?.kasus_mingguan || 0) +
+                          (kamtibmasIndex?.additional_data?.case_detail?.bencana_total?.[0]?.kasus_mingguan || 0)
+                        } 
+                      />
                     </div>
-                    <div className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] mt-1">TOTAL INSIDEN</div>
+                    <div className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] mt-1">TOTAL INSIDEN (7-HARI)</div>
                   </div>
                   <div className="flex flex-col items-end gap-2">
                     <div className={`px-2.5 py-1 rounded-full border flex items-center gap-1.5 ${

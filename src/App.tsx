@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
-import Dashboard from './pages/Dashboard';
+import PageTransitionLoader from './components/PageTransitionLoader';
+import CommandCenter from './pages/CommandCenter';
 import Osint from './pages/Osint';
 import PredictiveAnalytics from './pages/PredictiveAnalytics';
 import CrimeMapping from './pages/CrimeMapping';
-import InvestigationManagement from './pages/InvestigationManagement';
+import KamtibmasManagement from './pages/KamtibmasManagement';
 import SecurityIntegrity from './pages/SecurityIntegrity';
-import DisasterMitigation from './pages/DisasterMitigation';
+import DisasterHistory from './pages/DisasterHistory';
 import WeatherForecast from './pages/WeatherForecast';
 import CommoditiesPrice from './pages/CommoditiesPrice';
 import CommodityDetail from './pages/CommodityDetail';
@@ -21,13 +22,13 @@ import type { AlertItem } from './types';
 
 export type PageType = 
   | 'login'
-  | 'dashboard' 
+  | 'command-center' 
   | 'osint' 
   | 'predictive-analytics' 
   | 'crime-mapping' 
-  | 'investigation-management' 
+  | 'kamtibmas-management' 
   | 'security-integrity' 
-  | 'disaster-mitigation' 
+  | 'disaster-history' 
   | 'weather-forecast' 
   | 'commodities-price' 
   | 'sp2kp'
@@ -38,14 +39,14 @@ export type PageType =
 
 const pageTitles: Record<PageType, string> = {
   login: 'AUTENTIKASI SISTEM',
-  dashboard: 'COMMAND CENTER',
+  'command-center': 'COMMAND CENTER',
   osint: 'OSINT',
   'predictive-analytics': 'ANALITIK PREDIKTIF',
   'crime-mapping': 'DYNAMIC CRIME MAPPING',
-  'investigation-management': 'MANAJEMEN INVESTIGASI',
-  'security-integrity': 'INTEGRITAS & KEAMANAN',
-  'disaster-mitigation': 'MITIGASI BENCANA',
-  'weather-forecast': 'PREDIKSI CUACA',
+  'kamtibmas-management': 'MANAJEMEN KAMTIBMAS',
+  'security-integrity': 'INTEGRITAS SISTEM',
+  'disaster-history': 'HISTORI BENCANA',
+  'weather-forecast': 'WEATHER FORECAST',
   'commodities-price': 'HARGA SEMBAKO',
   'sp2kp': 'DETAIL ANALITIK KOMODITAS',
   'pihps': 'DETAIL ANALITIK KOMODITAS',
@@ -56,13 +57,13 @@ const pageTitles: Record<PageType, string> = {
 
 const pageSubtitles: Record<PageType, string> = {
   login: 'Otoritas Akses Sistem SAKTI',
-  dashboard: 'Pusat Kendali Operasional Terintegrasi',
+  'command-center': 'Pusat Kendali Operasional Terintegrasi',
   osint: 'Intelegensi Media Sosial & Analisis Sinyal',
   'predictive-analytics': 'Sistem Peringatan Dini Berbasis Vektor AI',
   'crime-mapping': 'Visualisasi Spasial Kepadatan Kriminalitas',
-  'investigation-management': 'Administrasi Perkara & Penelusuran Investigasi',
+  'kamtibmas-management': 'Administrasi Kamtibmas & Penelusuran Keamanan',
   'security-integrity': 'Integritas Sistem & Audit Keamanan',
-  'disaster-mitigation': 'Monitoring Bencana & Manajemen Kedaruratan',
+  'disaster-history': 'Pusat Data Historis & Analitik Kejadian Bencana Alam',
   'weather-forecast': 'Analisis Cuaca & Prediksi Atmosferik',
   'commodities-price': 'Pemantauan Harga Pangan & Inflasi',
   'sp2kp': 'Visualisasi Tren Historis & Analitik Harga Mendalam',
@@ -106,6 +107,8 @@ function App() {
   const [currentPage, setCurrentPage] = useState<PageType>('login');
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [minTimeElapsed, setMinTimeElapsed] = useState(true);
   const [commodityParam, setCommodityParam] = useState('');
   const { addToast, setSelectedSource } = useAppStore();
 
@@ -128,7 +131,7 @@ function App() {
       const isAuthenticated = sessionStorage.getItem('sakti_auth') === 'true';
 
       if (!isValidPage) {
-        window.location.hash = isAuthenticated ? '#/dashboard' : '#/login';
+        window.location.hash = isAuthenticated ? '#/command-center' : '#/login';
         return;
       }
 
@@ -143,12 +146,24 @@ function App() {
         const user = JSON.parse(sessionStorage.getItem('sakti_user') || '{}');
         if (user.role !== 'admin') {
           addToast('Akses ditolak: Area terbatas untuk ADMIN saja.', 'error');
-          window.location.hash = '#/dashboard';
+          window.location.hash = '#/command-center';
           return;
         }
       }
 
-      setCurrentPage(hash as PageType);
+      // Trigger transition sequence with Smart Sync
+      setIsTransitioning(true);
+      setMinTimeElapsed(false);
+      
+      // Delay the actual page swap slightly for a smoother transition
+      setTimeout(() => {
+        setCurrentPage(hash as PageType);
+      }, 150);
+
+      // Set minimum visual threshold (800ms)
+      setTimeout(() => {
+        setMinTimeElapsed(true);
+      }, 800);
     };
 
     window.addEventListener('hashchange', handleHashChange);
@@ -162,6 +177,29 @@ function App() {
 
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
+
+  // --- SMART LOADING COMPLETION HOOK ---
+  const activeRequests = useAppStore(state => state.activeRequests);
+  useEffect(() => {
+    // Only dismiss if transition is active, minimum time has passed, 
+    // AND all network requests have completed.
+    if (isTransitioning && minTimeElapsed && activeRequests.length === 0) {
+      // Small buffer before final fade out
+      const timer = setTimeout(() => setIsTransitioning(false), 150);
+      return () => clearTimeout(timer);
+    }
+  }, [isTransitioning, minTimeElapsed, activeRequests]);
+
+  // Fail-safe: Force exit after 6s in case of hanging requests
+  useEffect(() => {
+    if (isTransitioning) {
+      const timer = setTimeout(() => {
+        setIsTransitioning(false);
+        setMinTimeElapsed(true);
+      }, 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [isTransitioning]);
 
   // Update clock
   useEffect(() => {
@@ -194,14 +232,14 @@ function App() {
   const renderPage = () => {
     switch (currentPage) {
       case 'login':
-        return <Login onLoginSuccess={() => window.location.hash = '#/dashboard'} />;
-      case 'dashboard': return <Dashboard />;
+        return <Login onLoginSuccess={() => window.location.hash = '#/command-center'} />;
+      case 'command-center': return <CommandCenter />;
       case 'osint': return <Osint />;
       case 'predictive-analytics': return <PredictiveAnalytics />;
       case 'crime-mapping': return <CrimeMapping />;
-      case 'investigation-management': return <InvestigationManagement />;
+      case 'kamtibmas-management': return <KamtibmasManagement />;
       case 'security-integrity': return <SecurityIntegrity />;
-      case 'disaster-mitigation': return <DisasterMitigation />;
+      case 'disaster-history': return <DisasterHistory />;
       case 'weather-forecast': return <WeatherForecast />;
       case 'commodities-price': return <CommoditiesPrice />;
       case 'sp2kp': 
@@ -210,7 +248,7 @@ function App() {
       case 'security-mitigation': return <SecurityMitigation />;
       case 'account-profile': return <AccountProfile />;
       case 'api-docs': return <ApiDocs />;
-      default: return <Dashboard />;
+      default: return <CommandCenter />;
     }
   };
 
@@ -233,7 +271,8 @@ function App() {
           />
         )}
 
-        <main className={`${isStandalonePage ? 'p-0' : 'flex-1 p-5'}`}>
+        <main className={`${isStandalonePage ? 'p-0' : 'flex-1 p-5'} relative overflow-hidden`}>
+          <PageTransitionLoader isVisible={isTransitioning} isStandalone={isStandalonePage} />
           {renderPage()}
         </main>
       </div>

@@ -6,9 +6,6 @@ import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// Import the high-resolution city boundary data
-import cityBoundaries from '../assets/gadm41_IDN_2.json';
-
 import { correlations } from '../data/mockWeatherForecast';
 
 // Weather icon mapping for BMKG conditions
@@ -53,7 +50,7 @@ function MapZoomControls() {
 }
 
 // Internal component to focus map on selected city
-function MapFocusHandler({ selectedCity }: { selectedCity: string }) {
+function MapFocusHandler({ selectedCity, cityBoundaries }: { selectedCity: string, cityBoundaries: any }) {
   const map = useMap();
 
   useEffect(() => {
@@ -70,14 +67,14 @@ function MapFocusHandler({ selectedCity }: { selectedCity: string }) {
     window.addEventListener('map-national-view', handleNational);
 
     const normalizedSelected = normalizeName(selectedCity);
-    const feature = (cityBoundaries as any).features.find((f: any) => 
+    const feature = cityBoundaries?.features.find((f: any) => 
       normalizeName(f.properties.NAME_2) === normalizedSelected
     );
 
     if (feature) {
       const geoJsonLayer = L.geoJSON(feature);
       const bounds = geoJsonLayer.getBounds();
-      map.flyToBounds(bounds, { padding: [50, 50], duration: 1.5 });
+      map.flyToBounds(bounds, { padding: [120, 120], duration: 1.5, maxZoom: 11 });
     }
     return () => {
       window.removeEventListener('map-national-view', handleNational);
@@ -92,19 +89,42 @@ export default function WeatherForecast() {
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [cities, setCities] = useState<string[]>([]);
-  const [selectedCity, setSelectedCity] = useState('KOTA JAKARTA PUSAT');
+  const [selectedCity, setSelectedCity] = useState('');
   const [weatherData, setWeatherData] = useState<any>(null);
   const [mapCities, setMapCities] = useState<any[]>([]);
   const [hoveredRainIndex, setHoveredRainIndex] = useState<number | null>(null);
+  
+  const [cityBoundaries, setCityBoundaries] = useState<any>(null);
+  const [isLoadingBoundaries, setIsLoadingBoundaries] = useState(false);
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const todayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setMounted(true);
-    fetchCities();
-    fetchMapCities();
+    const init = async () => {
+      setMounted(true);
+      await Promise.all([fetchCities(), fetchMapCities(), fetchMapBoundaries()]);
+      if (!selectedCity) {
+        setLoading(false);
+      }
+    };
+    init();
   }, []);
+
+  const fetchMapBoundaries = async () => {
+    setIsLoadingBoundaries(true);
+    try {
+      const res = await authFetch(`${API_BASE}/weather/boundaries`);
+      if (res.ok) {
+        const data = await res.json();
+        setCityBoundaries(data);
+      }
+    } catch (err) {
+      console.error('Failed to load map boundaries:', err);
+    } finally {
+      setIsLoadingBoundaries(false);
+    }
+  };
 
   // Auto-scroll to today's forecast
   useEffect(() => {
@@ -129,8 +149,10 @@ export default function WeatherForecast() {
   const fetchCities = async () => {
     try {
       const res = await authFetch(`${API_BASE}/weather/cities`);
-      const data = await res.json();
-      setCities(data);
+      if (res.ok) {
+        const data = await res.json();
+        setCities(data);
+      }
     } catch (err) {
       addToast('Gagal mengambil daftar kota', 'alert');
     }
@@ -139,8 +161,10 @@ export default function WeatherForecast() {
   const fetchMapCities = async () => {
     try {
       const res = await authFetch(`${API_BASE}/weather/map-cities`);
-      const data = await res.json();
-      setMapCities(data);
+      if (res.ok) {
+        const data = await res.json();
+        setMapCities(data);
+      }
     } catch (err) {
       console.error('Failed to fetch map cities data');
     }
@@ -266,7 +290,7 @@ export default function WeatherForecast() {
             />
             
             <MapZoomControls />
-            <MapFocusHandler selectedCity={selectedCity} />
+            <MapFocusHandler selectedCity={selectedCity} cityBoundaries={cityBoundaries} />
 
             {/* FLOATING SECTOR SELECTION HUD (TOP RIGHT) */}
             <div className="absolute top-6 right-6 z-[1000] pointer-events-none">
@@ -286,9 +310,10 @@ export default function WeatherForecast() {
               </div>
             </div>
 
-            <GeoJSON
-              key={mapCities.length}
-              data={cityBoundaries as any}
+            {cityBoundaries && (
+              <GeoJSON
+                key={`${mapCities.length}-${cityBoundaries.features.length}`}
+                data={cityBoundaries}
               style={(feature: any) => {
                 const cityName = feature.properties.NAME_2;
                 const normalized = normalizeName(cityName);
@@ -311,29 +336,52 @@ export default function WeatherForecast() {
                 const cityData = mapCities.find(c => normalizeName(c.city) === normalized);
 
                 layer.bindTooltip(`
-                  <div class="bg-gray-900/95 border border-cyan-500/30 p-3 rounded backdrop-blur-md shadow-2xl font-rajdhani min-w-[140px] pointer-events-none">
-                    <div class="text-[9px] text-cyan-500 font-mono uppercase tracking-widest border-b border-cyan-500/20 pb-1 mb-2">
-                      TRACKING CODE: ${cityData ? `BMKG-${cityData.city.substring(0, 3).toUpperCase()}` : 'UNIT-OFFLINE'}
+                  <div class="bg-gray-900/95 border border-white/10 p-5 rounded-2xl backdrop-blur-2xl shadow-[0_25px_60px_rgba(0,0,0,0.6)] min-w-[240px] pointer-events-none relative overflow-hidden group">
+                    <!-- Corner Brackets -->
+                    <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-cyan-500/40 rounded-tl-xl"></div>
+                    <div class="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-cyan-500/40 rounded-tr-xl"></div>
+                    <div class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-cyan-500/40 rounded-bl-xl"></div>
+                    <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-cyan-500/40 rounded-br-xl"></div>
+                    
+                    <div class="text-[17px] font-orbitron font-black text-white uppercase tracking-[0.1em] mb-4 pb-3 border-b border-white/10 flex items-center justify-between mt-1">
+                      ${cityName}
+                      <i class="fa-solid fa-satellite text-[12px] text-cyan-500/40"></i>
                     </div>
-                    <div class="text-[12px] font-black text-white uppercase mb-2">
-                      ${cityName} ${cityData ? '' : '(N/A)'}
-                    </div>
+
                     ${cityData ? `
-                    <div class="grid grid-cols-2 gap-2 text-[10px] font-bold uppercase">
-                      <div class="text-gray-500">Temp:</div>
-                      <div class="text-white text-right">${cityData.temp}°C</div>
-                      <div class="text-gray-500">Humi:</div>
-                      <div class="text-white text-right">${cityData.humidity}%</div>
-                      <div class="text-gray-500">Cond:</div>
-                      <div class="${getConditionIcon(cityData.condition).color} text-right">${cityData.condition}</div>
+                    <div class="space-y-3.5">
+                      <div class="flex justify-between items-center bg-white/5 px-4 py-3 rounded-xl border border-white/10 shadow-inner group/row hover:bg-white/10 transition-all">
+                        <span class="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em] group-hover/row:text-cyan-500/80 transition-colors">Temperature</span>
+                        <span class="text-white font-orbitron text-[15px] font-black">${cityData.temp}°C</span>
+                      </div>
+                      <div class="flex justify-between items-center bg-white/5 px-4 py-3 rounded-xl border border-white/10 shadow-inner group/row hover:bg-white/10 transition-all">
+                        <span class="text-[9px] text-gray-400 uppercase font-black tracking-[0.2em] group-hover/row:text-amber-500/80 transition-colors">Condition</span>
+                        <span class="${getConditionIcon(cityData.condition).color} uppercase font-orbitron text-[11px] font-black tracking-tight">${cityData.condition}</span>
+                      </div>
                     </div>
                     ` : `
-                    <div class="text-[10px] text-gray-500 italic uppercase">
-                      NO ACTIVE DATA LINKED FOR THIS SECTOR
+                    <div class="flex items-center gap-4 bg-red-500/10 p-4 rounded-xl border border-red-500/20 text-red-500">
+                      <div class="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
+                        <i class="fa-solid fa-plug-circle-xmark text-lg animate-pulse"></i>
+                      </div>
+                      <div>
+                        <div class="text-[10px] font-black uppercase tracking-widest">Link Failure</div>
+                        <div class="text-[8px] font-mono opacity-60">ERR_CONNECTION_OFFLINE</div>
+                      </div>
                     </div>
                     `}
+                    
+                    <div class="mt-5 flex flex-col gap-1.5">
+                      <div class="flex justify-between text-[7px] font-mono text-gray-600 uppercase tracking-widest">
+                        <span>Sync Status: Nominal</span>
+                        <span>0.04ms</span>
+                      </div>
+                      <div class="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                        <div class="h-full bg-cyan-500/40 animate-[ews-ticker_3s_linear_infinite]" style="width: 60%"></div>
+                      </div>
+                    </div>
                   </div>
-                `, { sticky: true, direction: 'top', className: 'tactical-tooltip' });
+                `, { sticky: true, direction: 'top', className: 'tactical-tooltip', offset: [0, -15] });
 
                 if (cityData) {
                   layer.on({
@@ -356,6 +404,7 @@ export default function WeatherForecast() {
                 }
               }}
             />
+          )}
 
             {/* Tactical UI Overlays */}
             <div className="absolute top-4 left-4 z-[1000] pointer-events-none">
@@ -508,6 +557,19 @@ export default function WeatherForecast() {
               </div>
             );
           })}
+
+          {!weatherData && (
+            <div className="flex-1 flex flex-col items-center justify-center py-12 text-center bg-white/[0.01] rounded-2xl border border-dashed border-white/5 mx-auto w-full">
+              <div className="w-16 h-16 rounded-full bg-cyan-500/5 flex items-center justify-center mb-4 relative">
+                 <div className="absolute inset-0 rounded-full bg-cyan-500/10 animate-ping opacity-20" />
+                 <i className="fa-solid fa-map-pin text-cyan-500/40 text-3xl"></i>
+              </div>
+              <div className="font-orbitron text-gray-400 font-bold uppercase tracking-widest text-sm mb-2">Belum Ada Lokasi Terpilih</div>
+              <div className="text-[10px] text-gray-600 font-mono uppercase tracking-wider max-w-sm px-4">
+                Pilih salah satu kota pada peta atau gunakan dropdown untuk melihat prakiraan cuaca detail 7 hari ke depan.
+              </div>
+            </div>
+          )}
         </div>
 
         <style>{`
@@ -589,6 +651,12 @@ export default function WeatherForecast() {
             
             <path d={areaD} fill="url(#rainGradPro)" className="transition-all duration-500" />
             <path d={pathD} fill="none" stroke="#06b6d4" strokeWidth="1.5" strokeLinecap="round" className="opacity-80 transition-all duration-500" />
+            
+            {!weatherData && (
+              <text x="180" y="55" textAnchor="middle" className="fill-gray-600 font-orbitron text-[12px] uppercase font-bold tracking-[0.2em] opacity-50 animate-pulse">
+                Menunggu Input Lokasi...
+              </text>
+            )}
             
             {rainfallHistory.map((pt: any, idx: number) => (
               <g key={idx}>

@@ -80,6 +80,28 @@ export const regionIndonesiaProvinces = pgTable("region_indonesia_provinces", {
 	regionName: varchar("region_name", { length: 64 }).notNull(),
 });
 
+export const regionIndonesiaCities = pgTable("region_indonesia_cities", {
+	id: serial().primaryKey().notNull(),
+	gid2: varchar("gid_2", { length: 50 }).notNull(),
+	gid0: varchar("gid_0", { length: 10 }).default('IDN').notNull(),
+	country: varchar({ length: 50 }).default('Indonesia').notNull(),
+	gid1: varchar("gid_1", { length: 50 }),
+	provinceName: varchar("province_name", { length: 100 }).notNull(),
+	nlName1: varchar("nl_name_1", { length: 100 }),
+	cityName: varchar("city_name", { length: 150 }).notNull(),
+	varname2: varchar("varname_2", { length: 200 }),
+	nlName2: varchar("nl_name_2", { length: 200 }),
+	cityType: varchar("city_type", { length: 50 }),
+	cityTypeEn: varchar("city_type_en", { length: 50 }),
+	cc2: varchar("cc_2", { length: 20 }),
+	hasc2: varchar("hasc_2", { length: 20 }),
+	geometry: jsonb().notNull(),
+	centroidLat: doublePrecision("centroid_lat"),
+	centroidLon: doublePrecision("centroid_lon"),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+});
+
 export const calculationIndexRisiko = pgTable("calculation_index_risiko", {
 	id: bigserial({ mode: "bigint" }).notNull(),
 	reportDate: date("report_date").notNull(),

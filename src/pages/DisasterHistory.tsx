@@ -3,7 +3,7 @@ import { useAppStore } from '../store/useAppStore';
 
 import { bencanaAlerts, resources, emergencyContacts, vulnerabilityIndex } from '../data/mockDisasterMitigation';
 
-export default function DisasterMitigation() {
+export default function DisasterHistory() {
   const addToast = useAppStore((s) => s.addToast);
   const [mounted, setMounted] = useState(false);
 
@@ -59,7 +59,7 @@ export default function DisasterMitigation() {
           <div className="text-[12px] text-gray-500 uppercase tracking-wider mb-2">Potensi Bencana Aktif</div>
           <div className="font-orbitron text-4xl font-bold text-red-500 mb-1">02</div>
           <div className="flex items-center gap-2 text-[13px]">
-            <span className="text-red-400 uppercase font-black uppercase">▲ CRITICAL</span>
+            <span className="text-red-400 uppercase font-black">▲ CRITICAL</span>
             <span className="text-gray-500 italic">Banjir & Longsor</span>
           </div>
           <div className="absolute right-4 top-1/2 -translate-y-1/2 text-5xl opacity-20 text-red-500">

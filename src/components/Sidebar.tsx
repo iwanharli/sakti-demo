@@ -22,7 +22,7 @@ const menuSections: MenuSection[] = [
     title: 'UNIT OPERASIONAL',
     subtitle: 'POLRES KOTA METRO',
     items: [
-      { id: 'dashboard', label: 'Command Center', icon: 'fa-solid fa-house-chimney-medical' }
+      { id: 'command-center', label: 'Command Center', icon: 'fa-solid fa-house-chimney-medical' }
     ]
   },
   {
@@ -35,7 +35,7 @@ const menuSections: MenuSection[] = [
   {
     title: 'OPERASIONAL',
     items: [
-      { id: 'investigation-management', label: 'Manajemen Investigasi', icon: 'fa-solid fa-magnifying-glass-chart' },
+      { id: 'kamtibmas-management', label: 'Manajemen Kamtibmas', icon: 'fa-solid fa-magnifying-glass-chart' },
     ]
   },
   {
@@ -43,7 +43,7 @@ const menuSections: MenuSection[] = [
     items: [
       { id: 'weather-forecast', label: 'Prediksi Cuaca', icon: 'fa-solid fa-cloud-sun-rain' },
       { id: 'commodities-price', label: 'Harga Sembako', icon: 'fa-solid fa-cart-shopping', badge: { count: 4, color: 'yellow' } },
-      { id: 'disaster-mitigation', label: 'Mitigasi Bencana', icon: 'fa-solid fa-volcano', badge: { count: 2, color: 'yellow' } },
+      { id: 'disaster-history', label: 'Histori Bencana', icon: 'fa-solid fa-volcano', badge: { count: 2, color: 'yellow' } },
       { id: 'security-mitigation', label: 'Mitigasi Keamanan', icon: 'fa-solid fa-user-shield', badge: { count: 5, color: 'red' } },
     ]
   }

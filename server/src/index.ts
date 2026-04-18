@@ -132,6 +132,9 @@ app.get('/api/health', async (req, res) => {
     // Test Secondary DB
     const secondaryRes = await dbSecondary.execute(sql`SELECT current_database(), current_user`);
 
+    // Check boundaries count
+    const boundariesCount = await dbSecondary.execute(sql`SELECT COUNT(*)::int as count FROM region_indonesia_cities`);
+    
     res.json({
       status: 'OK',
       databases: {
@@ -142,6 +145,8 @@ app.get('/api/health', async (req, res) => {
         secondary: {
           connected: true,
           details: secondaryRes.rows[0],
+          boundaries_ready: (boundariesCount.rows[0] as { count: number })?.count > 0,
+          boundaries_count: (boundariesCount.rows[0] as { count: number })?.count
         }
       }
     });
@@ -331,6 +336,47 @@ app.get('/api/weather/map-cities', async (req, res) => {
 
 /**
  * @openapi
+ * /api/weather/boundaries:
+ *   get:
+ *     summary: Get GeoJSON boundaries for all Indonesian cities/regencies
+ *     description: Returns a FeatureCollection derived from the region_indonesia_cities table in the secondary database.
+ *     responses:
+ *       200:
+ *         description: GeoJSON FeatureCollection containing city boundaries.
+ */
+app.get('/api/weather/boundaries', async (req, res) => {
+  try {
+    const results = await dbSecondary.execute(sql`
+      SELECT 
+        gid_2,
+        city_name as "name_2",
+        province_name as "name_1",
+        geometry
+      FROM region_indonesia_cities
+    `);
+    
+    const features = results.rows.map((row: any) => ({
+      type: 'Feature',
+      id: row.gid_2,
+      properties: {
+        NAME_1: row.name_1,
+        NAME_2: row.name_2,
+        GID_2: row.gid_2
+      },
+      geometry: typeof row.geometry === 'string' ? JSON.parse(row.geometry) : row.geometry
+    }));
+
+    res.json({
+      type: 'FeatureCollection',
+      features
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
  * /api/bmkg/warnings:
  *   get:
  *     summary: Get latest BMKG disaster warnings
@@ -398,24 +444,33 @@ app.get('/api/analytics/kamtibmas-regions', authenticateToken, async (req, res) 
  */
 app.get('/api/analytics/kamtibmas-national-stats', authenticateToken, async (req, res) => {
   try {
+    const latestDateRes = await dbSecondary.execute(sql`SELECT MAX(report_date) as max_date FROM nasional_kamtibmas_case_data`);
+    const maxDate = latestDateRes.rows[0].max_date as string;
+    
+    if (!maxDate) {
+      return res.json({ today: 0, yesterday: 0, trend_pct: 0 });
+    }
+
+    const prevDateRes = await dbSecondary.execute(sql`
+      SELECT MAX(report_date) as prev_date 
+      FROM nasional_kamtibmas_case_data 
+      WHERE report_date < ${maxDate}
+    `);
+    const prevDate = prevDateRes.rows[0].prev_date as string;
+
     const results = await dbSecondary.execute(sql`
       WITH daily_stats AS (
         SELECT 
           report_date,
-          SUM(
-            COALESCE(((additional_data->'case_detail'->'kejahatan_total')::jsonb->0->>'kasus_mingguan')::numeric, 0) +
-            COALESCE(((additional_data->'case_detail'->'gangguan_total')::jsonb->0->>'kasus_mingguan')::numeric, 0) +
-            COALESCE(((additional_data->'case_detail'->'pelanggaran_total')::jsonb->0->>'kasus_mingguan')::numeric, 0) +
-            COALESCE(((additional_data->'case_detail'->'bencana_total')::jsonb->0->>'kasus_mingguan')::numeric, 0)
-          ) as daily_total
-        FROM calculation_index_risiko
-        WHERE category ILIKE '%KAMTIBMAS%'
-        AND report_date IN (CURRENT_DATE, CURRENT_DATE - INTERVAL '1 day')
+          SUM(value) as daily_total
+        FROM nasional_kamtibmas_case_data
+        WHERE sub_category IN ('kejahatan_total', 'gangguan_total', 'pelanggaran_total', 'bencana_total')
+        AND report_date IN (${maxDate}, ${prevDate})
         GROUP BY report_date
       )
       SELECT 
-        (SELECT daily_total FROM daily_stats WHERE report_date = CURRENT_DATE) as today,
-        (SELECT daily_total FROM daily_stats WHERE report_date = CURRENT_DATE - INTERVAL '1 day') as yesterday
+        (SELECT daily_total FROM daily_stats WHERE report_date = ${maxDate}) as today,
+        (SELECT daily_total FROM daily_stats WHERE report_date = ${prevDate}) as yesterday
     `);
     
     const row = results.rows[0] as any;
@@ -432,7 +487,216 @@ app.get('/api/analytics/kamtibmas-national-stats', authenticateToken, async (req
     res.json({
       today,
       yesterday,
-      trend_pct: parseFloat(trend_pct.toFixed(2))
+      trend_pct,
+      date: maxDate
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/kamtibmas/polda-list:
+ *   get:
+ *     summary: Get list of all available Polda
+ */
+app.get('/api/kamtibmas/polda-list', authenticateToken, async (req, res) => {
+  try {
+    const results = await dbSecondary.execute(sql`
+      SELECT DISTINCT polda_name 
+      FROM nasional_kamtibmas_case_data 
+      ORDER BY polda_name ASC
+    `);
+    res.json(results.rows.map(r => r.polda_name));
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/kamtibmas/classifications:
+ *   get:
+ *     summary: Get list of all available crime classifications
+ */
+app.get('/api/kamtibmas/classifications', authenticateToken, async (req, res) => {
+  try {
+    const results = await dbSecondary.execute(sql`
+      SELECT DISTINCT sub_category 
+      FROM nasional_kamtibmas_case_data 
+      WHERE sub_category NOT IN ('kejahatan_total', 'bencana_total', 'gangguan_total', 'pelanggaran_total')
+      ORDER BY sub_category ASC
+    `);
+    res.json(results.rows.map(r => r.sub_category));
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/kamtibmas/stats:
+ *   get:
+ *     summary: Get detailed Kamtibmas statistics for dashboard cards
+ */
+app.get('/api/kamtibmas/stats', authenticateToken, async (req, res) => {
+  const polda = req.query.polda;
+  const dateStr = req.query.date;
+  
+  try {
+    const whereClause = polda ? sql`AND polda_name = ${polda}` : sql``;
+    
+    // Determine the target date
+    let targetDateValue;
+    if (dateStr) {
+      targetDateValue = dateStr;
+    } else {
+      const latestDateRes = await dbSecondary.execute(sql`SELECT MAX(report_date) as d FROM nasional_kamtibmas_case_data`);
+      targetDateValue = latestDateRes.rows[0].d;
+    }
+
+    if (!targetDateValue) {
+      return res.json({ total_kamtibmas: 0, total_kejahatan: 0, total_demo: 0, total_massa: 0, date: 'N/A' });
+    }
+
+    const results = await dbSecondary.execute(sql`
+      SELECT 
+        (
+          SELECT SUM(CASE WHEN sub_category IN ('kejahatan_total', 'gangguan_total', 'pelanggaran_total', 'bencana_total') THEN value ELSE 0 END)
+          FROM nasional_kamtibmas_case_data
+          WHERE report_date >= (${targetDateValue}::date - INTERVAL '2 days') 
+            AND report_date <= ${targetDateValue}::date ${whereClause}
+        ) as total_kamtibmas,
+        (
+          SELECT SUM(CASE WHEN sub_category = 'kejahatan_total' THEN value ELSE 0 END)
+          FROM nasional_kamtibmas_case_data
+          WHERE report_date >= (${targetDateValue}::date - INTERVAL '2 days') 
+            AND report_date <= ${targetDateValue}::date ${whereClause}
+        ) as total_kejahatan,
+        (
+          SELECT SUM(CASE WHEN sub_category = 'kejahatan_konvensional' THEN value ELSE 0 END)
+          FROM nasional_kamtibmas_case_data
+          WHERE report_date >= (${targetDateValue}::date - INTERVAL '2 days') 
+            AND report_date <= ${targetDateValue}::date ${whereClause}
+        ) as konvensional,
+        (
+          SELECT SUM(CASE WHEN sub_category = 'kejahatan_transnasional' THEN value ELSE 0 END)
+          FROM nasional_kamtibmas_case_data
+          WHERE report_date >= (${targetDateValue}::date - INTERVAL '2 days') 
+            AND report_date <= ${targetDateValue}::date ${whereClause}
+        ) as transnasional,
+        (
+          SELECT SUM(CASE WHEN sub_category = 'kejahatan_kekayaan_negara' THEN value ELSE 0 END)
+          FROM nasional_kamtibmas_case_data
+          WHERE report_date >= (${targetDateValue}::date - INTERVAL '2 days') 
+            AND report_date <= ${targetDateValue}::date ${whereClause}
+        ) as kekayaan_negara,
+        (
+          SELECT SUM(CASE WHEN sub_category = 'pelanggaran_total' THEN value ELSE 0 END)
+          FROM nasional_kamtibmas_case_data
+          WHERE report_date >= (${targetDateValue}::date - INTERVAL '2 days') 
+            AND report_date <= ${targetDateValue}::date ${whereClause}
+        ) as pelanggaran,
+        (
+          SELECT SUM(CASE WHEN category = 'total_unjuk_rasa' THEN value ELSE 0 END)
+          FROM nasional_kamtibmas_unjuk_rasa_data
+          WHERE report_date >= (${targetDateValue}::date - INTERVAL '2 days') 
+            AND report_date <= ${targetDateValue}::date
+          ${polda ? sql`AND polda_name = ${polda}` : sql``}
+        ) as total_demo,
+        (
+          SELECT SUM(CASE WHEN category = 'total_massa' THEN value ELSE 0 END)
+          FROM nasional_kamtibmas_unjuk_rasa_data
+          WHERE report_date >= (${targetDateValue}::date - INTERVAL '2 days') 
+            AND report_date <= ${targetDateValue}::date
+          ${polda ? sql`AND polda_name = ${polda}` : sql``}
+        ) as total_massa,
+        (
+          SELECT SUM(CASE WHEN category = 'total_pam_polri' THEN value ELSE 0 END)
+          FROM nasional_kamtibmas_unjuk_rasa_data
+          WHERE report_date >= (${targetDateValue}::date - INTERVAL '2 days') 
+            AND report_date <= ${targetDateValue}::date
+          ${polda ? sql`AND polda_name = ${polda}` : sql``}
+        ) as pam_polri,
+        (
+          SELECT SUM(CASE WHEN category = 'total_pam_tni' THEN value ELSE 0 END)
+          FROM nasional_kamtibmas_unjuk_rasa_data
+          WHERE report_date >= (${targetDateValue}::date - INTERVAL '2 days') 
+            AND report_date <= ${targetDateValue}::date
+          ${polda ? sql`AND polda_name = ${polda}` : sql``}
+        ) as pam_tni,
+        (
+          SELECT SUM(CASE WHEN category = 'total_pam_lainnya' THEN value ELSE 0 END)
+          FROM nasional_kamtibmas_unjuk_rasa_data
+          WHERE report_date >= (${targetDateValue}::date - INTERVAL '2 days') 
+            AND report_date <= ${targetDateValue}::date
+          ${polda ? sql`AND polda_name = ${polda}` : sql``}
+        ) as pam_lainnya
+    `);
+    
+    const stats = results.rows[0] as any;
+    res.json({ ...stats, date: targetDateValue });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/kamtibmas/recent-cases:
+ *   get:
+ *     summary: Get recent crime records for the matrix table
+ */
+app.get('/api/kamtibmas/recent-cases', authenticateToken, async (req, res) => {
+  const polda = req.query.polda;
+  const classification = req.query.classification;
+  const limit = parseInt(req.query.limit as string) || 20;
+  const page = parseInt(req.query.page as string) || 1;
+  const offset = (page - 1) * limit;
+  
+  try {
+    const date = req.query.date;
+    let targetDate;
+    if (date) {
+      targetDate = date;
+    } else {
+      const latestDateRes = await dbSecondary.execute(sql`SELECT MAX(report_date) as max_date FROM nasional_kamtibmas_case_data`);
+      targetDate = latestDateRes.rows[0].max_date;
+    }
+
+    const whereConditions = [sql`sub_category NOT LIKE '%total%'`];
+    if (polda) whereConditions.push(sql`polda_name = ${polda}`);
+    if (classification) whereConditions.push(sql`sub_category = ${classification}`);
+    if (targetDate) whereConditions.push(sql`report_date = ${targetDate}`);
+    
+    // Construct WHERE clause
+    const whereClause = sql.join(whereConditions, sql` AND `);
+
+    // Get Data
+    const results = await dbSecondary.execute(sql`
+      SELECT id, report_date as date, polda_name as location, sub_category as type, value as count
+      FROM nasional_kamtibmas_case_data
+      WHERE ${whereClause}
+      ORDER BY value DESC, report_date DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `);
+
+    // Get Total Count for Pagination
+    const countResult = await dbSecondary.execute(sql`
+      SELECT COUNT(*) as total
+      FROM nasional_kamtibmas_case_data
+      WHERE ${whereClause}
+    `);
+    
+    res.json({
+      data: results.rows,
+      pagination: {
+        total: parseInt(countResult.rows[0].total as string),
+        page,
+        limit,
+        totalPages: Math.ceil(parseInt(countResult.rows[0].total as string) / limit)
+      }
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });

@@ -9,7 +9,7 @@ import {
   path1, 
   path2, 
   path3 
-} from '../data/mockDashboard';
+} from '../data/mockCrimeMapping';
 import { patrolRoutes, gpsTracking } from '../data/mockCrimeMapping';
 
 // Component to track map movement for HUD

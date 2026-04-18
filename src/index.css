@@ -387,6 +387,10 @@
   @apply bg-cyan-500/15 text-cyan-400 border border-cyan-500/30;
 }
 
+.ews-tag-blue {
+  @apply bg-blue-500/15 text-blue-400 border border-blue-500/30;
+}
+
 .ews-tag-purple {
   @apply bg-purple-500/15 text-purple-400 border border-purple-500/30;
 }
