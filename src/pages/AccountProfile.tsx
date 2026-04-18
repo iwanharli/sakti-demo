@@ -35,7 +35,6 @@ const getDeviceName = (ua: string) => {
 export default function AccountProfile() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
   const [loginLogs, setLoginLogs] = useState<any[]>([]);
 
   // States for inline editing
@@ -81,7 +80,6 @@ export default function AccountProfile() {
       return;
     }
 
-    setIsUpdating(true);
     try {
       let finalName = field === 'name' ? editName : user.name;
       let finalPhone = field === 'phone' ? editPhone : user.phone;
@@ -128,7 +126,6 @@ export default function AccountProfile() {
       if (field === 'name') setEditName(user.name);
       if (field === 'phone') setEditPhone(user.phone || '');
     } finally {
-      setIsUpdating(false);
     }
   };
 

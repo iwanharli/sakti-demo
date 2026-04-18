@@ -8,13 +8,17 @@ interface ToastContainerProps {
 const toastIcons = {
   info: 'ℹ️',
   alert: '🚨',
-  success: '✅'
+  success: '✅',
+  error: '❌',
+  warning: '⚠️'
 };
 
 const toastClasses = {
   info: 'ews-toast info',
   alert: 'ews-toast alert',
-  success: 'ews-toast success'
+  success: 'ews-toast success',
+  error: 'ews-toast error',
+  warning: 'ews-toast warning'
 };
 
 export default function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
