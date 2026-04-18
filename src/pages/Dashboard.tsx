@@ -725,8 +725,8 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-            {/* Timeline Feed with Scroll */}
-            <div className="flex-1 ews-timeline overflow-y-auto ews-scrollbar max-h-[480px] space-y-3 pr-2">
+            {/* Timeline Feed with Scroll - Now filling full available height */}
+            <div className="flex-1 ews-timeline overflow-y-auto ews-scrollbar space-y-3 pr-2 border-b border-gray-800/50 mb-4">
               {timelineData.map((item, idx) => {
                 // Get dynamic icon based on content/tags
                 const icon = item.tags.includes('LANTAS') ? 'fa-solid fa-car-burst' : 
