@@ -4,8 +4,8 @@ import * as dotenv from 'dotenv';
 import path from 'path';
 
 // Import schemas
-import * as primarySchema from '../db/primary/schema.ts';
-import * as secondarySchema from '../db/secondary/schema.ts';
+import * as primarySchema from './db/primary/schema';
+import * as secondarySchema from './db/secondary/schema';
 
 dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
 
