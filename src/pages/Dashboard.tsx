@@ -12,17 +12,10 @@ import {
   path3,
   tickerItems,
   timelineItems,
-  patrolStatusUnits,
   riskScores
 } from '../data/mockDashboard';
 import type { 
-  TimelineItem, 
-  CaseItem, 
-  PatrolUnit, 
-  PersonRisk, 
-  KeywordAlert, 
-  CollabItem, 
-  SystemLayer 
+  TimelineItem 
 } from '../types';
 import type { BMKGWarning } from '../bmkg_types';
 
