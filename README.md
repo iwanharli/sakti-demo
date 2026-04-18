@@ -1,64 +1,46 @@
 # SAKTI - Sistem Analisis Kamtibmas & Taktis Terintegrasi
 
-**SAKTI** adalah platform *Command Center* tingkat tinggi yang dirancang dengan estetika **Cyber-Tactical**. Dashboard ini dioptimalkan untuk pemantauan keamanan (Kamtibmas), mitigasi bencana, analitik intelijen, dan kolaborasi sektoral secara profesional dan *real-time*.
+**SAKTI** adalah platform *Early Warning System* (EWS) dan *Command Center* tingkat tinggi yang dirancang untuk kebutuhan operasional taktis institusi keamanan. Menggabungkan estetika **Cyber-Tactical** dengan infrastruktur data yang tangguh untuk pengambilan keputusan real-time.
 
-![Version](https://img.shields.io/badge/version-2.1.0--tactical-cyan)
-![React](https://img.shields.io/badge/React-19-blue)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)
-![Tailwind](https://img.shields.io/badge/Tailwind-3.4-cyan)
+![Version](https://img.shields.io/badge/version-2.5.0--resilient-cyan)
+![Build](https://img.shields.io/badge/build-passing-emerald)
+![Security](https://img.shields.io/badge/security-hardened-blue)
 
-## 💎 Konsep Desain: Cyber-Tactical Identity
-Berbeda dengan dashboard standar, SAKTI menggunakan bahasa desain **Cyber-Tactical** yang mengutamakan efisiensi informasi dan estetika futuristik:
-- **Glassmorphism HUD**: Antarmuka transparan dengan efek *backdrop-blur* tinggi untuk kedalaman visual.
-- **High-Precision Typography**: Menggunakan font *Orbitron* untuk elemen identitas dan *Rajdhani/Mono* untuk data operasional.
-- **Tactical Color Coding**: Skema warna fungsional (Cyan/Emerald untuk status normal, Amber/Red untuk peringatan) dengan pendaran neon halus.
+## 📡 Infrastruktur Taktis (Core Engine)
+Berbeda dengan dashboard standar, SAKTI dilengkapi dengan mesin komunikasi data yang dirancang untuk kondisi lapangan:
 
-## 🚀 Fitur Utama & Modernisasi UI
-Seluruh modul telah melalui tahap modernisasi untuk mencapai standar *Command Center* operasional:
+- **Smart Dynamic Transitions**: Navigasi antar modul yang cerdas—layar pemuatan tersinkronisasi langsung dengan aktivitas jaringan, memastikan konten hanya muncul saat data sudah benar-benar siap.
+- **Resilient Data Fetching (Auto-Retry)**: Mesin komunikasi yang "gigih" dengan protokol percobaan ulang otomatis (3x retry) untuk menjaga stabilitas pantauan saat koneksi server tidak stabil.
+- **Context-Aware Loading**: Log terminal vertikal yang menampilkan aktivitas jaringan secara real-time (`GET`, `RETRY`, `OK`, `ERR`) langsung pada layar transisi.
 
-### 1. Modernized Weather HUD
-- **Single-Line Streamlined Header**: Reduksi gangguan visual dengan header tipis yang fokus pada metrik utama.
-- **Integrated Map HUD**: Kontrol peta (seleksi sektor & nasional) kini terintegrasi sebagai elemen HUD melayang di dalam area peta.
-- **Scrollable Timeline**: 7-Day Forecast dengan fitur *horisontal scroll* dan *auto-focus* pada hari ini.
+## 🕹️ Modul Operasional Utama
+Sistem ini mengintegrasikan berbagai sumber intelijen ke dalam satu pusat kendali:
 
-### 2. Premium Sidebar Branding
-- **Hex-Shield Identity**: Logo "S" dengan desain perisai taktis hexagonal yang memiliki efek *chrome reflection* dan *neon pulse*.
-- **Tactical Navigation**: Penggunaan label kategori institusional (seperti "POLRES KOTA METRO") dengan aksen *border-left* perak.
-- **Dynamic Active Indicators**: Bar indikator aktif dengan pendaran neon cyan.
+- **Command Center**: Dashboard eksekutif untuk pantauan situasi makro nasional.
+- **OSINT Intelligence**: Analisis sentimen media sosial, tren provokasi, dan monitoring kata kunci kritis.
+- **Predictive Analytics**: Pemetaan hot-spot kriminalitas dan analisis probabilitas residivisme berbasis AI.
+- **Disaster History & Monitoring**: Integrasi data sensor lapangan IoT dan BMKG untuk pantauan bencana alam dan logistik darurat.
+- **Economics Monitor (SP2KP/PIHPS)**: Pemantauan harga pangan nasional dan deteksi anomali inflasi pasar.
 
-### 3. Tactical Minimalist Notifications
-- **Custom SweetAlert2 Overhaul**: Mengganti notifikasi standar dengan *Toast* kecil yang elegan.
-- **Dynamic Neon Borders**: Warna bingkai notifikasi berubah secara dinamis sesuai tipe pesan (Info, Success, Warning, Error).
-- **Non-Intrusive UX**: Tanpa *progress bar* yang mengganggu, menggunakan ikon FontAwesome yang minimalis.
+## 🛠️ Technology Stack
+SAKTI dibangun di atas teknologi modern untuk performa dan keamanan tinggi:
 
-## 🛠️ Tech Stack
-- **Frontend**: React 19 (Component-Based), TypeScript (Strict Mode).
-- **Styling**: Tailwind CSS dengan kustomisasi *Tactical Utilities*.
-- **Mapping**: React-Leaflet dengan *high-resolution city boundaries*.
-- **State Management**: Zustand untuk sinkronisasi data antar modul.
-- **Documentation**: Scalar API Reference terintegrasi.
-- **Notifications**: SweetAlert2 (Custom Tactical Mixin).
+- **Frontend Core**: React 19, TypeScript (Strict Mode), Vite.
+- **Styling**: Vanilla CSS & Tailwind (Tactical Utility Design).
+- **Mapping Engine**: React-Leaflet dengan integrasi GADM GeoJSON (High Precision).
+- **State Orchestration**: Zustand (Reactive System Storage).
+- **API Architecture**: Scalar Swagger Reference untuk dokumentasi endpoint teknis.
 
-## 🗄️ Struktur Data Modular (`src/data/`)
-Data operasional dipisahkan ke dalam modul mandiri untuk memudahkan integrasi API di masa depan:
-
-| Modul | Deskripsi Fungsi |
-|-------|------------------|
-| `mockOsint.ts` | Analisis sentimen media sosial & deteksi provokasi. |
-| `mockWeatherForecast.ts` | Data klimatologi & korelasi kerawanan cuaca. |
-| `mockPredictiveAnalytics.ts` | Prediksi residivisme & pemetaan titik panas kejahatan. |
-| `mockCommoditiesPrice.ts` | Pantauan harga sembako & deteksi anomali ekonomi. |
-
-## 🏁 Cara Menjalankan
-1. Pastikan Node.js telah terinstal.
-2. Install depedensi:
+## 🚀 Deployment & Setup
+1. Pastikan lingkungan Node.js (LTS) tersedia.
+2. Instalasi dependensi:
    ```bash
    npm install
    ```
-3. Jalankan server pengembangan:
+3. Inisialisasi lingkungan operasional:
    ```bash
    npm run dev
    ```
 
 ---
-*Dashboard ini dikembangkan untuk kebutuhan operasional taktis dengan standar keamanan dan integritas data tinggi.*
+*Dikembangkan dengan standar integritas data dan efisiensi informasi tinggi untuk pusat kendali operasional digital.*
