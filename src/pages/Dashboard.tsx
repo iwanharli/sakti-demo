@@ -938,143 +938,159 @@ export default function Dashboard() {
             </div>
             {/* Timeline Feed with Scroll - Limited height for tactical focus */}
             <div className="flex-1 ews-timeline overflow-y-auto ews-scrollbar space-y-3 pr-2 border-b border-gray-800/50 mb-1 max-h-[840px]">
-              {filteredTimeline.map((item, idx) => {
-                // Get dynamic icon based on content/tags
-                const icon = item.tags.includes('LANTAS') ? 'fa-solid fa-car-burst' : 
-                             item.tags.includes('RESKRIM') ? 'fa-solid fa-fingerprint' : 
-                             item.tags.includes('INTELKAM') ? 'fa-solid fa-masks-theater' : 
-                             item.tags.includes('MONITORING') ? 'fa-solid fa-display' : 
-                             'fa-solid fa-triangle-exclamation';
-                
-                const priorityColor = item.color === 'red' ? 'border-red-500' : 
-                                      item.color === 'amber' ? 'border-amber-500' : 
-                                      item.color === 'green' ? 'border-emerald-500' : 'border-cyan-500';
-                
-                                  item.color === 'amber' ? 'shadow-[0_0_10px_rgba(245,158,11,0.15)]' : 
-                                  'shadow-[0_0_10px_rgba(6,182,212,0.15)]';
-
-                return (
-                  <div 
-                    key={idx} 
-                    className={`
-                      relative p-4 rounded-lg bg-[#0a0f1a] border border-gray-800/50 border-l-4 ${priorityColor}
-                      hover:bg-gray-800/40 transition-all duration-300 group cursor-pointer
-                    `}
-                  >
-                    {/* Time & Type Header */}
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <div className={`flex items-center justify-center w-6 h-6 rounded bg-gray-900 border border-gray-800 ${item.color === 'red' ? 'text-red-400' : item.color === 'amber' ? 'text-amber-400' : 'text-cyan-400'}`}>
-                          <i className={`${icon} text-[10px]`}></i>
+              {filteredTimeline.length > 0 ? (
+                filteredTimeline.map((item, idx) => {
+                  // Get dynamic icon based on content/tags
+                  const icon = item.tags.includes('LANTAS') ? 'fa-solid fa-car-burst' : 
+                               item.tags.includes('RESKRIM') ? 'fa-solid fa-fingerprint' : 
+                               item.tags.includes('INTELKAM') ? 'fa-solid fa-masks-theater' : 
+                               item.tags.includes('MONITORING') ? 'fa-solid fa-display' : 
+                               'fa-solid fa-triangle-exclamation';
+                  
+                  const priorityColor = item.color === 'red' ? 'border-red-500' : 
+                                        item.color === 'amber' ? 'border-amber-500' : 
+                                        item.color === 'green' ? 'border-emerald-500' : 'border-cyan-500';
+                  
+                  return (
+                    <div 
+                      key={idx} 
+                      className={`
+                        relative p-4 rounded-lg bg-[#0a0f1a] border border-gray-800/50 border-l-4 ${priorityColor}
+                        hover:bg-gray-800/40 transition-all duration-300 group cursor-pointer
+                      `}
+                    >
+                      {/* Time & Type Header */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <div className={`flex items-center justify-center w-6 h-6 rounded bg-gray-900 border border-gray-800 ${item.color === 'red' ? 'text-red-400' : item.color === 'amber' ? 'text-amber-400' : 'text-cyan-400'}`}>
+                            <i className={`${icon} text-[10px]`}></i>
+                          </div>
+                          <span className="text-[12px] font-mono font-bold text-gray-500">{item.time}</span>
                         </div>
-                        <span className="text-[12px] font-mono font-bold text-gray-500">{item.time}</span>
+                        {idx === 0 && (
+                          <div className="flex items-center gap-2 px-2.5 py-1 rounded bg-red-500/5 border border-red-500/20">
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444] ews-animate-blink" />
+                            <span className="text-[11px] font-black text-red-500 tracking-widest">LIVE FEED</span>
+                          </div>
+                        )}
                       </div>
-                      {idx === 0 && (
-                        <div className="flex items-center gap-2 px-2.5 py-1 rounded bg-red-500/5 border border-red-500/20">
-                          <span className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444] ews-animate-blink" />
-                          <span className="text-[11px] font-black text-red-500 tracking-widest">LIVE FEED</span>
+
+                      {/* Header: Warning Event */}
+                      {item.event && (
+                        <div className="text-[11px] font-black text-white px-2 py-0.5 bg-white/5 border border-white/10 rounded mb-2 inline-block uppercase tracking-widest font-orbitron">
+                           {item.event}
                         </div>
                       )}
-                    </div>
 
-                    {/* Header: Warning Event */}
-                    {item.event && (
-                      <div className="text-[11px] font-black text-white px-2 py-0.5 bg-white/5 border border-white/10 rounded mb-2 inline-block uppercase tracking-widest font-orbitron">
-                         {item.event}
+                      {/* Content: Primary Message */}
+                      <div className="text-[14px] font-semibold text-gray-200 leading-normal mb-4 group-hover:text-cyan-400 transition-colors">
+                        {item.content}
                       </div>
-                    )}
 
-                    {/* Content: Primary Message */}
-                    <div className="text-[14px] font-semibold text-gray-200 leading-normal mb-4 group-hover:text-cyan-400 transition-colors">
-                      {item.content}
-                    </div>
-
-                    {/* STRUCTURED DATA BLOCKS: CUACA */}
-                    {item.subRegions && item.subRegions.length > 0 && (
-                      <div className="mb-4 p-3 bg-white/5 border border-white/10 rounded-lg">
-                        <div className="text-[9px] font-black text-cyan-500/80 uppercase tracking-widest mb-2 flex items-center gap-2">
-                           <i className="fa-solid fa-location-crosshairs"></i> Sector Monitoring: {item.region}
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {item.subRegions.map((loc, i) => (
-                            <span key={i} className="text-[10px] bg-cyan-500/10 text-cyan-300 px-2 py-0.5 rounded border border-cyan-500/20 font-mono">
-                              {loc}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* STRUCTURED DATA BLOCKS: GEMPA */}
-                    {item.magnitude && (
-                      <div className="mb-4 p-3 bg-red-500/5 border border-red-500/10 rounded-lg">
-                        <div className="text-[9px] font-black text-red-500/80 uppercase tracking-widest mb-2 flex items-center gap-2">
-                           <i className="fa-solid fa-waveform"></i> Seismic Data
-                        </div>
-                        <div className="flex gap-4">
-                          <div>
-                            <div className="text-[10px] text-gray-500 uppercase">Magnitude</div>
-                            <div className="text-[14px] font-bold text-red-500">{item.magnitude} SR</div>
+                      {/* STRUCTURED DATA BLOCKS: CUACA */}
+                      {item.subRegions && item.subRegions.length > 0 && (
+                        <div className="mb-4 p-3 bg-white/5 border border-white/10 rounded-lg">
+                          <div className="text-[9px] font-black text-cyan-500/80 uppercase tracking-widest mb-2 flex items-center gap-2">
+                             <i className="fa-solid fa-location-crosshairs"></i> Sector Monitoring: {item.region}
                           </div>
-                          <div>
-                            <div className="text-[10px] text-gray-500 uppercase">Depth</div>
-                            <div className="text-[14px] font-bold text-gray-200">{item.depth} KM</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {item.subRegions.map((loc, i) => (
+                              <span key={i} className="text-[10px] bg-cyan-500/10 text-cyan-300 px-2 py-0.5 rounded border border-cyan-500/20 font-mono">
+                                {loc}
+                              </span>
+                            ))}
                           </div>
-                          <div>
-                            <div className="text-[10px] text-gray-500 uppercase">Tsunami Risk</div>
-                            <div className={`text-[12px] font-bold ${item.status?.toLowerCase().includes('tidak') ? 'text-green-500' : 'text-red-500'}`}>
-                              {item.status?.toLowerCase().includes('tidak') ? 'NONE' : 'ALERT'}
+                        </div>
+                      )}
+
+                      {/* STRUCTURED DATA BLOCKS: GEMPA */}
+                      {item.magnitude && (
+                        <div className="mb-4 p-3 bg-red-500/5 border border-red-500/10 rounded-lg">
+                          <div className="text-[9px] font-black text-red-500/80 uppercase tracking-widest mb-2 flex items-center gap-2">
+                             <i className="fa-solid fa-waveform"></i> Seismic Data
+                          </div>
+                          <div className="flex gap-4">
+                            <div>
+                              <div className="text-[10px] text-gray-500 uppercase">Magnitude</div>
+                              <div className="text-[14px] font-bold text-red-500">{item.magnitude} SR</div>
+                            </div>
+                            <div>
+                              <div className="text-[10px] text-gray-500 uppercase">Depth</div>
+                              <div className="text-[14px] font-bold text-gray-200">{item.depth} KM</div>
+                            </div>
+                            <div>
+                              <div className="text-[10px] text-gray-500 uppercase">Tsunami Risk</div>
+                              <div className={`text-[12px] font-bold ${item.status?.toLowerCase().includes('tidak') ? 'text-green-500' : 'text-red-500'}`}>
+                                {item.status?.toLowerCase().includes('tidak') ? 'NONE' : 'ALERT'}
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {item.epicenter && (
-                      <div className="mb-4 p-2 bg-white/5 border border-white/10 rounded border-l-2 border-l-red-500 group/map">
-                        <div className="flex justify-between items-start mb-1">
-                          <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Coordinates</div>
-                          {item.coordinates && (
-                            <button 
-                              onClick={() => {
-                                const parts = item.coordinates?.split(' ') || [];
-                                let lat = parseFloat(parts[0] || '0');
-                                if (parts[1]?.toUpperCase() === 'LS') lat = -lat;
-                                let lng = parseFloat(parts[2] || '0');
-                                if (parts[3]?.toUpperCase() === 'BB') lng = -lng;
-                                window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
-                              }}
-                              className="text-[9px] bg-red-500/10 text-red-400 px-1.5 py-0.5 rounded border border-red-500/20 hover:bg-red-500/20 transition-all flex items-center gap-1"
-                            >
-                              <i className="fa-solid fa-map-location-dot"></i> TAC-MAP
-                            </button>
-                          )}
+                      {item.epicenter && (
+                        <div className="mb-4 p-2 bg-white/5 border border-white/10 rounded border-l-2 border-l-red-500 group/map">
+                          <div className="flex justify-between items-start mb-1">
+                            <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Coordinates</div>
+                            {item.coordinates && (
+                              <button 
+                                onClick={() => {
+                                  const parts = item.coordinates?.split(' ') || [];
+                                  let lat = parseFloat(parts[0] || '0');
+                                  if (parts[1]?.toUpperCase() === 'LS') lat = -lat;
+                                  let lng = parseFloat(parts[2] || '0');
+                                  if (parts[3]?.toUpperCase() === 'BB') lng = -lng;
+                                  window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+                                }}
+                                className="text-[9px] bg-red-500/10 text-red-400 px-1.5 py-0.5 rounded border border-red-500/20 hover:bg-red-500/20 transition-all flex items-center gap-1"
+                              >
+                                <i className="fa-solid fa-map-location-dot"></i> TAC-MAP
+                              </button>
+                            )}
+                          </div>
+                          <div className="text-[11px] font-mono text-gray-300 mb-1">{item.coordinates}</div>
+                          <div className="text-[10px] text-red-400 font-bold">{item.epicenter}</div>
                         </div>
-                        <div className="text-[11px] font-mono text-gray-300 mb-1">{item.coordinates}</div>
-                        <div className="text-[10px] text-red-400 font-bold">{item.epicenter}</div>
-                      </div>
-                    )}
+                      )}
 
-                    {item.impact && (
-                      <div className="mb-4 flex items-start gap-3">
-                        <div className="mt-1 w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
-                        <div>
-                          <div className="text-[9px] font-black text-amber-500/80 uppercase tracking-widest mb-1">Environmental Impact</div>
-                          <div className="text-[11px] text-gray-400 italic">"{item.impact}"</div>
+                      {item.impact && (
+                        <div className="mb-4 flex items-start gap-3">
+                          <div className="mt-1 w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
+                          <div>
+                            <div className="text-[9px] font-black text-amber-500/80 uppercase tracking-widest mb-1">Environmental Impact</div>
+                            <div className="text-[11px] text-gray-400 italic">"{item.impact}"</div>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {item.duration && (
-                      <div className="flex items-center gap-2 text-[10px] font-mono text-gray-500 border-t border-gray-800 pt-3">
-                        <i className="fa-regular fa-clock text-cyan-500/50"></i>
-                        ESTIMATED END TIME: <span className="text-gray-300">{item.duration}</span>
-                      </div>
-                    )}
+                      {item.duration && (
+                        <div className="flex items-center gap-2 text-[10px] font-mono text-gray-500 border-t border-gray-800 pt-3">
+                          <i className="fa-regular fa-clock text-cyan-500/50"></i>
+                          ESTIMATED END TIME: <span className="text-gray-300">{item.duration}</span>
+                        </div>
+                      )}
 
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center p-8 bg-white/[0.02] rounded-xl border border-dashed border-white/5 mx-2">
+                  <div className="w-20 h-20 rounded-full bg-cyan-500/5 flex items-center justify-center mb-6 relative">
+                    <div className="absolute inset-0 rounded-full bg-cyan-500/10 animate-ping opacity-20" />
+                    <i className="fa-solid fa-shield-check text-cyan-500/40 text-4xl"></i>
                   </div>
-                );
-              })}
+                  <h3 className="font-orbitron font-black text-[13px] text-cyan-500 tracking-[0.3em] uppercase mb-3">
+                    SITUASI TERPANTAU KONDUSIF
+                  </h3>
+                  <p className="text-[11px] text-gray-500 font-medium leading-relaxed max-w-[280px] uppercase tracking-wider">
+                     Belum terdeteksi adanya peringatan dini atau kejadian menonjol dalam jangkauan radar monitoring saat ini.
+                  </p>
+                  <div className="mt-8 flex items-center gap-2 px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded-full">
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
+                    <span className="text-[8px] font-mono text-cyan-500/70 tracking-widest lowercase">system.active.monitoring</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
