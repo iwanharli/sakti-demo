@@ -22,6 +22,20 @@ Sistem ini mengintegrasikan berbagai sumber intelijen ke dalam satu pusat kendal
 - **Disaster History & Monitoring**: Integrasi data sensor lapangan IoT dan BMKG untuk pantauan bencana alam dan logistik darurat.
 - **Economics Monitor (SP2KP/PIHPS)**: Pemantauan harga pangan nasional dan deteksi anomali inflasi pasar.
 
+## 🔌 Dokumentasi API (OpenAPI 3.0)
+SAKTI menyediakan API yang terdokumentasi secara teknis menggunakan Swagger/OpenAPI. Endpoint dapat diakses secara dinamis untuk integrasi pihak ketiga:
+
+| Layanan | Endpoint | Deskripsi |
+|---------|----------|-----------|
+| **Auth** | `/api/login` | Autentikasi personel & distribusi JWT |
+| **Kamtibmas** | `/api/kamtibmas/*` | Data sebaran kasus, statistik wilayah, & logistik |
+| **OSINT** | `/api/osint/social-metrics` | Ekstraksi volume keyword & analisis sentimen |
+| **Disaster** | `/api/weather/map-cities` | Data koordinat bencana & status anomali cuaca |
+| **Economics** | `/api/commodities/*` | Perbandingan HET vs pasar & tren historis harga |
+
+> [!NOTE]
+> Dokumentasi teknis lengkap tersedia secara interaktif melalui endpoint `/api-docs` setelah server dijalankan.
+
 ## 🛠️ Technology Stack
 SAKTI dibangun di atas teknologi modern untuk performa dan keamanan tinggi:
 
