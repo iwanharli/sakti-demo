@@ -16,7 +16,6 @@ import {
   riskScores
 } from '../data/mockDashboard';
 import type { 
-  StatCardData, 
   TimelineItem, 
   CaseItem, 
   PatrolUnit, 
