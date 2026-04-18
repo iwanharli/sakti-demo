@@ -213,7 +213,7 @@ export default function AccountProfile() {
         <div className="absolute inset-0">
           <img 
             src="/profile-bg.png" 
-            className="w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-105" 
+            className="w-full h-full object-cover transition-transform [transition-duration:2000ms] group-hover:scale-105" 
             alt="Tactical Background"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0a0f1a] via-[#0a0f1a]/60 to-transparent" />
