@@ -384,7 +384,7 @@ export default function KamtibmasManagement() {
               </tr>
             </thead>
             <tbody>
-              {recentCases.map((caseItem, idx) => (
+              {recentCases.map((caseItem) => (
                 <tr 
                   key={caseItem.id} 
                   className="group cursor-pointer transition-all duration-300 relative"

@@ -95,7 +95,6 @@ export default function WeatherForecast() {
   const [hoveredRainIndex, setHoveredRainIndex] = useState<number | null>(null);
   
   const [cityBoundaries, setCityBoundaries] = useState<any>(null);
-  const [isLoadingBoundaries, setIsLoadingBoundaries] = useState(false);
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const todayRef = useRef<HTMLDivElement>(null);
@@ -112,7 +111,6 @@ export default function WeatherForecast() {
   }, []);
 
   const fetchMapBoundaries = async () => {
-    setIsLoadingBoundaries(true);
     try {
       const res = await authFetch(`${API_BASE}/weather/boundaries`);
       if (res.ok) {
@@ -122,7 +120,7 @@ export default function WeatherForecast() {
     } catch (err) {
       console.error('Failed to load map boundaries:', err);
     } finally {
-      setIsLoadingBoundaries(false);
+      // Boundaries loading status handled internally if needed
     }
   };
 

@@ -91,22 +91,6 @@ function MapFocusHandler({ selectedCity, cityBoundaries }: { selectedCity: strin
   return null;
 }
  
-// Force-disable scroll zoom to prevent interference with page scrolling
-const TacticalMapLock = () => {
-  const map = useMap();
-  useEffect(() => {
-    if (map) {
-      map.scrollWheelZoom.disable();
-      map.doubleClickZoom.disable();
-      map.touchZoom.disable();
-      // Reinforce on focus to prevent browser overrides
-      const lock = () => map.scrollWheelZoom.disable();
-      map.on('focus', lock);
-      return () => { map.off('focus', lock); };
-    }
-  }, [map]);
-  return null;
-};
 
 
 export default function CommandCenter() {
@@ -129,10 +113,8 @@ export default function CommandCenter() {
   const [selectedCity, setSelectedCity] = useState('');
   const [cities, setCities] = useState<string[]>([]);
   const [weatherData, setWeatherData] = useState<any>(null);
-  const [isLoadingWeather, setIsLoadingWeather] = useState(false);
   const [activeMapMode, setActiveMapMode] = useState<'situational' | 'weather' | 'test'>('situational');
   const [cityBoundaries, setCityBoundaries] = useState<any>(null);
-  const [isLoadingBoundaries, setIsLoadingBoundaries] = useState(false);
 
   // RainViewer Radar States
   const [radarFrames, setRadarFrames] = useState<any[]>([]);
@@ -167,7 +149,6 @@ export default function CommandCenter() {
   }, []);
 
   const fetchMapBoundaries = async () => {
-    setIsLoadingBoundaries(true);
     try {
       const res = await authFetch(`${getApiBase()}/weather/boundaries`);
       if (res.ok) {
@@ -177,7 +158,7 @@ export default function CommandCenter() {
     } catch (err) {
       console.error('Failed to load map boundaries:', err);
     } finally {
-      setIsLoadingBoundaries(false);
+      // Boundaries loading status handled internally if needed
     }
   };
 
@@ -228,7 +209,6 @@ export default function CommandCenter() {
   };
 
   const fetchForecast = async (city: string) => {
-    setIsLoadingWeather(true);
     try {
       const res = await authFetch(`${getApiBase()}/weather/forecast?city=${encodeURIComponent(city)}`);
       if (res.ok) {
@@ -238,7 +218,7 @@ export default function CommandCenter() {
     } catch (err) {
       console.error('Forecast Fetch Error:', err);
     } finally {
-      setIsLoadingWeather(false);
+      // Weather loading status handled internally if needed
     }
   };
 
