@@ -55,7 +55,7 @@ export default function Sidebar({ currentPage }: SidebarProps) {
   };
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 w-72 bg-[#070a12] border-r border-gray-800/50 z-50 flex flex-col font-rajdhani overflow-hidden">
+    <aside className="fixed left-0 top-0 bottom-0 w-72 bg-[#070a12] border-r border-gray-800/50 z-[1200] flex flex-col font-rajdhani overflow-hidden">
       {/* Logo Section */}
       <div className="p-6 pb-4">
         <div className="flex items-center gap-4">

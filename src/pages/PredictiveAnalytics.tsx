@@ -1,7 +1,43 @@
 import { useState, useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
+import { recidivismData, curanmorPredictions, begalPredictions, dataSources, environmentFactors } from '../data/mockPredictiveAnalytics';
 
-import { recidivismData, curanmorPredictions, begalPredictions, dataSources } from '../data/mockPredictiveAnalytics';
+// --- TACTICAL SUB-COMPONENTS ---
+
+const RiskSparkline = ({ data, color }: { data: number[], color: string }) => {
+  const max = Math.max(...data, 100);
+  const min = 0;
+  const range = max - min;
+  const width = 80;
+  const height = 24;
+  
+  const points = data.map((val, i) => {
+    const x = (i / (data.length - 1)) * width;
+    const y = height - ((val - min) / range) * height;
+    return `${x},${y}`;
+  }).join(' ');
+
+  return (
+    <svg width={width} height={height} className="overflow-visible">
+      <polyline
+        fill="none"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={points}
+        className="drop-shadow-[0_0_5px_currentColor]"
+      />
+      <circle 
+        cx={width} 
+        cy={height - ((data[data.length - 1] - min) / range) * height} 
+        r="2" 
+        fill={color} 
+        className="animate-pulse"
+      />
+    </svg>
+  );
+};
 
 export default function PredictiveAnalytics() {
   const addToast = useAppStore((s) => s.addToast);
@@ -112,6 +148,80 @@ export default function PredictiveAnalytics() {
         </div>
       </div>
 
+      {/* FULL-WIDTH RISK TREND CHART */}
+      <div className="bg-[#0a0f1d]/60 border border-gray-800 rounded-xl p-6 relative overflow-hidden group mb-6">
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
+             style={{ backgroundImage: 'radial-gradient(#ef4444 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+        
+        <div className="flex items-center justify-between mb-8 relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500">
+              <i className="fa-solid fa-chart-line text-xl"></i>
+            </div>
+            <div>
+              <span className="font-orbitron font-bold text-sm text-gray-100 uppercase tracking-wider block">Aggregate Crime Risk Index</span>
+              <span className="text-[10px] text-red-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                Processing Vector Clusters • High Fidelity
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-8">
+            <div className="text-right">
+              <div className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-1">Current Index</div>
+              <div className="text-[20px] font-orbitron text-red-500 font-bold">78.4 <span className="text-[12px] text-gray-600">PTS</span></div>
+            </div>
+            <div className="w-px h-10 bg-gray-800" />
+            <div className="text-right">
+              <div className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-1">Trend Analytica</div>
+              <div className="text-[12px] font-mono text-cyan-400">STABLE/UP</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="relative h-48 w-full">
+          <svg viewBox="0 0 1000 100" preserveAspectRatio="none" className="w-full h-full">
+            <defs>
+              <linearGradient id="riskGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#ef4444" stopOpacity="0.3" />
+                <stop offset="100%" stopColor="#ef4444" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            {/* Grid Lines */}
+            {[25, 50, 75].map(y => (
+              <line key={y} x1="0" y1={y} x2="1000" y2={y} stroke="rgba(239, 68, 68, 0.05)" strokeWidth="1" strokeDasharray="4 4" />
+            ))}
+            
+            {/* Risk Path */}
+            <path 
+              d="M0,80 L100,75 L200,85 L300,60 L400,65 L500,40 L600,45 L700,30 L800,35 L900,20 L1000,22 L1000,100 L0,100 Z" 
+              fill="url(#riskGradient)" 
+            />
+            <path 
+              d="M0,80 L100,75 L200,85 L300,60 L400,65 L500,40 L600,45 L700,30 L800,35 L900,20 L1000,22" 
+              fill="none" 
+              stroke="#ef4444" 
+              strokeWidth="2.5" 
+              className="drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]"
+            />
+            
+            {/* Interactive Points (Visual) */}
+            <circle cx="1000" cy="22" r="4" fill="#ef4444" className="animate-ping" />
+            <circle cx="1000" cy="22" r="2" fill="#ef4444" />
+          </svg>
+          
+          <div className="flex justify-between mt-2 text-[9px] text-gray-600 font-mono uppercase tracking-widest">
+            <span>00:00</span>
+            <span>04:00</span>
+            <span>08:00</span>
+            <span>12:00</span>
+            <span>16:00</span>
+            <span>20:00</span>
+            <span>NOW</span>
+          </div>
+        </div>
+      </div>
+
       {/* Main Content Grid */}
       <div className="grid grid-cols-3 gap-5">
         {/* SUBJECT TRACKING MATRIX */}
@@ -140,7 +250,14 @@ export default function PredictiveAnalytics() {
                     <div className="text-[14px] font-bold text-gray-100 uppercase tracking-wide group-hover/item:text-white">{person.name}</div>
                     <span className="text-[10px] text-gray-600 font-mono">ID-{person.id.toString().padStart(4, '0')}</span>
                   </div>
-                  <div className="text-[11px] text-gray-500 font-medium truncate">{person.description}</div>
+                  <div className="text-[11px] text-gray-500 font-medium truncate mb-1">{person.description}</div>
+                  <div className="flex items-center gap-2">
+                    <RiskSparkline 
+                      data={person.riskHistory} 
+                      color={person.riskLevel === 'high' ? '#ef4444' : person.riskLevel === 'medium' ? '#f59e0b' : '#10b981'} 
+                    />
+                    <span className="text-[9px] text-gray-600 font-mono uppercase tracking-tighter">5D TREND</span>
+                  </div>
                 </div>
                 <div className="flex flex-col items-end gap-1">
                   <div className={`px-2 py-0.5 rounded text-[11px] font-black tracking-widest ${getRiskBadgeClass(person.riskLevel)}`}>
@@ -156,90 +273,96 @@ export default function PredictiveAnalytics() {
         {/* PREDICTIVE ANALYTICS MAIN ENGINE */}
         <div className="col-span-2 space-y-5">
           <div className="bg-[#0a0f1d]/60 border border-gray-800 rounded-xl relative overflow-hidden">
-            <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-[#0d1425]/80">
-              <div className="flex items-center gap-2">
-                <i className="fa-solid fa-chart-area text-amber-500 text-xs"></i>
-                <span className="font-orbitron font-bold text-[15px] tracking-wider text-white uppercase">Spatio-Temporal Predictive Matrix</span>
-              </div>
-            </div>
-            
-            <div className="p-5 grid grid-cols-2 gap-6">
-              {/* Curanmor Predictions */}
-              <div className="relative group">
-                <div className="flex items-center gap-2 mb-4 border-b border-gray-800 pb-2">
-                  <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                  <span className="text-[10px] text-red-500 font-black uppercase tracking-widest">Prediction: CURANMOR</span>
-                </div>
-                <div className="space-y-4">
-                  {curanmorPredictions.map((pred, idx) => (
-                    <div key={idx} className="group/bar">
-                      <div className="flex justify-between items-center mb-1.5">
-                        <span className="text-[13px] text-gray-400 font-bold group-hover/bar:text-gray-200 transition-colors uppercase leading-none">{pred.location}</span>
-                        <span className={`text-[13px] font-orbitron font-bold ${pred.color === 'red' ? 'text-red-500' : 'text-amber-500'}`}>
-                          {pred.probability}% <span className="text-[10px] text-gray-600">PROB</span>
-                        </span>
-                      </div>
-                      <div className="h-1.5 w-full bg-gray-900 rounded-full overflow-hidden border border-gray-800/50 relative">
-                        <div 
-                          className={`h-full relative transition-all duration-1000 ease-out shadow-[0_0_10px_currentColor] ${pred.color === 'red' ? 'bg-red-500 text-red-500' : 'bg-amber-500 text-amber-500'}`}
-                          style={{ width: `${pred.probability}%` }}
-                        >
-                          <div className="absolute inset-0 bg-white/20 animate-[shimmer_2s_infinite]" />
-                        </div>
-                      </div>
+            {/* Spatio-Temporal Matrix Visualization */}
+            <div className="p-5">
+              <div className="grid grid-cols-2 gap-8 mb-6">
+                {[
+                  { title: 'CURANMOR (VEKTOR TEMPORAL)', data: curanmorPredictions, accent: 'red' },
+                  { title: 'BEGAL (VEKTOR TEMPORAL)', data: begalPredictions, accent: 'cyan' }
+                ].map((section, sidx) => (
+                  <div key={sidx} className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-gray-800 pb-2">
+                      <span className={`text-[10px] font-black uppercase tracking-widest ${section.accent === 'red' ? 'text-red-500' : 'text-cyan-500'}`}>
+                        {section.title}
+                      </span>
+                      <span className="text-[9px] text-gray-600 font-mono">00:00 — 24:00</span>
                     </div>
-                  ))}
-                </div>
+                    
+                    <div className="space-y-5">
+                      {section.data.map((loc, lidx) => (
+                        <div key={lidx} className="group/loc">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-[12px] text-gray-300 font-bold uppercase group-hover/loc:text-white transition-colors">
+                              {loc.location}
+                            </span>
+                            <span className={`text-[12px] font-orbitron font-bold ${loc.color === 'red' ? 'text-red-500' : loc.color === 'amber' ? 'text-amber-500' : 'text-cyan-400'}`}>
+                              {loc.probability}% <span className="text-[9px] text-gray-600">PEAK</span>
+                            </span>
+                          </div>
+                          
+                          {/* Tactical Vector Bar */}
+                          <div className="relative h-6 flex items-end gap-1">
+                            {loc.timeVector.map((val, vidx) => (
+                              <div key={vidx} className="flex-1 relative group/bar">
+                                <div 
+                                  className={`w-full rounded-t-sm transition-all duration-700 bg-gradient-to-t ${
+                                    loc.color === 'red' ? 'from-red-500/10 to-red-500/60' : 
+                                    loc.color === 'amber' ? 'from-amber-500/10 to-amber-500/60' : 
+                                    'from-cyan-500/10 to-cyan-500/60'
+                                  }`}
+                                  style={{ height: `${val}%` }}
+                                >
+                                  {/* Tooltip on hover */}
+                                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-900 border border-gray-700 px-2 py-1 rounded text-[9px] text-white opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap z-20">
+                                    {String(vidx * 4).padStart(2, '0')}:00 • {val}%
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                            {/* Baseline */}
+                            <div className="absolute bottom-0 left-0 right-0 h-px bg-gray-800" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
 
-              {/* Begal Predictions */}
-              <div className="relative group">
-                <div className="flex items-center gap-2 mb-4 border-b border-gray-800 pb-2">
-                  <div className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" />
-                  <span className="text-[10px] text-cyan-500 font-black uppercase tracking-widest">Prediction: BEGAL</span>
-                </div>
-                <div className="space-y-4">
-                  {begalPredictions.map((pred, idx) => (
-                    <div key={idx} className="group/bar">
-                      <div className="flex justify-between items-center mb-1.5">
-                        <span className="text-[13px] text-gray-400 font-bold group-hover/bar:text-gray-200 transition-colors uppercase leading-none">{pred.location}</span>
-                        <span className={`text-[13px] font-orbitron font-bold ${pred.color === 'amber' ? 'text-amber-500' : 'text-cyan-500'}`}>
-                          {pred.probability}% <span className="text-[10px] text-gray-600">PROB</span>
-                        </span>
-                      </div>
-                      <div className="h-1.5 w-full bg-gray-900 rounded-full overflow-hidden border border-gray-800/50 relative">
-                        <div 
-                          className={`h-full relative transition-all duration-1000 ease-out shadow-[0_0_10px_currentColor] ${pred.color === 'amber' ? 'bg-amber-500 text-amber-500' : 'bg-cyan-500 text-cyan-500'}`}
-                          style={{ width: `${pred.probability}%` }}
-                        >
-                          <div className="absolute inset-0 bg-white/20 animate-[shimmer_2s_infinite]" />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Tactical Risk Timeline */}
-            <div className="mx-5 mb-5 p-4 bg-cyan-500/5 border border-cyan-500/10 rounded-lg relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-1 opacity-10">
-                <i className="fa-solid fa-clock-rotate-left text-4xl"></i>
-              </div>
-              <div className="flex items-center gap-2 mb-3">
-                <i className="fa-solid fa-hourglass-half text-cyan-500 text-sm"></i>
-                <span className="text-[12px] text-cyan-500 font-black uppercase tracking-[0.2em]">High-Activity Time Windows</span>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 border border-red-500/20 rounded text-[11px] font-orbitron text-red-500 font-bold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]" /> 20:00 – 23:00 WIB
-                </div>
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded text-[11px] font-orbitron text-amber-500 font-bold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shadow-[0_0_8px_#f59e0b]" /> 06:00 – 08:00 WIB
-                </div>
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-cyan-500/10 border border-cyan-500/20 rounded text-[11px] font-orbitron text-cyan-400 font-bold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_8px_#06b6d4]" /> SAT–SUN ×2.1 RISK
-                </div>
+              {/* Environmental Context Section */}
+              <div className="bg-[#0d1425]/40 border border-cyan-500/20 rounded-lg p-4 relative overflow-hidden group/env">
+                 <div className="absolute top-0 right-0 p-2 opacity-5 group-hover/env:opacity-10 transition-opacity">
+                   <i className="fa-solid fa-cloud-bolt text-6xl"></i>
+                 </div>
+                 <div className="flex items-center gap-2 mb-4">
+                   <i className="fa-solid fa-microscope text-cyan-400 text-xs"></i>
+                   <span className="text-[11px] text-cyan-400 font-black uppercase tracking-widest">Environmental Risk Correlation</span>
+                 </div>
+                 
+                 <div className="grid grid-cols-2 gap-6 relative z-10">
+                   <div>
+                     <div className="text-[10px] text-gray-500 uppercase font-bold mb-1">Atmospheric Condition</div>
+                     <div className="text-[14px] text-gray-100 font-rajdhani font-bold flex items-center gap-2">
+                       <i className="fa-solid fa-droplet text-cyan-500"></i>
+                       {environmentFactors.weather}
+                     </div>
+                     <div className="mt-2 inline-block px-2 py-1 bg-red-500/10 border border-red-500/30 rounded text-[10px] text-red-500 font-black animate-pulse">
+                       {environmentFactors.impact}
+                     </div>
+                   </div>
+                   <div className="space-y-3">
+                     <div className="text-[10px] text-gray-500 uppercase font-bold">Active Local Events</div>
+                     {environmentFactors.activeEvents.map((ev, i) => (
+                       <div key={i} className="flex items-start gap-2 bg-gray-950/40 p-2 rounded border border-gray-800/50">
+                          <i className="fa-solid fa-triangle-exclamation text-amber-500 text-[10px] mt-1"></i>
+                          <div>
+                            <div className="text-[11px] text-gray-200 font-bold leading-none">{ev.title}</div>
+                            <div className="text-[9px] text-gray-500 mt-1">{ev.impact}</div>
+                          </div>
+                       </div>
+                     ))}
+                   </div>
+                 </div>
               </div>
             </div>
           </div>

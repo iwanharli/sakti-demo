@@ -526,7 +526,7 @@
 
 /* Modal Overlay */
 .ews-modal-overlay {
-  @apply fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm;
+  @apply fixed inset-0 z-[5000] flex items-center justify-center bg-black/80 backdrop-blur-sm;
 }
 
 .ews-modal {

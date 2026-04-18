@@ -67,7 +67,7 @@ export default function Topbar({ title, subtitle, currentTime, alertCount, onAle
   const avatarUrl = user?.picture ? `${SERVER_URL}${user.picture}` : null;
 
   return (
-    <header className="sticky top-0 z-40 bg-[#0a0f1a]/95 backdrop-blur-xl border-b border-gray-800 px-6 py-3">
+    <header className="sticky top-0 z-[1100] bg-[#0a0f1a]/95 backdrop-blur-xl border-b border-gray-800 px-6 py-3">
       <div className="flex items-center justify-between">
         {/* Left: Title & Breadcrumb */}
         <div>
@@ -88,7 +88,7 @@ export default function Topbar({ title, subtitle, currentTime, alertCount, onAle
             className="flex items-center gap-2 px-3 py-1.5 bg-red-500/15 border border-red-500/40 rounded-lg text-red-400 text-sm font-semibold hover:bg-red-500/25 transition-colors ews-animate-pulse-red"
           >
             <span><i className="fa-solid fa-bell"></i></span>
-            <span>{alertCount} SIAGA AKTIF</span>
+            <span>{alertCount}  </span>
           </button>
 
           {/* User Profile Dropdown */}

@@ -1,32 +1,47 @@
 #!/usr/bin/env sh
 
-# SAKTI - Server Deployment Script
-# Digunakan untuk menarik kode terbaru dan build di lingkungan server
+# SAKTI - Professional Server Deployment Script
+# Optimized for Production at 84.247.145.144
 
 # Abort on errors
 set -e
 
-echo "🚀 Memulai proses update di server..."
+echo "🚀 Memulai proses update SAKTI di server..."
+
+# 0. Security & Integrity Check
+if [ ! -f .env ]; then
+    echo "❌ ERROR: File .env tidak ditemukan! Build frontend membutuhkan variabel environment."
+    echo "Silakan pastikan file .env sudah tersedia di root folder."
+    exit 1
+fi
 
 # 1. Pull latest code
 echo "📡 Menarik kode terbaru dari repositori..."
 git pull origin main
 
-# 2. Install dependencies (jika ada perubahan package.json)
-echo "📦 Menyinkronkan dependensi..."
+# 2. Synchronize Dependencies (Root & Frontend)
+echo "📦 Menyinkronkan dependensi utama..."
 npm install
 
-# 3. Build for production (Frontend)
-echo "🏗️ Membangun ulang aplikasi (Production Build)..."
+# 3. Build Frontend (Produces 'dist' folder)
+echo "🏗️ Membangun ulang Frontend (Production Build)..."
 npm run build
 
-# 4. Sync & Restart Backend
-echo "📡 Menyiapkan Backend..."
+# 4. Prepare & Build Backend
+echo "📡 Menyiapkan Backend Intelligence..."
 cd server
 npm install
-echo "🔄 Me-restart Backend dengan PM2..."
-npx pm2 delete demo-sakti-backend-8440 || true
-PORT=8440 npx pm2 start "npm run dev" --name "demo-sakti-backend-8440"
+echo "🏗️ Mengompilasi TypeScript ke JavaScript (Optimized)..."
+npm run build
+
+# 5. Production Process Management
+echo "🔄 Me-restart Backend dengan PM2 (Production Mode)..."
+# We use 'delete/start' cycle to ensure all ENV changes are loaded fresh
+npx pm2 delete sakti-backend-8440 || true
+PORT=8440 npx pm2 start "npm start" --name "sakti-backend-8440"
+
 cd ..
 
-echo "✅ Update Server Berhasil! Aplikasi SAKTI telah diperbarui."
+echo "✅ KONFIGURASI BERHASIL! Aplikasi SAKTI telah diperbarui dan berjalan di mode produksi."
+echo "🔗 Frontend: http://84.247.145.144:8444 (via Nginx/Preview)"
+echo "🔗 Backend: http://84.247.145.144:8440/api"

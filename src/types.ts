@@ -34,9 +34,19 @@ export interface StatCardData {
 
 export interface TimelineItem {
   time: string;
+  event?: string;
   content: string;
   tags: string[];
   color: 'red' | 'amber' | 'green' | 'cyan' | 'purple';
+  region?: string;
+  subRegions?: string[];
+  impact?: string;
+  duration?: string;
+  magnitude?: string;
+  depth?: string;
+  coordinates?: string;
+  epicenter?: string;
+  status?: string;
 }
 
 export interface CaseItem {

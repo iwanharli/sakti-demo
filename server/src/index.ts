@@ -1,4 +1,5 @@
 import express from 'express';
+import 'dotenv/config';
 import cors from 'cors';
 import swaggerJsdoc from 'swagger-jsdoc';
 import { dbPrimary, dbSecondary } from './db.ts';
@@ -50,8 +51,12 @@ const swaggerOptions = {
     },
     servers: [
       {
+        url: process.env.API_BASE_URL || `http://localhost:${port}/api`,
+        description: 'Primary API Server',
+      },
+      {
         url: `http://localhost:${port}`,
-        description: 'Development server',
+        description: 'Development Local',
       },
     ],
   },
@@ -65,7 +70,14 @@ const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://84.247.145.144:8444',
+    'http://localhost:5173',
+    'http://localhost:5174'
+  ],
+  credentials: true
+}));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
@@ -339,8 +351,9 @@ app.get('/api/bmkg/warnings', authenticateToken, async (req, res) => {
         additional_data, 
         created_at 
       FROM nasional_bmkg_warning_data 
+      WHERE report_date = CURRENT_DATE
       ORDER BY created_at DESC 
-      LIMIT 10
+      LIMIT 50
     `);
     res.json(results.rows);
   } catch (error: any) {
@@ -348,7 +361,131 @@ app.get('/api/bmkg/warnings', authenticateToken, async (req, res) => {
   }
 });
 
-const API_BASE = 'http://localhost:3001/api';
+/**
+ * @openapi
+ * /api/analytics/kamtibmas-regions:
+ *   get:
+ *     summary: Get provinces with available Kamtibmas data for today
+ *     responses:
+ *       200:
+ *         description: Array of province names.
+ */
+app.get('/api/analytics/kamtibmas-regions', authenticateToken, async (req, res) => {
+  try {
+    const results = await dbSecondary.execute(sql`
+      SELECT DISTINCT region_name 
+      FROM calculation_index_risiko 
+      WHERE category ILIKE '%KAMTIBMAS%'
+      AND report_date = CURRENT_DATE
+      ORDER BY region_name ASC
+    `);
+    
+    const regions = results.rows.map(r => r.region_name);
+    res.json(['Nasional', ...regions]);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/analytics/kamtibmas-national-stats:
+ *   get:
+ *     summary: Get national Kamtibmas totals for today and yesterday
+ *     responses:
+ *       200:
+ *         description: Object containing today and yesterday totals + trend.
+ */
+app.get('/api/analytics/kamtibmas-national-stats', authenticateToken, async (req, res) => {
+  try {
+    const results = await dbSecondary.execute(sql`
+      WITH daily_stats AS (
+        SELECT 
+          report_date,
+          SUM(
+            COALESCE(((additional_data->'case_detail'->'kejahatan_total')::jsonb->0->>'kasus_mingguan')::numeric, 0) +
+            COALESCE(((additional_data->'case_detail'->'gangguan_total')::jsonb->0->>'kasus_mingguan')::numeric, 0) +
+            COALESCE(((additional_data->'case_detail'->'pelanggaran_total')::jsonb->0->>'kasus_mingguan')::numeric, 0) +
+            COALESCE(((additional_data->'case_detail'->'bencana_total')::jsonb->0->>'kasus_mingguan')::numeric, 0)
+          ) as daily_total
+        FROM calculation_index_risiko
+        WHERE category ILIKE '%KAMTIBMAS%'
+        AND report_date IN (CURRENT_DATE, CURRENT_DATE - INTERVAL '1 day')
+        GROUP BY report_date
+      )
+      SELECT 
+        (SELECT daily_total FROM daily_stats WHERE report_date = CURRENT_DATE) as today,
+        (SELECT daily_total FROM daily_stats WHERE report_date = CURRENT_DATE - INTERVAL '1 day') as yesterday
+    `);
+    
+    const row = results.rows[0] as any;
+    const today = Number(row.today || 0);
+    const yesterday = Number(row.yesterday || 0);
+    
+    let trend_pct = 0;
+    if (yesterday > 0) {
+      trend_pct = ((today - yesterday) / yesterday) * 100;
+    } else if (today > 0) {
+      trend_pct = 100;
+    }
+    
+    res.json({
+      today,
+      yesterday,
+      trend_pct: parseFloat(trend_pct.toFixed(2))
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/commodities/het-counts:
+ *   get:
+ *     summary: Get counts of commodities above HET for SP2KP and PIHPS
+ */
+app.get('/api/commodities/het-counts', authenticateToken, async (req, res) => {
+  try {
+    const results = await dbSecondary.execute(sql`
+      WITH thresholds(code, het_price) AS (
+        VALUES 
+          ('beras-medium', 10900),
+          ('beras-premium', 13900),
+          ('bawang-merah', 32000),
+          ('bawang-putih-honan', 30000),
+          ('cabai-merah-besar', 45000),
+          ('cabai-rawit-merah', 55000),
+          ('daging-ayam-ras', 35000),
+          ('daging-sapi-paha-belakang', 140000),
+          ('gula-pasir-curah', 14500),
+          ('minyak-goreng-curah', 14000)
+      ),
+      sp2kp_national_avg AS (
+        SELECT commodity_code, AVG(price::numeric) as avg_price 
+        FROM nasional_commodity_sp2kp 
+        WHERE report_date = (SELECT MAX(report_date) FROM nasional_commodity_sp2kp)
+        GROUP BY commodity_code
+      ),
+      pihps_national_avg AS (
+        SELECT commodity_code, AVG(price::numeric) as avg_price 
+        FROM nasional_pihps_commodity_regional_prices 
+        WHERE report_date = (SELECT MAX(report_date) FROM nasional_pihps_commodity_regional_prices)
+        AND market_type = 'pasar tradisional'
+        GROUP BY commodity_code
+      )
+      SELECT 
+        (SELECT COUNT(*)::int FROM sp2kp_national_avg s JOIN thresholds t ON s.commodity_code = t.code WHERE s.avg_price > t.het_price) as sp2kp,
+        (SELECT COUNT(*)::int FROM pihps_national_avg p JOIN thresholds t ON p.commodity_code = t.code WHERE p.avg_price > t.het_price) as pihps
+    `);
+    
+    res.json(results.rows[0]);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+const API_BASE = process.env.API_BASE_URL || 'http://localhost:3001/api';
 
 // Helper for resolving data source table and metadata columns
 function resolveSource(source?: string) {
@@ -547,6 +684,91 @@ app.get('/api/commodities/stats', authenticateToken, async (req, res) => {
     `);
     
     res.json(results.rows[0]);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/analytics/kamtibmas-index:
+ *   get:
+ *     summary: Get Kamtibmas Risk Index for a specific region
+ *     description: Returns the latest risk index and sub-category metrics from the secondary database.
+ *     parameters:
+ *       - in: query
+ *         name: region
+ *         schema:
+ *           type: string
+ *         description: Province name or 'Nasional'
+ *     responses:
+ *       200:
+ *         description: Kamtibmas Index data object.
+ */
+app.get('/api/analytics/kamtibmas-index', authenticateToken, async (req, res) => {
+  const region = req.query.region || 'Nasional';
+  try {
+    const isNasional = region === 'Nasional';
+    
+    if (isNasional) {
+      // Aggregate all regional data for today to build the Nasional profile
+      const results = await dbSecondary.execute(sql`
+        SELECT 
+          AVG(value) as index_value,
+          SUM(((additional_data->'case_detail'->'kejahatan_total')::jsonb->0->>'kasus_mingguan')::numeric) as kejahatan,
+          SUM(((additional_data->'case_detail'->'gangguan_total')::jsonb->0->>'kasus_mingguan')::numeric) as gangguan,
+          SUM(((additional_data->'case_detail'->'pelanggaran_total')::jsonb->0->>'kasus_mingguan')::numeric) as pelanggaran,
+          SUM(((additional_data->'case_detail'->'bencana_total')::jsonb->0->>'kasus_mingguan')::numeric) as bencana,
+          AVG((additional_data->>'irs')::numeric) as irs,
+          MAX(report_date) as report_date
+        FROM calculation_index_risiko
+        WHERE category ILIKE '%KAMTIBMAS%'
+        AND report_date = CURRENT_DATE
+      `);
+
+      if (results.rows.length === 0 || results.rows[0].index_value === null) {
+        return res.status(404).json({ message: 'No regional data available for national aggregation today.' });
+      }
+
+      const row = results.rows[0] as any;
+      const aggregatedData = {
+        index_value: Number(row.index_value),
+        report_date: row.report_date,
+        region_name: 'Nasional',
+        additional_data: {
+          irs: Number(row.irs),
+          level: Number(row.irs) > 25 ? 'tinggi' : 'normal',
+          raw_total_week_prov: Number(row.kejahatan) + Number(row.gangguan) + Number(row.pelanggaran) + Number(row.bencana),
+          case_detail: {
+            kejahatan_total: [{ kasus_mingguan: Number(row.kejahatan) }],
+            gangguan_total: [{ kasus_mingguan: Number(row.gangguan) }],
+            pelanggaran_total: [{ kasus_mingguan: Number(row.pelanggaran) }],
+            bencana_total: [{ kasus_mingguan: Number(row.bencana) }]
+          }
+        }
+      };
+      return res.json(aggregatedData);
+    } else {
+      // Standard regional query
+      const results = await dbSecondary.execute(sql`
+        SELECT 
+          value as index_value,
+          additional_data,
+          report_date,
+          region_name
+        FROM calculation_index_risiko
+        WHERE category ILIKE '%KAMTIBMAS%'
+        AND region_name = ${region}
+        ORDER BY report_date DESC
+        LIMIT 1
+      `);
+      
+      if (results.rows.length === 0) {
+        return res.status(404).json({ message: 'No data available for the specified region' });
+      }
+      
+      res.json(results.rows[0]);
+    }
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -808,7 +1030,7 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
       return res.status(401).json({ error: 'Identitas atau Password salah' });
     }
 
-    const user = result.rows[0];
+    const user = result.rows[0] as any;
 
     // Verify Password with Bcrypt
     const isMatch = await bcrypt.compare(password, user.password);

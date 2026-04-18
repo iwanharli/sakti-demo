@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Circle, Polyline } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Circle, Polyline, ZoomControl } from 'react-leaflet';
 import L from 'leaflet';
 import { useAppStore, getApiBase, authFetch } from '../store/useAppStore';
+import { useMap } from 'react-leaflet';
 
 import {
   JAKARTA_CENTER,
@@ -14,7 +15,16 @@ import {
   patrolStatusUnits,
   riskScores
 } from '../data/mockDashboard';
-import type { TimelineItem } from '../types';
+import type { 
+  StatCardData, 
+  TimelineItem, 
+  CaseItem, 
+  PatrolUnit, 
+  PersonRisk, 
+  KeywordAlert, 
+  CollabItem, 
+  SystemLayer 
+} from '../types';
 import type { BMKGWarning } from '../bmkg_types';
 
 // Animated Patrol Unit Component
@@ -63,39 +73,208 @@ const MovingPatrolUnit = ({ path, color, label, duration = 20000 }: { path: [num
 
   return <Marker position={pos} icon={unitIcon} />;
 };
+ 
+// Force-disable scroll zoom to prevent interference with page scrolling
+const TacticalMapLock = () => {
+  const map = useMap();
+  useEffect(() => {
+    if (map) {
+      map.scrollWheelZoom.disable();
+      map.doubleClickZoom.disable();
+      map.touchZoom.disable();
+      // Reinforce on focus to prevent browser overrides
+      const lock = () => map.scrollWheelZoom.disable();
+      map.on('focus', lock);
+      return () => { map.off('focus', lock); };
+    }
+  }, [map]);
+  return null;
+};
+
 
 export default function Dashboard() {
   const addToast = useAppStore((s) => s.addToast);
   const [mounted, setMounted] = useState(false);
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
   const [timelineData, setTimelineData] = useState<TimelineItem[]>(timelineItems);
+  const [filter, setFilter] = useState<'all' | 'cuaca' | 'gempa'>('all');
+  
+  // Kamtibmas Index Stats
+  const [availableRegions, setAvailableRegions] = useState<string[]>(['Nasional', 'DKI JAKARTA']);
+  const [kamtibmasRegion, setKamtibmasRegion] = useState('Nasional');
+  const [kamtibmasIndex, setKamtibmasIndex] = useState<any>(null);
+  const [isKamtibmasLoading, setIsKamtibmasLoading] = useState(false);
+  const [nationalKamtibmasStats, setNationalKamtibmasStats] = useState<{today: number, yesterday: number, trend_pct: number} | null>(null);
+  const [commodityHetStats, setCommodityHetStats] = useState<{sp2kp: number, pihps: number} | null>(null);
+
+  const filteredTimeline = useMemo(() => {
+    if (filter === 'all') return timelineData;
+    return timelineData.filter(item => {
+      const isGempa = item.tags.some(t => t.toUpperCase().includes('GEMPA'));
+      const isCuaca = item.tags.some(t => t.toUpperCase().includes('CUACA')) || (!isGempa && item.tags.includes('BMKG_ALERT'));
+      
+      if (filter === 'gempa') return isGempa;
+      if (filter === 'cuaca') return isCuaca;
+      return true;
+    });
+  }, [timelineData, filter]);
 
   useEffect(() => {
     setMounted(true);
     fetchBMKGWarnings();
+    fetchAvailableRegions();
+    fetchKamtibmasIndex();
+    fetchNationalKamtibmasStats();
+    fetchCommodityHetStats();
   }, []);
+
+  useEffect(() => {
+    fetchKamtibmasIndex();
+  }, [kamtibmasRegion]);
+
+  const fetchAvailableRegions = async () => {
+    try {
+      const response = await authFetch(`${getApiBase()}/analytics/kamtibmas-regions`);
+      if (response.ok) {
+        const data = await response.json();
+        setAvailableRegions(data);
+      }
+    } catch (err) {
+      console.error('Kamtibmas Regions Fetch Error:', err);
+    }
+  };
+
+  const fetchCommodityHetStats = async () => {
+    try {
+      const response = await authFetch(`${getApiBase()}/commodities/het-counts`);
+      if (response.ok) {
+        const data = await response.json();
+        setCommodityHetStats(data);
+      }
+    } catch (err) {
+      console.error('Commodity HET Stats Fetch Error:', err);
+    }
+  };
+
+  const fetchNationalKamtibmasStats = async () => {
+    try {
+      const response = await authFetch(`${getApiBase()}/analytics/kamtibmas-national-stats`);
+      if (response.ok) {
+        const data = await response.json();
+        setNationalKamtibmasStats(data);
+      }
+    } catch (err) {
+      console.error('National Kamtibmas Stats Fetch Error:', err);
+    }
+  };
+
+  const fetchKamtibmasIndex = async () => {
+    setIsKamtibmasLoading(true);
+    try {
+      const response = await authFetch(`${getApiBase()}/analytics/kamtibmas-index?region=${encodeURIComponent(kamtibmasRegion)}`);
+      if (response.ok) {
+        const data = await response.json();
+        setKamtibmasIndex(data);
+      }
+    } catch (err) {
+      console.error('Kamtibmas Index Fetch Error:', err);
+    } finally {
+      setIsKamtibmasLoading(false);
+    }
+  };
 
   const fetchBMKGWarnings = async () => {
     try {
       const apiBase = getApiBase();
       const response = await authFetch(`${apiBase}/bmkg/warnings`);
-      
       const data: BMKGWarning[] = await response.json();
       
-      // Map BMKG data to TimelineItem format
       const bmkgItems: TimelineItem[] = data.map(item => {
         const date = new Date(item.created_at);
         const timeStr = date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
         
+        const desc = item.warning_description || '';
+        const isGempa = item.warning_type.toLowerCase() === 'gempa';
+        
+        // ADVANCED TACTICAL PARSER
+        // 1. Common / Weather Extraction
+        const regionMatch = desc.match(/wilayah (.*?), khususnya di (.*?)\./);
+        const region = regionMatch ? regionMatch[1].trim() : undefined;
+        const subRegions = regionMatch ? regionMatch[2].split(',').map(s => s.trim()) : undefined;
+
+        const impactMatch = desc.match(/berpotensi menimbulkan dampak berupa (.*?)\./);
+        const impact = impactMatch ? impactMatch[1].trim() : undefined;
+
+        const durationMatch = desc.match(/berlangsung hingga (.*?)\$/) || desc.match(/berlangsung hingga (.*)/);
+        const duration = durationMatch ? durationMatch[1].trim() : undefined;
+
+        // 2. Gempa Extraction
+        const magMatch = desc.match(/magnitudo (.*?) SR/);
+        const magnitude = magMatch ? magMatch[1].trim() : undefined;
+
+        const depthMatch = desc.match(/kedalaman (.*?) km/);
+        const depth = depthMatch ? depthMatch[1].trim() : undefined;
+
+        const coordMatch = desc.match(/koordinat (.*?)\(/);
+        const coordinates = coordMatch ? coordMatch[1].trim() : undefined;
+
+        const epicenterMatch = desc.match(/tepatnya di (.*?)\./);
+        const epicenter = epicenterMatch ? epicenterMatch[1].trim() : undefined;
+
+        const statusMatch = desc.match(/Status: (.*?)\./) || desc.match(/Status: (.*)/);
+        const status = statusMatch ? statusMatch[1].trim() : undefined;
+
+        // 3. Extract Event Time and Date from Description
+        const descDateMatch = desc.match(/(\d{1,2} [A-Z][a-z]+ \d{4})/);
+        const descTimeMatch = desc.match(/(\d{2}:\d{2}(?::\d{2})? WIB)/i);
+
+        let eventTime = timeStr;
+        if (descDateMatch && descTimeMatch) {
+          eventTime = `${descDateMatch[0]}, ${descTimeMatch[0]}`;
+        } else if (descTimeMatch) {
+          // If only time is found (common in Gempa), use the date from created_at
+          const formattedDate = date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+          eventTime = `${formattedDate}, ${descTimeMatch[0]}`;
+        } else if (descDateMatch) {
+          eventTime = descDateMatch[0];
+        }
+
+        // 4. Clean content
+        let mainContent = desc
+          .replace(/Telah terjadi/gi, '')
+          .replace(/Peringatan Dini Cuaca/gi, '🌤️')
+          .replace(/wilayah .*?, khususnya di .*?\./gi, '')
+          .replace(/berpotensi menimbulkan dampak berupa .*?\./gi, '')
+          .replace(/Masyarakat dihimbau .*?\./gi, '')
+          .replace(/Kondisi diperkirakan .*?\./gi, '')
+          .replace(/Gempa magnitudo .*? pada jam .*?\./gi, '')
+          .replace(/Lokasi pusat gempa berada .*? tepatnya di .*?\./gi, '')
+          .replace(/Status: .*?\./gi, '')
+          .trim();
+
+        if (mainContent.length < 5) {
+          mainContent = isGempa ? `Terdeteksi aktivitas seismik di ${epicenter || 'lokasi yang belum teridentifikasi'}.` : item.warning_title;
+        }
+
         return {
-          time: timeStr,
-          content: item.warning_title,
+          time: eventTime,
+          event: item.warning_event,
+          content: mainContent,
+          region,
+          subRegions,
+          impact,
+          duration,
+          magnitude,
+          depth,
+          coordinates,
+          epicenter,
+          status,
           tags: [item.warning_type.toUpperCase(), 'BMKG_ALERT'],
-          color: item.warning_type.toLowerCase() === 'gempa' ? 'red' : 'amber'
+          color: isGempa ? 'red' : 
+                 item.warning_type.toLowerCase() === 'cuaca' ? 'cyan' : 'amber'
         };
       });
 
-      // Only show real BMKG alerts, remove dummy security items
       setTimelineData(bmkgItems);
     } catch (err) {
       console.error('BMKG Fetch Error:', err);
@@ -157,54 +336,63 @@ export default function Dashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-4 gap-4">
-        {/* Insiden Aktif */}
-        <div className="ews-stat-card red cursor-pointer" onClick={() => addToast('Membuka detail insiden aktif', 'info')}>
-          <div className="text-[14px] text-gray-500 uppercase tracking-wider mb-2 font-bold">Insiden Aktif</div>
-          <div className="font-orbitron text-4xl font-bold text-red-400 mb-1">14</div>
+        {/* Total Kejadian Kamtibmas */}
+        <div className="ews-stat-card red cursor-pointer" onClick={() => addToast('Membuka detail kejadian kamtibmas', 'info')}>
+          <div className="text-[14px] text-gray-500 uppercase tracking-wider mb-2 font-bold">Total Kejadian Kamtibmas</div>
+          <div className="font-orbitron text-4xl font-bold text-red-400 mb-1">
+            {nationalKamtibmasStats?.today.toLocaleString('id-ID') || '0'}
+          </div>
           <div className="flex items-center gap-2 text-sm">
-            <span className="text-emerald-400"><i className="fa-solid fa-caret-up"></i> 2</span>
-            <span className="text-gray-500">vs rata-rata</span>
+            <span className={!nationalKamtibmasStats || nationalKamtibmasStats.trend_pct > 0 ? 'text-red-400' : 'text-emerald-400'}>
+              <i className={`fa-solid fa-caret-${!nationalKamtibmasStats || nationalKamtibmasStats.trend_pct >= 0 ? 'up' : 'down'}`}></i> 
+              {Math.abs(nationalKamtibmasStats?.trend_pct || 0).toFixed(1)}%
+            </span>
+            <span className="text-gray-500">vs kemarin</span>
           </div>
           <div className="absolute right-4 top-1/2 -translate-y-1/2 text-3xl opacity-20 text-red-500">
-            <i className="fa-solid fa-triangle-exclamation"></i>
+            <i className="fa-solid fa-handcuffs"></i>
           </div>
         </div>
 
-        {/* Kasus Berjalan */}
-        <div className="ews-stat-card amber cursor-pointer" onClick={() => addToast('Membuka daftar kasus berjalan', 'info')}>
-          <div className="text-[14px] text-gray-500 uppercase tracking-wider mb-2 font-bold">Kasus Berjalan</div>
-          <div className="font-orbitron text-4xl font-bold text-amber-400 mb-1">52</div>
+        {/* Jumlah Komoditas diatas HET */}
+        <div className="ews-stat-card amber cursor-pointer" onClick={() => addToast('Membuka rincian harga komoditas', 'info')}>
+          <div className="text-[14px] text-gray-500 uppercase tracking-wider mb-2 font-bold">Jumlah Komoditas diatas HET</div>
+          <div className="font-orbitron text-4xl font-bold text-amber-400 mb-1">
+            {commodityHetStats ? (commodityHetStats.sp2kp + commodityHetStats.pihps) : '0'}
+          </div>
           <div className="flex items-center gap-2 text-sm">
-            <span className="text-red-400"><i className="fa-solid fa-caret-down"></i> 3</span>
-            <span className="text-gray-500">diselesaikan hari ini</span>
+            <span className="text-amber-400 font-bold uppercase tracking-tighter text-[10px]">
+              SP2KP: {commodityHetStats?.sp2kp || 0} | PIHPS: {commodityHetStats?.pihps || 0}
+            </span>
+            <span className="text-gray-500 whitespace-nowrap text-[10px]">komoditas kritis</span>
           </div>
           <div className="absolute right-4 top-1/2 -translate-y-1/2 text-3xl opacity-20 text-amber-500">
-            <i className="fa-solid fa-folder-open"></i>
+            <i className="fa-solid fa-cart-shopping"></i>
           </div>
         </div>
 
-        {/* Personel Bertugas */}
-        <div className="ews-stat-card green cursor-pointer" onClick={() => addToast('Membuka status personel', 'info')}>
-          <div className="text-[14px] text-gray-500 uppercase tracking-wider mb-2 font-bold">Personel Bertugas</div>
-          <div className="font-orbitron text-4xl font-bold text-emerald-400 mb-1">84</div>
-          <div className="flex items-center gap-2 text-sm text-emerald-400">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 ews-animate-blink" />
-            <span>Online / 120 total</span>
+        {/* Sentimen Negatif */}
+        <div className="ews-stat-card red cursor-pointer" onClick={() => addToast('Membuka analisis sentimen', 'info')}>
+          <div className="text-[14px] text-gray-500 uppercase tracking-wider mb-2 font-bold">Sentimen Negatif</div>
+          <div className="font-orbitron text-4xl font-bold text-red-400 mb-1">24.5%</div>
+          <div className="flex items-center gap-2 text-sm text-red-400">
+            <span className="w-2 h-2 rounded-full bg-red-500 ews-animate-blink" />
+            <span>High Awareness Alert</span>
           </div>
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-3xl opacity-20 text-emerald-500">
-            <i className="fa-solid fa-user-shield"></i>
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-3xl opacity-20 text-red-500">
+            <i className="fa-solid fa-face-frown"></i>
           </div>
         </div>
 
-        {/* Prediksi Risiko */}
-        <div className="ews-stat-card cyan cursor-pointer" onClick={() => addToast('Membuka analisis prediksi risiko', 'info')}>
-          <div className="text-[14px] text-gray-500 uppercase tracking-wider mb-2 font-bold">Risiko Wilayah JKT</div>
-          <div className="font-orbitron text-4xl font-bold text-cyan-400 mb-1">74</div>
-          <div className="flex items-center gap-2 text-sm text-amber-400">
-            <span><i className="fa-solid fa-tower-radar"></i> TINGGI TERDETEKSI</span>
+        {/* Total Data Kecelakaan */}
+        <div className="ews-stat-card cyan cursor-pointer" onClick={() => addToast('Membuka data kecelakaan lalin', 'info')}>
+          <div className="text-[14px] text-gray-500 uppercase tracking-wider mb-2 font-bold">Total Data Kecelakaan</div>
+          <div className="font-orbitron text-4xl font-bold text-cyan-400 mb-1">42</div>
+          <div className="flex items-center gap-2 text-sm text-cyan-400">
+            <span><i className="fa-solid fa-car-burst"></i> TERDATA HARI INI</span>
           </div>
           <div className="absolute right-4 top-1/2 -translate-y-1/2 text-3xl opacity-20 text-cyan-500">
-            <i className="fa-solid fa-chart-line"></i>
+            <i className="fa-solid fa-truck-medical"></i>
           </div>
         </div>
       </div>
@@ -225,10 +413,6 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <div className="flex gap-2">
-              <button className="ews-btn ews-btn-cyan text-[10px] py-1.5 px-3">Sudirman-Thamrin</button>
-              <button className="ews-btn ews-btn-cyan text-[10px] py-1.5 px-3">Tanah Abang - Senayan</button>
-            </div>
             <span className="ews-live-badge red">
               <span className="ews-live-dot" />
               LIVE
@@ -240,16 +424,20 @@ export default function Dashboard() {
           <MapContainer 
             center={JAKARTA_CENTER} 
             zoom={14} 
-            scrollWheelZoom={true}
+            scrollWheelZoom={false}
+            doubleClickZoom={false}
+            touchZoom={false}
             className="w-full h-full z-0"
             zoomControl={false}
             attributionControl={false}
           >
+            <TacticalMapLock />
             {/* Dark Theme Tile Layer (CartoDB Dark Matter) */}
             <TileLayer
               url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
             />
+            <ZoomControl position="bottomright" />
 
             {/* Vulnerability Circles */}
             {vulnerabilityZones.map((zone, idx) => (
@@ -273,12 +461,18 @@ export default function Dashboard() {
           </MapContainer>
 
           {/* Map Overlay HUD */}
-          <div className="absolute top-4 left-4 z-[1000] pointer-events-none">
-          <div className="bg-black/60 backdrop-blur-md border border-cyan-500/30 p-2.5 rounded flex flex-col gap-1.5 shadow-2xl">
-            <div className="text-[11px] text-cyan-400 font-bold font-orbitron tracking-tighter uppercase">Coordinate Monitoring</div>
-            <div className="text-[11px] text-gray-400 font-mono tracking-widest uppercase">LAT: 06° 11' 17" S</div>
-            <div className="text-[11px] text-gray-400 font-mono tracking-widest uppercase">LON: 106° 49' 31" E</div>
-          </div>
+          <div className="absolute top-4 left-4 z-[1000]">
+            <div className="bg-black/60 backdrop-blur-md border border-gray-700/50 p-3 rounded-lg flex flex-col gap-2">
+              <div className="text-[10px] text-amber-400 font-bold font-orbitron tracking-tighter mb-1 uppercase">Zone Categories</div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]" />
+                <span className="text-[10px] text-gray-400">Zona Kerawanan (Kritis)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_#f59e0b]" />
+                <span className="text-[10px] text-gray-400">Zona Waspada</span>
+              </div>
+            </div>
           </div>
 
           <div className="absolute top-4 right-4 z-[1000] pointer-events-none">
@@ -303,19 +497,6 @@ export default function Dashboard() {
              <div className="font-orbitron text-[10px] text-gray-600 tracking-[0.4em] uppercase">SEKTOR : JAKARTA PUSAT - SELATAN</div>
           </div>
 
-          <div className="absolute bottom-4 right-4 z-[1000]">
-            <div className="bg-black/60 backdrop-blur-md border border-gray-700/50 p-3 rounded-lg flex flex-col gap-2">
-              <div className="text-[10px] text-amber-400 font-bold font-orbitron tracking-tighter mb-1 uppercase">Zone Categories</div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]" />
-                <span className="text-[10px] text-gray-400">Zona Kerawanan (Kritis)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_#f59e0b]" />
-                <span className="text-[10px] text-gray-400">Zona Waspada</span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -459,7 +640,6 @@ export default function Dashboard() {
                     <div className="text-[9px] text-gray-600 font-mono uppercase mt-1">Normal Pattern</div>
                   </div>
                 </div>
-
                 {/* Legend List */}
                 <div className="flex-1 space-y-4">
                   {[
@@ -504,17 +684,16 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Province Dropdown (Dummy) */}
+                {/* Province Dropdown (Real) */}
                 <div className="relative group/select">
                   <select 
-                    className="appearance-none bg-white/[0.03] border border-white/10 rounded-lg px-3 py-1.5 text-[10px] font-black text-gray-400 uppercase tracking-widest cursor-pointer outline-none hover:border-cyan-500/30 hover:text-cyan-400 transition-all pr-8"
-                    defaultValue="DKI JAKARTA"
+                    className="appearance-none bg-white/[0.03] border border-white/10 rounded-lg px-3 py-1.5 text-[10px] font-black text-gray-400 uppercase tracking-widest cursor-pointer outline-none hover:border-cyan-500/30 hover:text-cyan-400 transition-all pr-8 w-40"
+                    value={kamtibmasRegion}
+                    onChange={(e) => setKamtibmasRegion(e.target.value)}
                   >
-                    <option value="DKI JAKARTA">DKI JAKARTA</option>
-                    <option value="JAWA BARAT">JAWA BARAT</option>
-                    <option value="JAWA TENGAH">JAWA TENGAH</option>
-                    <option value="JAWA TIMUR">JAWA TIMUR</option>
-                    <option value="BALI">BALI</option>
+                    {availableRegions.map(region => (
+                      <option key={region} value={region}>{region.toUpperCase()}</option>
+                    ))}
                   </select>
                   <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-[8px] text-gray-600 group-hover/select:text-cyan-500 transition-colors">
                     <i className="fa-solid fa-chevron-down"></i>
@@ -523,36 +702,51 @@ export default function Dashboard() {
               </div>
               
               <div className="space-y-4">
-                {/* Compact Stats Row */}
+                {/* Compact Stats Row (Live) */}
                 <div className="flex items-end justify-between p-4 rounded-2xl bg-white/[0.02] border border-white/[0.05] relative overflow-hidden group hover:border-red-500/20 transition-all">
                   <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/5 blur-3xl -mr-12 -mt-12" />
-                  <div>
-                    <div className="font-orbitron text-4xl font-black text-white leading-none tracking-tighter">2.221</div>
+                  <div className={isKamtibmasLoading ? 'animate-pulse' : ''}>
+                    <div className="font-orbitron text-4xl font-black text-white leading-none tracking-tighter">
+                      {(
+                        (kamtibmasIndex?.additional_data?.case_detail?.kejahatan_total?.[0]?.kasus_mingguan || 0) +
+                        (kamtibmasIndex?.additional_data?.case_detail?.gangguan_total?.[0]?.kasus_mingguan || 0) +
+                        (kamtibmasIndex?.additional_data?.case_detail?.pelanggaran_total?.[0]?.kasus_mingguan || 0) +
+                        (kamtibmasIndex?.additional_data?.case_detail?.bencana_total?.[0]?.kasus_mingguan || 0)
+                      ).toLocaleString('id-ID')}
+                    </div>
                     <div className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] mt-1">TOTAL INSIDEN</div>
                   </div>
                   <div className="flex flex-col items-end gap-2">
-                    <div className="px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/20 flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]" />
-                      <span className="text-[9px] font-black text-white uppercase tracking-widest">TINGGI</span>
+                    <div className={`px-2.5 py-1 rounded-full border flex items-center gap-1.5 ${
+                      kamtibmasIndex?.additional_data?.level?.toLowerCase() === 'tinggi' ? 'bg-red-500/10 border-red-500/20' : 'bg-emerald-500/10 border-emerald-500/20'
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${
+                        kamtibmasIndex?.additional_data?.level?.toLowerCase() === 'tinggi' ? 'bg-red-500 shadow-[0_0_8px_#ef4444]' : 'bg-emerald-500 shadow-[0_0_8px_#10b981]'
+                      }`} />
+                      <span className="text-[9px] font-black text-white uppercase tracking-widest">
+                        {kamtibmasIndex?.additional_data?.level?.toUpperCase() || 'NORMAL'}
+                      </span>
                     </div>
                     <div className="text-right">
                       <div className="text-[9px] text-gray-600 font-black uppercase tracking-widest">RISK INDEX</div>
-                      <div className="text-[15px] font-orbitron font-bold text-cyan-400">26.51</div>
+                      <div className="text-[15px] font-orbitron font-bold text-cyan-400">
+                        {kamtibmasIndex?.additional_data?.irs?.toFixed(2) || '0.00'}
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Condensed Sub-Stats Grid */}
+                {/* Condensed Sub-Stats Grid (Live Data Contextualized) */}
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { label: 'KEJAHATAN', value: '2.008' },
-                    { label: 'GANGGUAN', value: '110' },
-                    { label: 'PELANGGARAN', value: '90' },
-                    { label: 'BENCANA', value: '13' },
+                    { label: 'KEJAHATAN', value: kamtibmasIndex?.additional_data?.case_detail?.kejahatan_total?.[0]?.kasus_mingguan || 0 },
+                    { label: 'GANGGUAN', value: kamtibmasIndex?.additional_data?.case_detail?.gangguan_total?.[0]?.kasus_mingguan || 0 },
+                    { label: 'PELANGGARAN', value: kamtibmasIndex?.additional_data?.case_detail?.pelanggaran_total?.[0]?.kasus_mingguan || 0 },
+                    { label: 'BENCANA', value: kamtibmasIndex?.additional_data?.case_detail?.bencana_total?.[0]?.kasus_mingguan || 0 },
                   ].map((item) => (
                     <div key={item.label} className="py-2.5 px-3.5 rounded-xl bg-white/[0.01] border border-white/[0.03] flex items-center justify-between hover:bg-white/[0.04] transition-all group/sub">
                       <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest group-hover/sub:text-gray-400 transition-colors">{item.label}</span>
-                      <span className="font-orbitron text-[15px] font-bold text-gray-200">{item.value}</span>
+                      <span className="font-orbitron text-[15px] font-bold text-gray-200">{item.value.toLocaleString('id-ID')}</span>
                     </div>
                   ))}
                 </div>
@@ -711,23 +905,48 @@ export default function Dashboard() {
         {/* Right Section (Takes 1 Column) - Elongated */}
         <div className="col-span-1 flex flex-col">
           <div className="ews-card p-6 flex-1 flex flex-col shadow-2xl border-cyan-500/10">
-            <div className="flex items-center justify-between mb-6 border-b border-gray-800 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.1)]">
-                  <i className="fa-solid fa-bolt-lightning text-lg"></i>
-                </div>
-                <div>
-                  <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">INSIDEN TERKINI</span>
-                  <span className="text-[10px] text-red-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                    Live Feed • High Priority Active
-                  </span>
+            <div className="flex flex-col gap-4 mb-6 border-b border-gray-800 pb-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.1)]">
+                    <i className="fa-solid fa-bolt-lightning text-lg"></i>
+                  </div>
+                  <div>
+                    <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">PERINGATAN DINI & KEJADIAN</span>
+                    <span className="text-[10px] text-red-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                      Live Feed • Priority Active
+                    </span>
+                  </div>
                 </div>
               </div>
+
+              {/* TACTICAL FILTER GROUP */}
+              <div className="flex p-0.5 bg-white/5 rounded-lg border border-white/10">
+                {[
+                  { id: 'all', label: 'ALL', icon: 'fa-layer-group' },
+                  { id: 'cuaca', label: 'CUACA', icon: 'fa-cloud-bolt' },
+                  { id: 'gempa', label: 'GEMPA', icon: 'fa-house-crack' }
+                ].map((btn) => (
+                  <button
+                    key={btn.id}
+                    onClick={() => setFilter(btn.id as any)}
+                    className={`
+                      flex-1 flex items-center justify-center gap-2 py-1.5 rounded-md text-[10px] font-black tracking-widest transition-all
+                      ${filter === btn.id 
+                        ? 'bg-cyan-500 text-black shadow-[0_0_10px_rgba(6,182,212,0.3)]' 
+                        : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'}
+                    `}
+                  >
+                    <i className={`fa-solid ${btn.icon} text-[9px]`}></i>
+                    {btn.label}
+                  </button>
+                ))}
+              </div>
             </div>
-            {/* Timeline Feed with Scroll - Now filling full available height */}
-            <div className="flex-1 ews-timeline overflow-y-auto ews-scrollbar space-y-3 pr-2 border-b border-gray-800/50 mb-4">
-              {timelineData.map((item, idx) => {
+            {/* Timeline Feed with Scroll - Limited height for tactical focus */}
+            <div className="flex-1 ews-timeline overflow-y-auto ews-scrollbar space-y-3 pr-2 border-b border-gray-800/50 mb-1 max-h-[840px]">
+              {filteredTimeline.map((item, idx) => {
                 // Get dynamic icon based on content/tags
                 const icon = item.tags.includes('LANTAS') ? 'fa-solid fa-car-burst' : 
                              item.tags.includes('RESKRIM') ? 'fa-solid fa-fingerprint' : 
@@ -766,39 +985,104 @@ export default function Dashboard() {
                       )}
                     </div>
 
-                    {/* Content */}
-                    <div className="text-[16px] font-semibold text-gray-200 leading-normal mb-3 group-hover:text-cyan-400 transition-colors">
+                    {/* Header: Warning Event */}
+                    {item.event && (
+                      <div className="text-[11px] font-black text-white px-2 py-0.5 bg-white/5 border border-white/10 rounded mb-2 inline-block uppercase tracking-widest font-orbitron">
+                         {item.event}
+                      </div>
+                    )}
+
+                    {/* Content: Primary Message */}
+                    <div className="text-[14px] font-semibold text-gray-200 leading-normal mb-4 group-hover:text-cyan-400 transition-colors">
                       {item.content}
                     </div>
 
-                    {/* Footer Tags */}
-                    <div className="flex flex-wrap gap-2">
-                      {item.tags.map((tag, tidx) => (
-                        <span 
-                          key={tidx} 
-                          className={`
-                            text-[13px] font-black uppercase px-2.5 py-1 rounded bg-gray-900 border border-gray-800/50
-                            ${tag === 'PRIORITAS TINGGI' ? 'text-red-500' : 
-                              tag === 'SEDANG' ? 'text-amber-500' : 
-                              tag === 'SELESAI' ? 'text-emerald-500' : 
-                              'text-cyan-500'}
-                          `}
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
+                    {/* STRUCTURED DATA BLOCKS: CUACA */}
+                    {item.subRegions && item.subRegions.length > 0 && (
+                      <div className="mb-4 p-3 bg-white/5 border border-white/10 rounded-lg">
+                        <div className="text-[9px] font-black text-cyan-500/80 uppercase tracking-widest mb-2 flex items-center gap-2">
+                           <i className="fa-solid fa-location-crosshairs"></i> Sector Monitoring: {item.region}
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {item.subRegions.map((loc, i) => (
+                            <span key={i} className="text-[10px] bg-cyan-500/10 text-cyan-300 px-2 py-0.5 rounded border border-cyan-500/20 font-mono">
+                              {loc}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* STRUCTURED DATA BLOCKS: GEMPA */}
+                    {item.magnitude && (
+                      <div className="mb-4 p-3 bg-red-500/5 border border-red-500/10 rounded-lg">
+                        <div className="text-[9px] font-black text-red-500/80 uppercase tracking-widest mb-2 flex items-center gap-2">
+                           <i className="fa-solid fa-waveform"></i> Seismic Data
+                        </div>
+                        <div className="flex gap-4">
+                          <div>
+                            <div className="text-[10px] text-gray-500 uppercase">Magnitude</div>
+                            <div className="text-[14px] font-bold text-red-500">{item.magnitude} SR</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] text-gray-500 uppercase">Depth</div>
+                            <div className="text-[14px] font-bold text-gray-200">{item.depth} KM</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] text-gray-500 uppercase">Tsunami Risk</div>
+                            <div className={`text-[12px] font-bold ${item.status?.toLowerCase().includes('tidak') ? 'text-green-500' : 'text-red-500'}`}>
+                              {item.status?.toLowerCase().includes('tidak') ? 'NONE' : 'ALERT'}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {item.epicenter && (
+                      <div className="mb-4 p-2 bg-white/5 border border-white/10 rounded border-l-2 border-l-red-500 group/map">
+                        <div className="flex justify-between items-start mb-1">
+                          <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Coordinates</div>
+                          {item.coordinates && (
+                            <button 
+                              onClick={() => {
+                                const parts = item.coordinates?.split(' ') || [];
+                                let lat = parseFloat(parts[0] || '0');
+                                if (parts[1]?.toUpperCase() === 'LS') lat = -lat;
+                                let lng = parseFloat(parts[2] || '0');
+                                if (parts[3]?.toUpperCase() === 'BB') lng = -lng;
+                                window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+                              }}
+                              className="text-[9px] bg-red-500/10 text-red-400 px-1.5 py-0.5 rounded border border-red-500/20 hover:bg-red-500/20 transition-all flex items-center gap-1"
+                            >
+                              <i className="fa-solid fa-map-location-dot"></i> TAC-MAP
+                            </button>
+                          )}
+                        </div>
+                        <div className="text-[11px] font-mono text-gray-300 mb-1">{item.coordinates}</div>
+                        <div className="text-[10px] text-red-400 font-bold">{item.epicenter}</div>
+                      </div>
+                    )}
+
+                    {item.impact && (
+                      <div className="mb-4 flex items-start gap-3">
+                        <div className="mt-1 w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
+                        <div>
+                          <div className="text-[9px] font-black text-amber-500/80 uppercase tracking-widest mb-1">Environmental Impact</div>
+                          <div className="text-[11px] text-gray-400 italic">"{item.impact}"</div>
+                        </div>
+                      </div>
+                    )}
+
+                    {item.duration && (
+                      <div className="flex items-center gap-2 text-[10px] font-mono text-gray-500 border-t border-gray-800 pt-3">
+                        <i className="fa-regular fa-clock text-cyan-500/50"></i>
+                        ESTIMATED END TIME: <span className="text-gray-300">{item.duration}</span>
+                      </div>
+                    )}
+
                   </div>
                 );
               })}
-            </div>
-            <div className="mt-4 pt-4 border-t border-gray-800">
-              <button 
-                className="w-full py-2 bg-cyan-500/10 border border-cyan-500/30 rounded text-[12px] font-black text-cyan-400 uppercase tracking-widest hover:bg-cyan-500/20 transition-all"
-                onClick={() => addToast('Mengunduh laporan insiden lengkap', 'info')}
-              >
-                Unduh Rekap Laporan
-              </button>
             </div>
           </div>
         </div>

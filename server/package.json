@@ -4,6 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
     "db:pull:primary": "drizzle-kit pull --config=drizzle.primary.config.ts",
     "db:pull:secondary": "drizzle-kit pull --config=drizzle.secondary.config.ts"
   },
