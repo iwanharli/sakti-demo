@@ -1,327 +1,337 @@
-import { useState, useEffect } from 'react';
-import { useAppStore } from '../store/useAppStore';
-
-import { bencanaAlerts, resources, emergencyContacts, vulnerabilityIndex } from '../data/mockDisasterMitigation';
+import { useDisasterData } from '../hooks/useDisasterData';
+import CountUp from '../components/CountUp';
+import TacticalCard from '../components/CommandCenter/shared/TacticalCard';
 
 export default function DisasterHistory() {
-  const addToast = useAppStore((s) => s.addToast);
-  const [mounted, setMounted] = useState(false);
+  const { 
+    history, 
+    stats, 
+    loading, 
+    selectedRegion, 
+    setSelectedRegion,
+    selectedCategory,
+    setSelectedCategory,
+    startDate,
+    setStartDate,
+    endDate,
+    setEndDate
+  } = useDisasterData();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
-  const getResourceStatusClass = (status: string) => {
-    switch (status) {
-      case 'good':
-        return 'text-emerald-400';
-      case 'warning':
-        return 'text-amber-400';
-      case 'critical':
-        return 'text-red-400';
-      default:
-        return 'text-gray-400';
+  const categories = [
+    'Semua', 'BANJIR', 'CUACA EKSTREM', 'TANAH LONGSOR', 
+    'KEBAKARAN HUTAN DAN LAHAN', 'KEKERINGAN', 'GEMPABUMI'
+  ];
+
+  const provinces = [
+    'Nasional', 'ACEH', 'SUMATERA UTARA', 'SUMATERA BARAT', 'RIAU', 'JAMBI', 
+    'SUMATERA SELATAN', 'BENGKULU', 'LAMPUNG', 'KEP. BANGKA BELITUNG', 'KEP. RIAU', 
+    'DKI JAKARTA', 'JAWA BARAT', 'JAWA TENGAH', 'DI YOGYAKARTA', 'JAWA TIMUR', 
+    'BANTEN', 'BALI', 'NUSA TENGGARA BARAT', 'NUSA TENGGARA TIMUR'
+  ];
+
+  const getEventIcon = (cat: string) => {
+    switch (cat) {
+      case 'BANJIR': return 'fa-solid fa-house-flood-water';
+      case 'CUACA EKSTREM': return 'fa-solid fa-cloud-bolt';
+      case 'TANAH LONGSOR': return 'fa-solid fa-hill-rockslide';
+      case 'KEBAKARAN HUTAN DAN LAHAN': return 'fa-solid fa-fire-extinguisher';
+      case 'GEMPABUMI': return 'fa-solid fa-house-crack';
+      default: return 'fa-solid fa-triangle-exclamation';
     }
   };
 
+  const getEventColor = (cat: string) => {
+    switch (cat) {
+      case 'BANJIR': return 'text-cyan-400';
+      case 'CUACA EKSTREM': return 'text-amber-400';
+      case 'TANAH LONGSOR': return 'text-orange-400';
+      case 'KEBAKARAN HUTAN DAN LAHAN': return 'text-red-500';
+      case 'GEMPABUMI': return 'text-purple-400';
+      default: return 'text-gray-400';
+    }
+  };
+
+  const formatLocation = (loc: string, category: string): string[] => {
+    if (!loc) return [];
+    
+    // 1. Initial cleanup
+    let clean = loc
+      .replace(/Kecamatan:[\/|\\]n/gi, '')
+      .replace(/[\/|\\]n/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (clean.toUpperCase() === category.toUpperCase()) {
+      return [];
+    }
+
+    // 2. Split by "Kec." safely
+    const parts = clean.split(/(?=Kec\.)|(?=Kecamatan )/gi);
+    
+    return parts
+      .map(p => p.trim())
+      .filter(p => p.length > 0)
+      .map(p => p.toUpperCase());
+  };
+
   return (
-    <div className={`space-y-5 ${mounted ? 'ews-animate-fade-in' : ''}`}>
-      {/* DATA SOURCE & METHODOLOGY SECTION */}
-      <div className="ews-card p-6 border-l-4 border-red-500 bg-red-500/5 mb-8 relative overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-        <div className="flex items-start justify-between relative z-10">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.1)]">
-              <i className="fa-solid fa-house-flood-water text-xl"></i>
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-orbitron font-bold text-xs text-white uppercase tracking-widest">DATA SOURCE & TEKNIK PENGOLAHAN</h3>
-              </div>
-              <p className="text-[13px] text-gray-400 leading-relaxed font-rajdhani max-w-4xl">
-                Sinkronisasi data sensor lapangan IoT dan feed BMKG untuk deteksi dini bencana alam, monitoring ketinggian air, serta manajemen evakuasi kedaulatan secara real-time.
-              </p>
-            </div>
+    <div className="space-y-6 ews-animate-fade-in">
+      {/* HERO STATS - REAL AGGREGATION */}
+      <div className="grid grid-cols-4 gap-6">
+        <div className="ews-card p-6 border-l-4 border-red-600 bg-red-500/[0.02]">
+          <div className="text-[11px] text-gray-500 font-black uppercase tracking-[0.2em] mb-2">Total Meninggal</div>
+          <div className="font-orbitron text-4xl font-black text-red-500 leading-none">
+            <CountUp value={Number(stats?.deaths || 0)} />
           </div>
-          
-          <div className="flex items-center gap-4">
-            <div className="flex flex-col items-end pr-4">
-              <span className="text-[11px] text-gray-400 font-bold uppercase tracking-widest">Source</span>
-              <span className="font-orbitron text-lg font-bold text-red-500">BMKG</span>
-            </div>
+          <div className="mt-3 flex items-center gap-2">
+             <span className="text-[10px] text-red-500/60 font-mono tracking-widest uppercase">Casualty Log</span>
+             <div className="flex-1 h-px bg-red-500/10" />
+          </div>
+        </div>
+
+        <div className="ews-card p-6 border-l-4 border-amber-600 bg-amber-500/[0.02]">
+          <div className="text-[11px] text-gray-500 font-black uppercase tracking-[0.2em] mb-2">Korban Luka</div>
+          <div className="font-orbitron text-4xl font-black text-amber-500 leading-none">
+            <CountUp value={Number(stats?.injured || 0)} />
+          </div>
+          <div className="mt-3 flex items-center gap-2">
+             <span className="text-[10px] text-amber-500/60 font-mono tracking-widest uppercase">Medical Response</span>
+             <div className="flex-1 h-px bg-amber-500/10" />
+          </div>
+        </div>
+
+        <div className="ews-card p-6 border-l-4 border-cyan-600 bg-cyan-500/[0.02]">
+          <div className="text-[11px] text-gray-500 font-black uppercase tracking-[0.2em] mb-2">Rumah Terdampak</div>
+          <div className="font-orbitron text-4xl font-black text-cyan-400 leading-none">
+            <CountUp value={Number(stats?.damage || 0)} />
+          </div>
+          <div className="mt-3 flex items-center gap-2">
+             <span className="text-[10px] text-cyan-500/60 font-mono tracking-widest uppercase">Infrastructure</span>
+             <div className="flex-1 h-px bg-cyan-500/10" />
+          </div>
+        </div>
+
+        <div className="ews-card p-6 border-l-4 border-emerald-600 bg-emerald-500/[0.02]">
+          <div className="text-[11px] text-gray-500 font-black uppercase tracking-[0.2em] mb-2">Total Kejadian</div>
+          <div className="font-orbitron text-4xl font-black text-emerald-400 leading-none">
+            <CountUp value={Number(stats?.total_events || 0)} />
+          </div>
+          <div className="mt-3 flex items-center gap-2">
+             <span className="text-[10px] text-emerald-500/60 font-mono tracking-widest uppercase">Event Record</span>
+             <div className="flex-1 h-px bg-emerald-500/10" />
           </div>
         </div>
       </div>
 
-      {/* HUD STATS GRID */}
-      <div className="grid grid-cols-4 gap-5 mb-8 relative z-10">
-        <div className="ews-stat-card red cursor-pointer" onClick={() => addToast('Detail potensi bencana aktif', 'alert')}>
-          <div className="text-[12px] text-gray-500 uppercase tracking-wider mb-2">Potensi Bencana Aktif</div>
-          <div className="font-orbitron text-4xl font-bold text-red-500 mb-1">02</div>
-          <div className="flex items-center gap-2 text-[13px]">
-            <span className="text-red-400 uppercase font-black">▲ CRITICAL</span>
-            <span className="text-gray-500 italic">Banjir & Longsor</span>
-          </div>
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-5xl opacity-20 text-red-500">
-            <i className="fa-solid fa-triangle-exclamation"></i>
-          </div>
+      {/* FILTER BAR */}
+      <div className="flex flex-wrap items-center gap-y-4 gap-x-4 bg-white/[0.02] border border-white/5 p-4 rounded-xl backdrop-blur-md">
+        <div className="flex items-center gap-2">
+          <i className="fa-solid fa-filter text-cyan-500/50 text-xs"></i>
+          <span className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em]">Wilayah:</span>
         </div>
+        <select 
+          className="bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-[12px] text-white uppercase tracking-widest outline-none focus:border-cyan-500/50 transition-all font-bold"
+          value={selectedRegion}
+          onChange={(e) => setSelectedRegion(e.target.value)}
+        >
+          {provinces.map(p => <option key={p} value={p}>{p}</option>)}
+        </select>
 
-        <div className="ews-stat-card amber cursor-pointer" onClick={() => addToast('Detail status siaga', 'info')}>
-          <div className="text-[12px] text-gray-500 uppercase tracking-wider mb-2">Status Siaga</div>
-          <div className="font-orbitron text-4xl font-bold text-amber-500 mb-1">III</div>
-          <div className="text-[13px] text-amber-500 italic">Waspada — Curah Hujan Tinggi</div>
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-5xl opacity-20 text-amber-500">
-            <i className="fa-solid fa-cloud-showers-heavy"></i>
-          </div>
+        <div className="w-px h-8 bg-white/5 mx-2" />
+
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em]">Kategori:</span>
         </div>
+        <select 
+          className="bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-[12px] text-white uppercase tracking-widest outline-none focus:border-cyan-500/50 transition-all font-bold"
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+        >
+          {categories.map(cat => (
+            <option key={cat} value={cat}>{cat}</option>
+          ))}
+        </select>
 
-        <div className="ews-stat-card green cursor-pointer" onClick={() => addToast('Detail posko siaga', 'info')}>
-          <div className="text-[12px] text-gray-500 uppercase tracking-wider mb-2">Posko Siaga Aktif</div>
-          <div className="font-orbitron text-4xl font-bold text-emerald-400 mb-1">08</div>
-          <div className="text-[13px] text-gray-500 italic">8 dari 12 Unit Terpantau</div>
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-5xl opacity-20 text-emerald-500">
-            <i className="fa-solid fa-house-medical"></i>
-          </div>
+        <div className="w-px h-8 bg-white/5 mx-2" />
+
+        <div className="flex items-center gap-2">
+          <i className="fa-solid fa-calendar-days text-cyan-500/50 text-xs"></i>
+          <span className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em]">Rentang Tanggal:</span>
         </div>
-
-        <div className="ews-stat-card cyan cursor-pointer" onClick={() => addToast('Detail personel standby', 'info')}>
-          <div className="text-[12px] text-gray-500 uppercase tracking-wider mb-2">Personel Gabungan</div>
-          <div className="font-orbitron text-4xl font-bold text-cyan-400 mb-1">124</div>
-          <div className="text-[13px] text-gray-500 italic">BPBD · TNI · POLRI · PMI</div>
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-5xl opacity-20 text-cyan-500">
-            <i className="fa-solid fa-users-gear"></i>
-          </div>
-        </div>
-      </div>
-
-      {/* TACTICAL DISASTER MAP - FULL WIDTH */}
-      <div className="ews-card p-6 relative overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 via-transparent to-transparent h-1 w-full animate-[scan_4s_linear_infinite] pointer-events-none opacity-20" />
-        
-        <div className="flex items-center justify-between mb-6 relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.1)]">
-              <i className="fa-solid fa-map-location-dot text-xl"></i>
-            </div>
-            <div>
-              <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">PETA MONITORING KERAWANAN REAL-TIME</span>
-              <span className="text-[10px] text-red-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                Live Sensor Grid • Intelligence Matrix
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-6">
-            <div className="text-right">
-              <div className="text-[10px] text-gray-500 uppercase font-black tracking-widest mb-1">Active Alerts</div>
-              <div className="text-[18px] font-orbitron text-red-500 font-bold">02 ZONES</div>
-            </div>
-            <div className="w-px h-10 bg-gray-800" />
-            <span className="ews-live-badge red">
-              <span className="ews-live-dot" />
-              BMKG SAT-EL
-            </span>
-          </div>
-        </div>
-
-        <div className="relative h-[560px] bg-gradient-to-b from-[#0d1f35] to-[#070a12] rounded-xl overflow-hidden border border-gray-800/50">
-          {/* Grid Pattern */}
-          <div 
-            className="absolute inset-0 opacity-20"
-            style={{
-              backgroundImage: 'linear-gradient(rgba(6, 182, 212, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(6, 182, 212, 0.1) 1px, transparent 1px)',
-              backgroundSize: '40px 40px'
-            }}
+        <div className="flex items-center gap-2">
+          <input 
+            type="date" 
+            className="bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-[11px] text-white outline-none focus:border-cyan-500/50 transition-all font-bold selection:bg-cyan-500"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
           />
-          
-          {/* Roads & Vectors */}
-          <div className="absolute left-0 right-0 top-[30%] h-px bg-cyan-500/20" />
-          <div className="absolute left-0 right-0 top-[65%] h-px bg-cyan-500/20" />
-          <div className="absolute left-[30%] top-0 bottom-0 w-px bg-cyan-500/20" />
-          <div className="absolute left-[75%] top-0 bottom-0 w-px bg-cyan-500/20" />
-
-          {/* Interactive Heatzones */}
-          <div className="ews-heat-zone ews-heat-red w-48 h-48 left-[25%] top-[25%]" />
-          <div className="ews-heat-zone ews-heat-amber w-64 h-64 left-[60%] top-[45%] shadow-[0_0_40px_rgba(245,158,11,0.1)]" style={{ animationDelay: '1s' }} />
-          <div className="ews-heat-zone ews-heat-amber w-32 h-32 left-[45%] top-[10%]" style={{ animationDelay: '0.5s' }} />
-
-          {/* Tactical Markers */}
-          <div className="ews-map-marker left-[35%] top-[35%]">
-            <div className="ews-marker-dot text-red-500" />
-            <div className="ews-marker-label">ZONA MERAH: KEL. REJO (BANJIR)</div>
-          </div>
-          
-          <div className="ews-map-marker left-[72%] top-[62%]">
-            <div className="ews-marker-dot text-amber-500" />
-            <div className="ews-marker-label">RISIKO LONGSOR: BUKIT SELATAN</div>
-          </div>
-
-          <div className="ews-map-marker left-[52%] top-[18%]">
-            <div className="ews-marker-dot text-emerald-500" />
-            <div className="ews-marker-label">POSKO UTAMA: GOR MADIUN</div>
-          </div>
-
-          <div className="absolute bottom-6 right-6 bg-gray-900/90 border border-gray-800 rounded-xl p-4 backdrop-blur-xl shadow-2xl">
-            <div className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-3 border-b border-gray-800 pb-2">Legend Information</div>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444]" />
-                <span className="text-[11px] text-gray-300 font-bold uppercase tracking-wider">Bahaya Banjir</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-3 h-3 rounded-full bg-amber-500 shadow-[0_0_10px_#f59e0b]" />
-                <span className="text-[11px] text-gray-300 font-bold uppercase tracking-wider">Potensi Longsor</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]" />
-                <span className="text-[11px] text-gray-300 font-bold uppercase tracking-wider">Posko Evakuasi</span>
-              </div>
-            </div>
-          </div>
+          <span className="text-[9px] text-gray-600 font-black uppercase tracking-widest">— TO —</span>
+          <input 
+            type="date" 
+            className="bg-black/40 border border-white/10 rounded-lg px-2 py-2 text-[11px] text-white outline-none focus:border-cyan-500/50 transition-all font-bold selection:bg-cyan-500"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+          />
         </div>
       </div>
 
-      {/* MID SECTION GRID */}
-      <div className="grid grid-cols-3 gap-5">
-        {/* Alert Timeline */}
-        <div className="ews-card p-6 col-span-2 relative overflow-hidden group">
-          <div className="flex items-center gap-3 mb-6 relative z-10">
-            <div className="w-10 h-10 rounded bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500">
-              <i className="fa-solid fa-bell-concierge text-lg"></i>
+      {/* MAIN DATA GRID */}
+      <TacticalCard
+        headerIcon="fa-solid fa-clock-rotate-left"
+        headerTitle="MATRIKS HISTORI BENCANA"
+        headerSubtitle={`Log Kejadian Terverifikasi • ${startDate} s/d ${endDate} • ${selectedRegion.toUpperCase()}`}
+      >
+        <div className="min-h-[600px] relative">
+          {loading && (
+            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm rounded-xl">
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin" />
+                <span className="text-[10px] text-cyan-500 font-black uppercase tracking-[0.3em] animate-pulse">Syncing Tactical Data...</span>
+              </div>
             </div>
-            <span className="font-orbitron font-bold text-sm text-gray-100 uppercase tracking-widest">LOG PERINGATAN DINI</span>
-          </div>
-          <div className="ews-timeline max-h-[350px] overflow-y-auto ews-scrollbar pr-2 relative z-10">
-            {bencanaAlerts.map((alert, idx) => (
-              <div key={idx} className="ews-timeline-item pl-6">
+          )}
+
+           <div className="flex flex-col max-h-[1200px] overflow-y-auto ews-scrollbar-hide pr-2">
+              {history.map((event) => (
                 <div 
-                  className="ews-timeline-dot"
-                  style={{ 
-                    backgroundColor: alert.color === 'red' ? '#ef4444' : alert.color === 'amber' ? '#f59e0b' : alert.color === 'green' ? '#10b981' : '#06b6d4',
-                    boxShadow: `0 0 10px ${alert.color === 'red' ? '#ef4444' : alert.color === 'amber' ? '#f59e0b' : alert.color === 'green' ? '#10b981' : '#06b6d4'}`
-                  }}
-                />
-                <div className="flex flex-col gap-1">
-                  <div className="flex justify-between items-center text-[10px] font-mono text-gray-500">
-                    <span>{alert.time} · SOURCE: {alert.source}</span>
-                    <span className="bg-gray-800 px-1.5 py-0.5 rounded">ID-TRK-{Math.floor(Math.random() * 1000)}</span>
+                  key={event.id}
+                  className="group relative flex items-center gap-6 p-6 border-b border-white/[0.03] hover:bg-white/[0.02] transition-all duration-300"
+                >
+                  {/* GLOW DECORATOR */}
+                  <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-12 rounded-r-full blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity ${getEventColor(event.category).replace('text-', 'bg-')}`} />
+
+                  {/* COL 1: IDENTITY & TEMPORAL */}
+                  <div className="flex flex-col items-center w-28 shrink-0">
+                    <div className={`w-14 h-14 rounded-2xl bg-black/40 border border-white/5 flex items-center justify-center text-2xl mb-2 group-hover:border-cyan-500/30 transition-all shadow-inner ${getEventColor(event.category)}`}>
+                      <i className={getEventIcon(event.category)}></i>
+                    </div>
+                    <div className="text-[10px] text-gray-500 font-black uppercase tracking-widest font-mono">
+                      {new Date(event.report_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </div>
                   </div>
-                  <div className="text-[14px] text-gray-300 font-bold leading-relaxed">{alert.content}</div>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {alert.tags.map((tag, tidx) => (
-                      <span key={tidx} className={`ews-tag text-[9px] font-black tracking-widest ${
-                        alert.color === 'red' ? 'ews-tag-red' :
-                        alert.color === 'amber' ? 'ews-tag-amber' :
-                        'ews-tag-cyan'
-                      }`}>
-                        {tag}
+
+                  {/* COL 2: GEOSPATIAL & NARRATIVE */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className={`px-2 py-0.5 rounded-md border text-[9px] font-black uppercase tracking-widest ${getEventColor(event.category)} ${getEventColor(event.category).replace('text-', 'border-').replace('-400', '-500/20').replace('-500', '-600/20')} bg-white/[0.02]`}>
+                        {event.category}
                       </span>
-                    ))}
+                      <div className="flex items-center gap-2 text-[11px] text-gray-400 font-bold tracking-wider uppercase">
+                        <i className="fa-solid fa-location-dot text-[9px] text-cyan-500/50"></i>
+                        <span className="truncate">{event.city_name}</span>
+                        <span className="text-white/10">•</span>
+                        <span className="text-gray-500">{event.province_name}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="mb-2">
+                       {(() => {
+                         const locs = formatLocation(event.location, event.category);
+                         if (locs.length === 0) {
+                           return <h3 className="text-[14px] font-black text-white/90 group-hover:text-cyan-400 transition-colors uppercase tracking-wide">LOKASI TIDAK TERPERINCI</h3>;
+                         }
+                         if (locs.length === 1) {
+                           return <h3 className="text-[14px] font-black text-white/90 group-hover:text-cyan-400 transition-colors uppercase tracking-wide">{locs[0]}</h3>;
+                         }
+                         return (
+                           <div className="space-y-1.5 mt-1">
+                             {locs.map((l, idx) => (
+                               <div key={idx} className="flex items-start gap-3 group/loc">
+                                 <span className="text-[10px] text-cyan-500/40 font-mono mt-0.5">{idx + 1}.</span>
+                                 <h3 className="text-[13px] font-black text-white/80 group-hover/loc:text-cyan-400 transition-colors uppercase tracking-wide leading-tight">
+                                   {l}
+                                 </h3>
+                               </div>
+                             ))}
+                           </div>
+                         );
+                       })()}
+                    </div>
+                    
+                    <div className="flex items-start gap-2">
+                      <i className="fa-solid fa-quote-left text-[8px] text-gray-700 mt-1"></i>
+                      <p className="text-[11px] text-gray-500 line-clamp-2 leading-relaxed italic tracking-wide">
+                        {event.cause || 'PENYEBAB DALAM PROSES INVESTIGASI LAPORAN...'}
+                      </p>
+                    </div>
+
+                    <div className="mt-3 flex items-center gap-4">
+                       <span className="text-[9px] text-gray-600 font-mono tracking-tighter">REF-ID: {event.id.substring(0,8).toUpperCase()}</span>
+                    </div>
+                  </div>
+
+                  {/* COL 3: IMPACT MATRIX (MINIMALIST HUD) */}
+                  <div className="flex flex-col gap-3 min-w-[340px] px-6 py-2 border-l border-white/5">
+                    {/* Row 1: Human Impact */}
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className={`flex items-center gap-2 ${event.total_meninggal > 0 ? 'opacity-100' : 'opacity-30'}`} title="Meninggal Dunia">
+                        <i className="fa-solid fa-skull text-[10px] text-red-500"></i>
+                        <span className={`text-2xl font-orbitron font-black ${event.total_meninggal > 0 ? 'text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.4)]' : 'text-gray-400'}`}>
+                          {event.total_meninggal || 0}
+                        </span>
+                        <span className="text-[8px] text-gray-500 font-bold uppercase tracking-widest">Die</span>
+                      </div>
+
+                      <div className={`flex items-center gap-2 ${event.total_hilang > 0 ? 'opacity-100' : 'opacity-30'}`} title="Orang Hilang">
+                        <i className="fa-solid fa-person-circle-question text-[10px] text-amber-500"></i>
+                        <span className={`text-2xl font-orbitron font-black ${event.total_hilang > 0 ? 'text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.3)]' : 'text-gray-400'}`}>
+                          {event.total_hilang || 0}
+                        </span>
+                        <span className="text-[8px] text-gray-500 font-bold uppercase tracking-widest">Mis</span>
+                      </div>
+
+                      <div className={`flex items-center gap-2 ${event.total_terluka > 0 ? 'opacity-100' : 'opacity-30'}`} title="Korban Terluka">
+                        <i className="fa-solid fa-user-injured text-[10px] text-blue-400"></i>
+                        <span className={`text-2xl font-orbitron font-black ${event.total_terluka > 0 ? 'text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.3)]' : 'text-gray-400'}`}>
+                          {event.total_terluka || 0}
+                        </span>
+                        <span className="text-[8px] text-gray-500 font-bold uppercase tracking-widest">Inj</span>
+                      </div>
+                    </div>
+
+                    {/* Divider line (Subtle) */}
+                    <div className="h-px bg-gradient-to-r from-transparent via-white/5 to-transparent w-full" />
+
+                    {/* Row 2: Infrastructure Impact */}
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className={`flex items-center gap-2 ${event.total_rumah_rusak > 0 ? 'opacity-100' : 'opacity-30'}`} title="Rumah Rusak">
+                        <i className="fa-solid fa-house-crack text-[10px] text-orange-400"></i>
+                        <span className={`text-2xl font-orbitron font-black ${event.total_rumah_rusak > 0 ? 'text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.3)]' : 'text-gray-400'}`}>
+                          {event.total_rumah_rusak || 0}
+                        </span>
+                        <span className="text-[8px] text-gray-500 font-bold uppercase tracking-widest">Dmg</span>
+                      </div>
+
+                      <div className={`flex items-center gap-2 ${event.total_rumah_terendam > 0 ? 'opacity-100' : 'opacity-30'}`} title="Rumah Terendam">
+                        <i className="fa-solid fa-house-flood-water text-[10px] text-cyan-400"></i>
+                        <span className={`text-2xl font-orbitron font-black ${event.total_rumah_terendam > 0 ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]' : 'text-gray-400'}`}>
+                          {event.total_rumah_terendam || 0}
+                        </span>
+                        <span className="text-[8px] text-gray-500 font-bold uppercase tracking-widest">Wtr</span>
+                      </div>
+
+                      <div className={`flex items-center gap-2 ${event.total_fasum_rusak > 0 ? 'opacity-100' : 'opacity-30'}`} title="Fasilitas Umum Rusak">
+                        <i className="fa-solid fa-building-circle-exclamation text-[10px] text-emerald-400"></i>
+                        <span className={`text-2xl font-orbitron font-black ${event.total_fasum_rusak > 0 ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.3)]' : 'text-gray-400'}`}>
+                          {event.total_fasum_rusak || 0}
+                        </span>
+                        <span className="text-[8px] text-gray-500 font-bold uppercase tracking-widest">Pub</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
+              ))}
 
-        {/* Vulnerability Index */}
-        <div className="ews-card p-6 relative overflow-hidden group">
-          <div className="flex items-center gap-3 mb-6 relative z-10">
-            <div className="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
-              <i className="fa-solid fa-chart-line text-lg"></i>
-            </div>
-            <span className="font-orbitron font-bold text-sm text-gray-100 uppercase tracking-widest">INDEKS KERENTANAN</span>
-          </div>
-          <div className="space-y-6 relative z-10">
-            {vulnerabilityIndex.map((item, idx) => (
-              <div key={idx} className="group/stat">
-                <div className="flex justify-between text-xs mb-2 items-end">
-                  <span className="text-gray-400 font-bold uppercase tracking-wider">{item.name}</span>
-                  <span className={`font-orbitron font-black text-sm ${
-                    item.value >= 70 ? 'text-red-500' :
-                    item.value >= 40 ? 'text-amber-500' :
-                    item.value >= 25 ? 'text-cyan-400' :
-                    'text-emerald-400'
-                  }`}>
-                    {item.value}%
-                  </span>
-                </div>
-                <div className="ews-progress-bar h-1">
-                  <div 
-                    className={`ews-progress-fill relative overflow-hidden ${
-                      item.color.includes('gradient') ? '' : `bg-${item.color.replace('500', '400')}`
-                    }`}
-                    style={{ 
-                      width: `${item.value}%`,
-                      background: item.color.includes('gradient') 
-                        ? undefined 
-                        : undefined
-                    }}
-                  >
-                    <div className="absolute inset-0 bg-white/20 animate-[shimmer_2s_infinite]" />
-                  </div>
-                </div>
+            {history.length === 0 && !loading && (
+              <div className="flex flex-col items-center justify-center py-40 border-2 border-dashed border-white/5 rounded-3xl">
+                <i className="fa-solid fa-database text-4xl text-white/5 mb-4"></i>
+                <div className="text-[12px] text-gray-600 font-black uppercase tracking-[0.3em]">No Disaster Records in this Sector</div>
               </div>
-            ))}
-          </div>
-          <div className="mt-8 p-3 bg-cyan-500/5 border border-cyan-500/10 rounded text-[10px] text-cyan-500/70 font-mono leading-relaxed">
-            SENSORY DATA AGGREGATED FROM 12 MONITORING NODES.
+            )}
           </div>
         </div>
-      </div>
-
-      {/* BOTTOM GRID */}
-      <div className="grid grid-cols-2 gap-5">
-        {/* Emergency Resources */}
-        <div className="ews-card p-6 relative overflow-hidden group">
-          <div className="flex items-center gap-3 mb-6 relative z-10">
-            <div className="w-10 h-10 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-              <i className="fa-solid fa-ambulance text-lg"></i>
-            </div>
-            <span className="font-orbitron font-bold text-sm text-gray-100 uppercase tracking-widest">LOGISTIK & SUMBER DAYA</span>
-          </div>
-          <div className="grid grid-cols-2 gap-4 relative z-10">
-            {resources.map((resource, idx) => (
-              <div 
-                key={idx}
-                className={`p-3 rounded-lg border transition-all ${
-                  resource.status === 'good' ? 'bg-emerald-500/5 border-emerald-500/10 hover:border-emerald-500/30' : 'bg-amber-500/5 border-amber-500/10 hover:border-amber-500/30'
-                }`}
-              >
-                <div className="text-[10px] text-gray-500 uppercase font-black tracking-widest mb-1">{resource.name}</div>
-                <div className={`font-orbitron text-lg font-bold ${getResourceStatusClass(resource.status)}`}>
-                  {resource.current} <span className="text-xs opacity-50">/ {resource.total}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Emergency Contacts */}
-        <div className="ews-card p-6 relative overflow-hidden group">
-          <div className="flex items-center gap-3 mb-6 relative z-10">
-            <div className="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
-              <i className="fa-solid fa-phone-volume text-lg"></i>
-            </div>
-            <span className="font-orbitron font-bold text-sm text-gray-100 uppercase tracking-widest">KONTAK DARURAT SEKTORAL</span>
-          </div>
-          <div className="grid grid-cols-2 gap-3 relative z-10">
-            {emergencyContacts.map((contact, idx) => (
-              <div 
-                key={idx}
-                className="flex justify-between items-center p-3 rounded-lg bg-gray-900 border border-gray-800 hover:border-cyan-500/40 hover:bg-cyan-500/5 transition-all cursor-pointer group/contact"
-              >
-                <div>
-                  <div className="text-[13px] font-bold text-gray-100 group-hover/contact:text-white">{contact.name}</div>
-                  <div className="text-[9px] text-gray-500 font-mono italic">{contact.sub}</div>
-                </div>
-                <div className={`w-2 h-2 rounded-full ${contact.statusColor === 'green' ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-cyan-500 shadow-[0_0_8px_#06b6d4]'}`} />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      </TacticalCard>
     </div>
   );
 }

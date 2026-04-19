@@ -45,6 +45,7 @@ const menuSections: MenuSection[] = [
       { id: 'commodities-price', label: 'Harga Sembako', icon: 'fa-solid fa-cart-shopping', badge: { count: 4, color: 'yellow' } },
       { id: 'disaster-history', label: 'Histori Bencana', icon: 'fa-solid fa-volcano', badge: { count: 2, color: 'yellow' } },
       { id: 'security-mitigation', label: 'Mitigasi Keamanan', icon: 'fa-solid fa-user-shield', badge: { count: 5, color: 'red' } },
+      { id: 'traffic-accident-mitigation', label: 'Mitigasi Laka Lantas', icon: 'fa-solid fa-car-burst', badge: { count: 3, color: 'yellow' } },
     ]
   }
 ];
@@ -134,52 +135,45 @@ export default function Sidebar({ currentPage }: SidebarProps) {
         ))}
       </div>
 
-      {/* Bottom Status Section */}
-      <div className="p-5 border-t border-gray-800/50 bg-[#05080f]/80 backdrop-blur-md">
-        {JSON.parse(sessionStorage.getItem('sakti_user') || '{}')?.role === 'admin' && (
-          <button
-            onClick={() => navigateTo('security-integrity')}
-            className={`
-              w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 group relative mb-5
-              ${currentPage === 'security-integrity' 
-                ? 'bg-cyan-500/10 border border-cyan-500/40 shadow-[inset_0_0_15px_rgba(6,182,212,0.1)]' 
-                : 'hover:bg-gray-800/30 border-b border-white/[0.03]'
-              }
-            `}
-          >
-            {currentPage === 'security-integrity' && (
-              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-cyan-400 rounded-r-full shadow-[0_0_10px_#22d3ee]" />
-            )}
-            <div className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 ${currentPage === 'security-integrity' ? 'bg-cyan-500/20 text-cyan-400' : 'text-gray-500 group-hover:text-gray-300'}`}>
-              <i className="fa-solid fa-shield-halved"></i>
-            </div>
-            <span className={`text-sm font-bold tracking-wide flex-1 text-left ${currentPage === 'security-integrity' ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>
-              Integritas & Keamanan
-            </span>
-          </button>
-        )}
+      {/* Bottom Tactical HUD */}
+      <div className="mt-auto p-4 border-t border-white/[0.03] bg-gradient-to-b from-transparent to-white/[0.02]">
 
-        <div className="space-y-2 mb-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 ews-animate-blink shadow-[0_0_8px_#10b981]" />
-              <span className="text-xs text-gray-400 font-bold">Platform Online</span>
+        <div className="grid grid-cols-2 gap-2 mb-5">
+          <div className="p-2 rounded-lg bg-white/[0.02] border border-white/5 flex flex-col gap-1">
+            <div className="flex items-center gap-1.5">
+              <div className="w-1 h-1 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981] animate-pulse" />
+              <span className="text-[8px] text-gray-500 font-bold uppercase tracking-widest">Platform</span>
             </div>
-            <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">AKTIF</span>
+            <div className="text-[10px] font-black text-emerald-400 px-2.5">AKTIF</div>
           </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-amber-400 ews-animate-blink shadow-[0_0_8px_#fbbf24]" />
-              <span className="text-xs text-gray-400 font-bold">Sinkronisasi</span>
+
+          <div className="p-2 rounded-lg bg-white/[0.02] border border-white/5 flex flex-col gap-1">
+            <div className="flex items-center gap-1.5">
+              <div className="w-1 h-1 rounded-full bg-amber-400 shadow-[0_0_8px_#fbbf24]" />
+              <span className="text-[8px] text-gray-500 font-bold uppercase tracking-widest">Sync</span>
             </div>
-            <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Realtime</span>
+            <div className="text-[10px] font-black text-amber-400 px-2.5 uppercase">Realtime</div>
           </div>
         </div>
 
-        <div className="pt-3 border-t border-gray-800/50">
-          <div className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] mb-1">Personel Aktif</div>
-          <div className="font-orbitron text-3xl font-black text-cyan-400 tracking-tighter flex items-baseline">
-            47<span className="text-lg text-gray-600 mx-1">/</span>62
+        <div className="relative p-3 rounded-xl bg-cyan-500/[0.03] border border-cyan-500/10 overflow-hidden group/personnel">
+          {/* Subtle background impact line */}
+          <div className="absolute bottom-0 left-0 h-[2px] bg-cyan-500/30 w-full transform scale-x-0 group-hover/personnel:scale-x-100 transition-transform duration-700 origin-left" />
+          
+          <div className="text-[9px] text-gray-500 font-black uppercase tracking-[0.25em] mb-1">Personel Aktif</div>
+          <div className="flex items-baseline gap-1">
+            <span className="font-orbitron text-3xl font-black text-white leading-none tracking-tighter">47</span>
+            <span className="text-sm font-bold text-cyan-500/50">/ 62</span>
+          </div>
+
+          {/* Micro-activity line */}
+          <div className="flex gap-0.5 mt-2">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div 
+                key={i} 
+                className={`h-0.5 flex-1 rounded-full ${i < 9 ? 'bg-cyan-500/40' : 'bg-gray-800'}`} 
+              />
+            ))}
           </div>
         </div>
       </div>

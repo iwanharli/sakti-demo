@@ -170,4 +170,9 @@ export interface MitigationRecommendation {
   color: 'red' | 'amber' | 'cyan' | 'green';
 }
 
-// End of types definition
+export interface RiskScore {
+  region_name: string;
+  value: number;
+  additional_data: any;
+  report_date: string;
+}

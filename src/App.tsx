@@ -13,6 +13,7 @@ import WeatherForecast from './pages/WeatherForecast';
 import CommoditiesPrice from './pages/CommoditiesPrice';
 import CommodityDetail from './pages/CommodityDetail';
 import SecurityMitigation from './pages/SecurityMitigation';
+import TrafficAccidentMitigation from './pages/TrafficAccidentMitigation';
 import ApiDocs from './pages/ApiDocs';
 import AccountProfile from './pages/AccountProfile';
 import Login from './pages/Login';
@@ -34,6 +35,7 @@ export type PageType =
   | 'sp2kp'
   | 'pihps'
   | 'security-mitigation'
+  | 'traffic-accident-mitigation'
   | 'account-profile'
   | 'api-docs';
 
@@ -51,6 +53,7 @@ const pageTitles: Record<PageType, string> = {
   'sp2kp': 'DETAIL ANALITIK KOMODITAS',
   'pihps': 'DETAIL ANALITIK KOMODITAS',
   'security-mitigation': 'MITIGASI KEAMANAN',
+  'traffic-accident-mitigation': 'MITIGASI LAKA LANTAS',
   'account-profile': 'PROFIL PERSONEL',
   'api-docs': 'API DOCUMENTATION'
 };
@@ -69,6 +72,7 @@ const pageSubtitles: Record<PageType, string> = {
   'sp2kp': 'Visualisasi Tren Historis & Analitik Harga Mendalam',
   'pihps': 'Visualisasi Tren Historis & Analitik Harga Mendalam',
   'security-mitigation': 'Strategi Pencegahan & Mitigasi Kejahatan',
+  'traffic-accident-mitigation': 'Manajemen Risiko & Pencegahan Kecelakaan Lalu Lintas',
   'account-profile': 'Detail Identitas & Otoritas Personel SAKTI',
   'api-docs': 'Referensi Teknis & Dokumentasi Endpoint SAKTI'
 };
@@ -246,6 +250,7 @@ function App() {
       case 'pihps': 
         return <CommodityDetail commodityCode={commodityParam} />;
       case 'security-mitigation': return <SecurityMitigation />;
+      case 'traffic-accident-mitigation': return <TrafficAccidentMitigation />;
       case 'account-profile': return <AccountProfile />;
       case 'api-docs': return <ApiDocs />;
       default: return <CommandCenter />;

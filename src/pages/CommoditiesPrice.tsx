@@ -113,6 +113,7 @@ export default function CommoditiesPrice() {
 
   return (
     <div className={`space-y-6 ${mounted ? 'ews-animate-fade-in' : ''}`}>
+
       {/* HEADER & FILTERS */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-3">
@@ -247,7 +248,12 @@ export default function CommoditiesPrice() {
                const count = criticalItems.length;
 
                return (
-                 <div className={`bg-[#1a1012] border ${count > 0 ? 'border-red-900/30' : 'border-emerald-900/10'} rounded-2xl p-6 relative group hover:border-red-500/30 transition-all cursor-pointer`}>
+                 <div className={`bg-[#1a1012] border ${count > 0 ? 'border-red-900/30' : 'border-emerald-900/10'} rounded-2xl p-6 relative group/card hover:border-red-500/30 transition-all cursor-pointer overflow-hidden`}>
+                    <div className="ews-hud-corner ews-hud-tl" />
+                    <div className="ews-hud-corner ews-hud-tr" />
+                    <div className="ews-hud-corner ews-hud-bl" />
+                    <div className="ews-hud-corner ews-hud-br" />
+                    <div className="ews-card-header-bar opacity-30" />
                     <div className="flex items-center justify-between mb-4">
                        <div className="flex items-center gap-2">
                           <span className={`px-2 py-0.5 rounded text-[10px] ${count > 0 ? 'bg-red-500' : 'bg-emerald-500'} text-white font-black uppercase`}>
@@ -278,7 +284,12 @@ export default function CommoditiesPrice() {
               const count = aboveHetItems.length;
 
               return (
-                <div className="bg-[#1a1610] border border-amber-900/30 rounded-2xl p-6 relative group hover:border-amber-500/30 transition-all cursor-pointer">
+                <div className="bg-[#1a1610] border border-amber-900/30 rounded-2xl p-6 relative group/card hover:border-amber-500/30 transition-all cursor-pointer overflow-hidden">
+                   <div className="ews-hud-corner ews-hud-tl" />
+                   <div className="ews-hud-corner ews-hud-tr" />
+                   <div className="ews-hud-corner ews-hud-bl" />
+                   <div className="ews-hud-corner ews-hud-br" />
+                   <div className="ews-card-header-bar opacity-30" />
                    <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2">
                          <span className={`px-2 py-0.5 rounded text-[10px] ${count > 0 ? 'bg-amber-500' : 'bg-emerald-500'} text-black font-black uppercase`}>
@@ -299,7 +310,12 @@ export default function CommoditiesPrice() {
            })()}
 
            {/* INFO ALERT */}
-           <div className="bg-[#0f172a]/40 border border-cyan-900/30 rounded-2xl p-6 relative group hover:border-cyan-500/30 transition-all cursor-pointer">
+           <div className="bg-[#0f172a]/40 border border-cyan-900/30 rounded-2xl p-6 relative group/card hover:border-cyan-500/30 transition-all cursor-pointer overflow-hidden">
+              <div className="ews-hud-corner ews-hud-tl" />
+              <div className="ews-hud-corner ews-hud-tr" />
+              <div className="ews-hud-corner ews-hud-bl" />
+              <div className="ews-hud-corner ews-hud-br" />
+              <div className="ews-card-header-bar opacity-50" />
               <div className="flex items-center justify-between mb-4">
                  <div className="flex items-center gap-2">
                     <span className="px-2 py-0.5 rounded text-[10px] bg-cyan-500 text-black font-black uppercase">Info</span>
@@ -314,17 +330,25 @@ export default function CommoditiesPrice() {
       </div>
 
       {/* PRICE MATRIX TABLE (FULL WIDTH) */}
-      <div className="ews-card p-6 relative overflow-hidden group z-10">
-        <div className="flex items-center justify-between mb-6 relative z-10 border-b border-gray-800/50 pb-4">
+      <div className="ews-card p-6 relative overflow-hidden group/card z-10 shadow-2xl">
+        <div className="ews-hud-corner ews-hud-tl" />
+        <div className="ews-hud-corner ews-hud-tr" />
+        <div className="ews-hud-corner ews-hud-bl" />
+        <div className="ews-hud-corner ews-hud-br" />
+        <div className="ews-card-header-bar" />
+        <div className="flex items-center justify-between mb-6 relative z-10">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
               <i className="fa-solid fa-list-check text-lg"></i>
             </div>
             <div>
-              <span className="font-orbitron font-bold text-[18px] text-gray-100 uppercase tracking-wider block">
-                MATRIKS HARGA KOMODITAS Utama
+              <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">
+                MATRIKS HARGA KOMODITAS UTAMA
               </span>
-              <span className="text-[11px] text-cyan-500/60 font-mono uppercase tracking-[0.2em]">Data Point: {selectedDate ? new Date(selectedDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '...'}</span>
+              <span className="text-[10px] text-cyan-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
+                Umpan Pasar • Indeks Harga
+              </span>
             </div>
           </div>
           <div className="flex items-center gap-4">

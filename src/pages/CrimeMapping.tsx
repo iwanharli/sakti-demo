@@ -90,25 +90,6 @@ export default function CrimeMapping() {
 
   return (
     <div className={`space-y-5 ${mounted ? 'ews-animate-fade-in' : ''}`}>
-      {/* DATA SOURCE & METHODOLOGY SECTION */}
-      <div className="ews-card p-6 border-l-4 border-cyan-500 bg-cyan-500/5 mb-8 relative overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-        <div className="flex items-start justify-between relative z-10">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(6,211,234,0.1)]">
-              <i className="fa-solid fa-map-location-dot text-xl"></i>
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-orbitron font-bold text-xs text-white uppercase tracking-widest">DATA SOURCE & TEKNIK PENGOLAHAN</h3>
-              </div>
-              <p className="text-[13px] text-gray-400 leading-relaxed font-rajdhani max-w-4xl">
-                Integrasi data GPS real-time dari unit operasional Sabhara & Lantas yang dipadukan dengan koordinat laporan 110 untuk visualisasi kepadatan ancaman spasial secara dinamis.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-4 gap-4">
@@ -152,15 +133,30 @@ export default function CrimeMapping() {
       {/* Main Content Grid */}
       <div className="grid grid-cols-3 gap-5">
         {/* Big Interactive Map */}
-        <div className="col-span-2 ews-card flex flex-col">
-          <div className="flex items-center justify-between p-4 border-b border-gray-800">
+        <div className="col-span-2 ews-card flex flex-col relative overflow-hidden group/card shadow-2xl">
+          <div className="ews-hud-corner ews-hud-tl" />
+          <div className="ews-hud-corner ews-hud-tr" />
+          <div className="ews-hud-corner ews-hud-bl" />
+          <div className="ews-hud-corner ews-hud-br" />
+          <div className="ews-card-header-bar" />
+          <div className="flex items-center justify-between p-6">
             <div className="flex items-center gap-3">
-              <span className="text-cyan-400"><i className="fa-solid fa-map-location-dot"></i></span>
-              <span className="font-semibold text-[15px] uppercase tracking-tight">INTERACTIVE STRATEGIC MAP — POLRES KOTA METRO</span>
-              <span className="ews-live-badge red">
-                <span className="ews-live-dot" />
-                LIVE GPS
-              </span>
+              <div className="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
+                <i className="fa-solid fa-map-location-dot text-lg"></i>
+              </div>
+              <div>
+                <div className="flex items-center gap-3">
+                  <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">PETA STRATEGIS INTERAKTIF</span>
+                  <span className="ews-live-badge red">
+                    <span className="ews-live-dot" />
+                    LIVE GPS
+                  </span>
+                </div>
+                <span className="text-[10px] text-cyan-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
+                  Pemetaan Area • Intensitas Kejadian
+                </span>
+              </div>
             </div>
             <div className="flex gap-2">
               {['heat', 'patrol', 'incidents'].map((filter) => (
@@ -269,10 +265,23 @@ export default function CrimeMapping() {
         {/* Right Column */}
         <div className="space-y-5">
           {/* Smart Patrol Routing */}
-          <div className="ews-card p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-cyan-400"><i className="fa-solid fa-diamond-turn-right"></i></span>
-              <span className="font-semibold text-[15px] text-gray-300 uppercase tracking-tight">AI Patrol Optimization</span>
+          <div className="ews-card p-6 relative overflow-hidden group/card">
+            <div className="ews-hud-corner ews-hud-tl" />
+            <div className="ews-hud-corner ews-hud-tr" />
+            <div className="ews-hud-corner ews-hud-bl" />
+            <div className="ews-hud-corner ews-hud-br" />
+            <div className="ews-card-header-bar" />
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
+                <i className="fa-solid fa-diamond-turn-right text-lg"></i>
+              </div>
+              <div>
+                <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-widest block">OPTIMASI RUTE PATROLI (AI)</span>
+                <span className="text-[10px] text-cyan-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
+                  Navigasi Taktis • Analisis Jalur
+                </span>
+              </div>
             </div>
             <div className="space-y-3">
               {patrolRoutes.map((route) => (
@@ -300,10 +309,23 @@ export default function CrimeMapping() {
           </div>
 
           {/* Live GPS Tracking Table */}
-          <div className="ews-card p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-cyan-400"><i className="fa-solid fa-satellite-dish"></i></span>
-              <span className="font-semibold text-[15px] text-gray-300 uppercase tracking-tight">Active Asset Feed</span>
+          <div className="ews-card p-6 relative overflow-hidden group/card">
+            <div className="ews-hud-corner ews-hud-tl" />
+            <div className="ews-hud-corner ews-hud-tr" />
+            <div className="ews-hud-corner ews-hud-bl" />
+            <div className="ews-hud-corner ews-hud-br" />
+            <div className="ews-card-header-bar" />
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
+                <i className="fa-solid fa-satellite-dish text-lg"></i>
+              </div>
+              <div>
+                <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-widest block">ASSET TRACKING REAL-TIME</span>
+                <span className="text-[10px] text-cyan-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
+                  Riwayat Aset • Monitoring GPS
+                </span>
+              </div>
             </div>
             <div className="overflow-hidden rounded-lg border border-gray-800/50">
               <table className="w-full text-[10px]">

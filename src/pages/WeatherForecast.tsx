@@ -214,17 +214,20 @@ export default function WeatherForecast() {
       )}
       {/* MAP SECTION WITH INTEGRATED CONTROLS */}
       <div className="ews-card p-0 overflow-hidden relative border border-white/5 shadow-2xl group">
-        <div className="p-6 border-b border-white/5 bg-gray-900/60 backdrop-blur-md flex items-center justify-between relative z-10">
+        <div className="p-6 bg-gray-900/60 backdrop-blur-md flex items-center justify-between relative z-10">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
               <i className="fa-solid fa-satellite-dish text-lg"></i>
             </div>
             <div>
               <div className="flex items-center gap-3">
-                <span className="font-orbitron font-bold text-[14px] text-gray-100 uppercase tracking-wider">MAP SEBARAN CUACA NASIONAL</span>
+                <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">MAP SEBARAN CUACA NASIONAL</span>
                 <span className="px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded text-[9px] font-orbitron font-bold text-emerald-500 animate-pulse">LIVE DATA</span>
               </div>
-              <span className="text-[11px] text-cyan-500/60 font-mono uppercase tracking-[0.2em]">Real-time Geospatial Meteorological Monitoring</span>
+              <span className="text-[10px] text-cyan-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
+                Satelit BMKG • Visualisasi Radar
+              </span>
             </div>
           </div>
           
@@ -504,16 +507,19 @@ export default function WeatherForecast() {
 
       {/* 7-DAY FORECAST SECTION */}
       <div className="ews-card p-6 relative overflow-hidden group z-10">
-        <div className="flex items-center gap-3 mb-6 relative z-10 border-b border-gray-800/50 pb-4">
+        <div className="flex items-center gap-3 mb-6 relative z-10">
           <div className="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
             <i className="fa-solid fa-calendar-days text-lg"></i>
           </div>
           <div>
             <div className="flex items-center gap-3">
-              <span className="font-orbitron font-bold text-[14px] text-gray-100 uppercase tracking-wider">PRAKIRAAN CUACA</span>
+              <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">PRAKIRAAN CUACA</span>
               <span className="px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded-full font-orbitron font-black text-[11px] text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.1)] uppercase tracking-wider">{selectedCity}</span>
             </div>
-            <span className="text-[11px] text-cyan-500/60 font-mono uppercase tracking-[0.2em]">Operational Forecast Schedule</span>
+            <span className="text-[10px] text-cyan-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
+              Prediksi Atmosfer • Metrik Cuaca
+            </span>
           </div>
         </div>
         <div 
@@ -590,14 +596,17 @@ export default function WeatherForecast() {
 
       {/* RAINFALL TREND SECTION (Using forecast as proxy for visualization) */}
       <div className="ews-card p-6 relative overflow-hidden group z-10">
-        <div className="flex items-center justify-between mb-8 relative z-10 border-b border-gray-800/50 pb-4">
+        <div className="flex items-center justify-between mb-8 relative z-10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+            <div className="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
               <i className="fa-solid fa-chart-line text-lg"></i>
             </div>
             <div>
-              <span className="font-orbitron font-bold text-[14px] text-gray-100 uppercase tracking-wider block">TREN CURAH HUJAN (30 HARI)</span>
-              <span className="text-[10px] text-cyan-500/60 font-mono uppercase tracking-[0.2em]">Scientific Data Visualization</span>
+              <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">TREN CURAH HUJAN (30 HARI)</span>
+              <span className="text-[10px] text-cyan-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
+                Visualisasi Data • Prediksi Presipitasi
+              </span>
             </div>
           </div>
         </div>
@@ -672,13 +681,16 @@ export default function WeatherForecast() {
 
       <div className="grid grid-cols-2 gap-5 relative z-10">
         <div className="ews-card p-6 relative overflow-hidden group">
-          <div className="flex items-center gap-3 mb-6 relative z-10 border-b border-gray-800/50 pb-4">
-            <div className="w-10 h-10 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+          <div className="flex items-center gap-3 mb-6 relative z-10">
+            <div className="w-10 h-10 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
               <i className="fa-solid fa-leaf text-lg"></i>
             </div>
             <div>
-              <span className="font-orbitron font-bold text-[14px] text-gray-100 uppercase tracking-wider block">KUALITAS UDARA (AQI)</span>
-              <span className="text-[11px] text-emerald-500/60 font-mono uppercase tracking-[0.2em]">Atmospheric Composition</span>
+              <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">KUALITAS UDARA (AQI)</span>
+              <span className="text-[10px] text-emerald-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Komposisi Atmosfer • Indeks Pencemaran
+              </span>
             </div>
           </div>
           <div className="flex items-center gap-8 relative z-10">
@@ -702,13 +714,16 @@ export default function WeatherForecast() {
         </div>
 
         <div className="ews-card p-6 relative overflow-hidden group">
-          <div className="flex items-center gap-3 mb-6 relative z-10 border-b border-gray-800/50 pb-4">
+          <div className="flex items-center gap-3 mb-6 relative z-10">
             <div className="w-10 h-10 rounded bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.1)]">
               <i className="fa-solid fa-diagram-project text-lg"></i>
             </div>
             <div>
-              <span className="font-orbitron font-bold text-[14px] text-gray-100 uppercase tracking-wider block">KORELASI GANGGUAN KAMTIBMAS</span>
-              <span className="text-[11px] text-amber-500/60 font-mono uppercase tracking-[0.2em]">Risk Matrix Analysis</span>
+              <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">KORELASI GANGGUAN KAMTIBMAS</span>
+              <span className="text-[10px] text-amber-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                Matriks Risiko • Analisis Korelasi
+              </span>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3 relative z-10">

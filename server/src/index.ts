@@ -435,6 +435,251 @@ app.get('/api/analytics/kamtibmas-regions', authenticateToken, async (req, res) 
 
 /**
  * @openapi
+ * /api/analytics/risk-scores:
+ *   get:
+ *     summary: Get live risk scores for all provinces
+ *     description: Returns the latest calculated risk assessments for all provinces from the secondary database.
+ *     responses:
+ *       200:
+ *         description: Array of risk score entries.
+ */
+app.get('/api/analytics/risk-scores', authenticateToken, async (req, res) => {
+  try {
+    const results = await dbSecondary.execute(sql`
+      SELECT region_name, value, additional_data, report_date
+      FROM calculation_index_risiko 
+      WHERE category = 'skor-kamtibmas'
+      AND report_date = (SELECT MAX(report_date) FROM calculation_index_risiko WHERE category = 'skor-kamtibmas')
+      ORDER BY value DESC
+    `);
+    res.json(results.rows);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/analytics/food-risk:
+ *   get:
+ *     summary: Get live food risk scores (aggregated)
+ */
+app.get('/api/analytics/food-risk', authenticateToken, async (req, res) => {
+  try {
+    const results = await dbSecondary.execute(sql`
+      SELECT region_name, value, additional_data, report_date
+      FROM calculation_index_risiko 
+      WHERE category = 'skor-pangan-agregasi'
+      AND report_date = (SELECT MAX(report_date) FROM calculation_index_risiko WHERE category = 'skor-pangan-agregasi')
+      ORDER BY value DESC
+    `);
+    res.json(results.rows);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/analytics/disaster-history:
+ *   get:
+ *     summary: Get latest disaster history logs from BNPB data
+ */
+app.get('/api/analytics/disaster-history', authenticateToken, async (req, res) => {
+  const { province, category, start_date, end_date, limit = 50 } = req.query;
+  try {
+    let query = sql`
+      SELECT id, report_date, region_name as province_name, city_name, event as category, 
+             location, cause, total_meninggal, total_hilang, total_terluka, 
+             total_rumah_rusak, total_rumah_terendam, total_fasum_rusak, 
+             created_at
+      FROM sample_bnpb_bencana_data 
+      WHERE 1=1
+    `;
+
+    if (start_date) {
+      query = sql`${query} AND report_date >= ${start_date as string}`;
+    } else {
+      query = sql`${query} AND report_date >= CURRENT_DATE - INTERVAL '1 month'`;
+    }
+
+    if (end_date) {
+      query = sql`${query} AND report_date <= ${end_date as string}`;
+    }
+
+    if (province && province !== 'Nasional') {
+      query = sql`${query} AND region_name = ${province as string}`;
+    }
+    if (category && category !== 'Semua') {
+      query = sql`${query} AND event = ${category as string}`;
+    }
+
+    query = sql`${query} ORDER BY report_date DESC LIMIT ${Number(limit)}`;
+
+    const results = await dbPrimary.execute(query);
+    res.json(results.rows);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/analytics/disaster-stats:
+ *   get:
+ *     summary: Get aggregated disaster statistics
+ */
+app.get('/api/analytics/disaster-stats', authenticateToken, async (req, res) => {
+  const { province, category, start_date, end_date } = req.query;
+  try {
+    let query = sql`
+      SELECT 
+        COALESCE(SUM(total_meninggal), 0) as deaths,
+        COALESCE(SUM(total_hilang), 0) as missing,
+        COALESCE(SUM(total_terluka), 0) as injured,
+        COALESCE(SUM(total_rumah_rusak + total_rumah_terendam), 0) as damage,
+        COUNT(*) as total_events
+      FROM sample_bnpb_bencana_data
+      WHERE 1=1
+    `;
+
+    if (start_date) {
+      query = sql`${query} AND report_date >= ${start_date as string}`;
+    } else {
+      query = sql`${query} AND report_date >= CURRENT_DATE - INTERVAL '1 month'`;
+    }
+
+    if (end_date) {
+      query = sql`${query} AND report_date <= ${end_date as string}`;
+    }
+
+    if (province && province !== 'Nasional') {
+      query = sql`${query} AND region_name = ${province as string}`;
+    }
+
+    if (category && category !== 'Semua') {
+      query = sql`${query} AND event = ${category as string}`;
+    }
+
+    const results = await dbPrimary.execute(query);
+    res.json(results.rows[0]);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/analytics/traffic-accidents:
+ *   get:
+ *     summary: Get detailed traffic accident records (Last 3 Days default)
+ */
+app.get('/api/analytics/traffic-accidents', authenticateToken, async (req, res) => {
+  const { province, injury_status, start_date, search, limit = 50, page = 1 } = req.query;
+  try {
+    const startDateVal = start_date ? String(start_date) : null;
+    const endDateVal = req.query.end_date ? String(req.query.end_date) : null;
+    const offset = (Number(page) - 1) * Number(limit);
+    const searchVal = search ? `%${String(search)}%` : null;
+    
+    let query = sql`
+      WITH latest AS (SELECT MAX(accident_date) as max_d FROM sample_polisi_kecelakaan_data)
+      SELECT p.* 
+      FROM sample_polisi_kecelakaan_data p, latest l
+      WHERE p.accident_date >= COALESCE(${startDateVal}::date, l.max_d - INTERVAL '7 days')
+    `;
+
+    if (endDateVal) {
+      query = sql`${query} AND p.accident_date <= ${endDateVal}::date`;
+    }
+    if (province && province !== 'Nasional') {
+      query = sql`${query} AND p.region_name = ${province as string}`;
+    }
+    if (injury_status && injury_status !== 'Semua') {
+      query = sql`${query} AND p.injury_status = ${injury_status as string}`;
+    }
+    if (searchVal) {
+      query = sql`${query} AND (
+        p.victim_name ILIKE ${searchVal} OR 
+        p.city_name ILIKE ${searchVal} OR 
+        p.polres ILIKE ${searchVal} OR 
+        p.report_number ILIKE ${searchVal}
+      )`;
+    }
+
+    // Get Data
+    const dataQuery = sql`${query} ORDER BY p.accident_date DESC LIMIT ${Number(limit)} OFFSET ${offset}`;
+    const results = await dbPrimary.execute(dataQuery);
+
+    // Get Total Count for Pagination
+    const countQuery = sql`
+      WITH latest AS (SELECT MAX(accident_date) as max_d FROM sample_polisi_kecelakaan_data)
+      SELECT COUNT(*)::int as total
+      FROM sample_polisi_kecelakaan_data p, latest l
+      WHERE p.accident_date >= COALESCE(${startDateVal}::date, l.max_d - INTERVAL '7 days')
+      ${endDateVal ? sql` AND p.accident_date <= ${endDateVal}::date` : sql``}
+      ${province && province !== 'Nasional' ? sql` AND p.region_name = ${province as string}` : sql``}
+      ${injury_status && injury_status !== 'Semua' ? sql` AND p.injury_status = ${injury_status as string}` : sql``}
+      ${searchVal ? sql` AND (p.victim_name ILIKE ${searchVal} OR p.city_name ILIKE ${searchVal} OR p.polres ILIKE ${searchVal} OR p.report_number ILIKE ${searchVal})` : sql``}
+    `;
+    const countRes = await dbPrimary.execute(countQuery);
+    const total = countRes.rows[0].total as number;
+
+    res.json({
+      data: results.rows,
+      pagination: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error: any) {
+    console.error('Traffic accidents error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/analytics/traffic-accident-stats:
+ *   get:
+ *     summary: Get aggregated traffic accident statistics (Last 7 Days default)
+ */
+app.get('/api/analytics/traffic-accident-stats', authenticateToken, async (req, res) => {
+  const { province, start_date } = req.query;
+  try {
+    const startDateVal = start_date ? String(start_date) : null;
+    const endDateVal = req.query.end_date ? String(req.query.end_date) : null;
+
+    let query = sql`
+      WITH latest AS (SELECT MAX(accident_date) as max_d FROM sample_polisi_kecelakaan_data)
+      SELECT 
+        COUNT(*)::int as total,
+        COUNT(CASE WHEN injury_status = 'MD' THEN 1 END)::int as fatal,
+        COUNT(CASE WHEN injury_status = 'LB' THEN 1 END)::int as heavy,
+        COUNT(CASE WHEN injury_status = 'LR' THEN 1 END)::int as light
+      FROM sample_polisi_kecelakaan_data p, latest l
+      WHERE p.accident_date >= COALESCE(${startDateVal}::date, l.max_d - INTERVAL '7 days')
+    `;
+
+    if (endDateVal) {
+      query = sql`${query} AND p.accident_date <= ${endDateVal}::date`;
+    }
+    if (province && province !== 'Nasional') {
+      query = sql`${query} AND p.region_name = ${province as string}`;
+    }
+
+    const results = await dbPrimary.execute(query);
+    res.json(results.rows[0]);
+  } catch (error: any) {
+    console.error('Traffic stats error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
  * /api/analytics/kamtibmas-national-stats:
  *   get:
  *     summary: Get national Kamtibmas totals for today and yesterday
@@ -705,6 +950,48 @@ app.get('/api/kamtibmas/recent-cases', authenticateToken, async (req, res) => {
 
 /**
  * @openapi
+ * /api/kamtibmas/trend:
+ *   get:
+ *     summary: Get 7-day historical trend for Kamtibmas classifications
+ */
+app.get('/api/kamtibmas/trend', authenticateToken, async (req, res) => {
+  const polda = req.query.polda;
+  try {
+    const latestDateRes = await dbSecondary.execute(sql`SELECT MAX(report_date) as d FROM nasional_kamtibmas_case_data`);
+    const targetDate = latestDateRes.rows[0].d;
+
+    if (!targetDate) {
+      return res.json([]);
+    }
+
+    const whereConditions = [sql`sub_category IN ('kejahatan_total', 'gangguan_total', 'pelanggaran_total', 'bencana_total')`];
+    if (polda && polda !== 'Nasional') whereConditions.push(sql`polda_name = ${polda}`);
+    
+    // Last 7 days including the latest date
+    whereConditions.push(sql`report_date >= (${targetDate}::date - INTERVAL '6 days')`);
+    whereConditions.push(sql`report_date <= ${targetDate}::date`);
+    
+    const whereClause = sql.join(whereConditions, sql` AND `);
+
+    const results = await dbSecondary.execute(sql`
+      SELECT 
+        report_date as date, 
+        sub_category as type, 
+        SUM(value) as total
+      FROM nasional_kamtibmas_case_data
+      WHERE ${whereClause}
+      GROUP BY report_date, sub_category
+      ORDER BY report_date ASC, sub_category ASC
+    `);
+    
+    res.json(results.rows);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
  * /api/commodities/het-counts:
  *   get:
  *     summary: Get counts of commodities above HET for SP2KP and PIHPS
@@ -849,6 +1136,7 @@ app.get('/api/commodities/matrix', async (req, res) => {
             nl.commodity_code, 
             (SELECT ${sql.identifier(metadataCol)}->>'variant_nama' FROM ${sql.identifier(tableName)} p2 WHERE p2.commodity_code = nl.commodity_code LIMIT 1) as name,
             ROUND(nl.avg_price, 0) as price,
+            ROUND(COALESCE(np.prev_price, nl.avg_price), 0) as prev_price,
             ROUND(nl.avg_price - COALESCE(ny.yesterday_price, nl.avg_price), 0) as delta_day,
             ROUND(((nl.avg_price - COALESCE(np.prev_price, nl.avg_price)) / NULLIF(nl.avg_price, 0)) * 100, 2) as variation_pct,
             nl.report_date
@@ -878,6 +1166,7 @@ app.get('/api/commodities/matrix', async (req, res) => {
             rl.name,
             rl.report_date,
             ROUND(rl.cur_price, 0) as price,
+            ROUND(COALESCE(rp.prev_price, rl.cur_price), 0) as prev_price,
             ROUND(rl.cur_price - COALESCE(ry.yesterday_price, rl.cur_price), 0) as delta_day,
             ROUND(((rl.cur_price - COALESCE(rp.prev_price, rl.cur_price)) / NULLIF(rl.cur_price, 0)) * 100, 2) as variation_pct
           FROM regional_latest rl

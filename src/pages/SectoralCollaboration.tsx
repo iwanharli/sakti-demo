@@ -39,25 +39,6 @@ export default function SectoralCollaboration() {
 
   return (
     <div className={`space-y-5 ${mounted ? 'ews-animate-fade-in' : ''}`}>
-      {/* DATA SOURCE & METHODOLOGY SECTION */}
-      <div className="ews-card p-6 border-l-4 border-cyan-500 bg-cyan-500/5 mb-8 relative overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-        <div className="flex items-start justify-between relative z-10">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(6,211,234,0.1)]">
-              <i className="fa-solid fa-handshake text-xl"></i>
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-orbitron font-bold text-xs text-white uppercase tracking-widest">DATA SOURCE & TEKNIK PENGOLAHAN</h3>
-              </div>
-              <p className="text-[13px] text-gray-400 leading-relaxed font-rajdhani max-w-4xl">
-                Portal pertukaran data lintas instansi menggunakan teknologi Dual-Use untuk koordinasi operasional bersama dan transparansi informasi strategis antar lembaga negara.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-4 gap-4">
@@ -89,10 +70,23 @@ export default function SectoralCollaboration() {
       {/* Main Content Grid */}
       <div className="grid grid-cols-2 gap-5">
         {/* Instansi List */}
-        <div className="ews-card p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-lg">🏛️</span>
-            <span className="font-semibold text-sm text-gray-300">STATUS KONEKSI INSTANSI</span>
+        <div className="ews-card p-6 relative overflow-hidden group/card">
+          <div className="ews-hud-corner ews-hud-tl" />
+          <div className="ews-hud-corner ews-hud-tr" />
+          <div className="ews-hud-corner ews-hud-bl" />
+          <div className="ews-hud-corner ews-hud-br" />
+          <div className="ews-card-header-bar" />
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
+              <i className="fa-solid fa-server text-lg"></i>
+            </div>
+            <div>
+              <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-widest block">STATUS KONEKSI INSTANSI</span>
+              <span className="text-[10px] text-cyan-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
+                Monitoring Link • Sinergi Lembaga
+              </span>
+            </div>
           </div>
           <div className="space-y-2">
             {instansiList.map((instansi, idx) => (
@@ -119,10 +113,23 @@ export default function SectoralCollaboration() {
         {/* Right Column */}
         <div className="space-y-5">
           {/* Permintaan Data */}
-          <div className="ews-card p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-lg">📨</span>
-              <span className="font-semibold text-sm text-gray-300">PERMINTAAN DATA AKTIF</span>
+          <div className="ews-card p-6 relative overflow-hidden group/card shadow-2xl">
+            <div className="ews-hud-corner ews-hud-tl" />
+            <div className="ews-hud-corner ews-hud-tr" />
+            <div className="ews-hud-corner ews-hud-bl" />
+            <div className="ews-hud-corner ews-hud-br" />
+            <div className="ews-card-header-bar" />
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
+                <i className="fa-solid fa-envelope-open-text text-lg"></i>
+              </div>
+              <div>
+                <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-widest block">PERMINTAAN DATA AKTIF</span>
+                <span className="text-[10px] text-cyan-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
+                  Umpan Data • Tiket Koordinasi
+                </span>
+              </div>
             </div>
             <div className="space-y-2">
               {permintaanData.map((item, idx) => (
@@ -155,10 +162,23 @@ export default function SectoralCollaboration() {
           </div>
 
           {/* Insights */}
-          <div className="ews-card p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-lg">💡</span>
-              <span className="font-semibold text-sm text-gray-300">INSIGHT LINTAS SEKTORAL</span>
+          <div className="ews-card p-6 relative overflow-hidden group/card">
+            <div className="ews-hud-corner ews-hud-tl" />
+            <div className="ews-hud-corner ews-hud-tr" />
+            <div className="ews-hud-corner ews-hud-bl" />
+            <div className="ews-hud-corner ews-hud-br" />
+            <div className="ews-card-header-bar" />
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.1)]">
+                <i className="fa-solid fa-lightbulb text-lg"></i>
+              </div>
+              <div>
+                <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-widest block">INSIGHT LINTAS SEKTORAL</span>
+                <span className="text-[10px] text-cyan-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  Analisis Lintas • Rekomendasi Sektoral
+                </span>
+              </div>
             </div>
             <div className="space-y-2">
               {insights.map((insight, idx) => (

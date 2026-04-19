@@ -87,32 +87,6 @@ Jika GPS Error "Error code 1", sistem otomatis akan menggunakan IP Geolocation s
 
   return (
     <div className={`space-y-6 ${mounted ? 'ews-animate-fade-in' : ''}`}>
-      {/* DATA SOURCE & METHODOLOGY SECTION */}
-      <div className="ews-card p-6 border-l-4 border-emerald-500 bg-emerald-500/5 mb-8 relative overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-        <div className="flex items-start justify-between relative z-10">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
-              <i className="fa-solid fa-shield-halved text-xl"></i>
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-orbitron font-bold text-xs text-white uppercase tracking-widest">DATA SOURCE & TEKNIK PENGOLAHAN</h3>
-              </div>
-              <p className="text-[13px] text-gray-400 leading-relaxed font-rajdhani max-w-4xl">
-                Monitoring integritas kernel dan audit log sistem SAKTI secara real-time untuk mendeteksi anomali akses dan memastikan keamanan infrastruktur kritikal melalui immutable audit nodes.
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <div className="flex flex-col items-end pr-4">
-              <span className="text-[11px] text-gray-400 font-bold uppercase tracking-widest">System Health</span>
-              <span className="font-orbitron text-lg font-bold text-emerald-500 uppercase tracking-widest">SECURE</span>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* HUD STATS GRID */}
       <div className="grid grid-cols-4 gap-5 mb-8 relative z-10">
@@ -158,15 +132,23 @@ Jika GPS Error "Error code 1", sistem otomatis akan menggunakan IP Geolocation s
       {/* MAIN CONTENT GRID */}
       <div className="grid grid-cols-2 gap-6 relative z-10">
         {/* SYSTEM HEALTH MATRIC */}
-        <div className="ews-card p-6 relative overflow-hidden group">
-          <div className="flex items-center justify-between mb-6 relative z-10 border-b border-gray-800/50 pb-4">
+        <div className="ews-card p-6 relative overflow-hidden group/card">
+          <div className="ews-hud-corner ews-hud-tl" />
+          <div className="ews-hud-corner ews-hud-tr" />
+          <div className="ews-hud-corner ews-hud-bl" />
+          <div className="ews-hud-corner ews-hud-br" />
+          <div className="ews-card-header-bar" />
+          <div className="flex items-center justify-between mb-6 relative z-10">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
                 <i className="fa-solid fa-gears text-lg"></i>
               </div>
               <div>
-                <span className="font-orbitron font-bold text-[18px] text-gray-100 uppercase tracking-wider block">KESEHATAN SISTEM — 4 LAYER</span>
-                <span className="text-[10px] text-cyan-500/60 font-mono uppercase tracking-[0.2em]">Operational Kernel Monitoring</span>
+                <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">KESEHATAN SISTEM (4 LAYER)</span>
+                <span className="text-[10px] text-cyan-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
+                  Monitoring Kernel • Status Operasional
+                </span>
               </div>
             </div>
           </div>
@@ -235,15 +217,23 @@ Jika GPS Error "Error code 1", sistem otomatis akan menggunakan IP Geolocation s
         </div>
 
         {/* AUDIT LOG TIMELINE */}
-        <div className="ews-card p-6 relative overflow-hidden group">
-          <div className="flex items-center justify-between mb-6 relative z-10 border-b border-gray-800/50 pb-4">
+        <div className="ews-card p-6 relative overflow-hidden group/card">
+          <div className="ews-hud-corner ews-hud-tl" />
+          <div className="ews-hud-corner ews-hud-tr" />
+          <div className="ews-hud-corner ews-hud-bl" />
+          <div className="ews-hud-corner ews-hud-br" />
+          <div className="ews-card-header-bar" />
+          <div className="flex items-center justify-between mb-6 relative z-10">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.1)]">
                 <i className="fa-solid fa-list-check text-lg"></i>
               </div>
               <div>
-                <span className="font-orbitron font-bold text-[18px] text-gray-100 uppercase tracking-wider block">AUDIT LOG IMMUTABLE</span>
-                <span className="text-[10px] text-amber-500/60 font-mono uppercase tracking-[0.2em]">Hash-Linked Action History</span>
+                <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">LOG AUDIT SISTEM</span>
+                <span className="text-[10px] text-amber-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  Riwayat Aktivitas • Tautan Hash
+                </span>
               </div>
             </div>
             <span className="ews-live-badge red shadow-[0_0_10px_rgba(239,68,68,0.2)]">
@@ -286,14 +276,22 @@ Jika GPS Error "Error code 1", sistem otomatis akan menggunakan IP Geolocation s
       </div>
 
       {/* ACCESS MANAGEMENT (FULL WIDTH) */}
-      <div className="ews-card p-6 relative overflow-hidden group z-10">
-        <div className="flex items-center gap-3 mb-6 relative z-10 border-b border-gray-800/50 pb-4">
-          <div className="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+      <div className="ews-card p-6 relative overflow-hidden group/card z-10">
+        <div className="ews-hud-corner ews-hud-tl" />
+        <div className="ews-hud-corner ews-hud-tr" />
+        <div className="ews-hud-corner ews-hud-bl" />
+        <div className="ews-hud-corner ews-hud-br" />
+        <div className="ews-card-header-bar" />
+        <div className="flex items-center gap-3 mb-6 relative z-10">
+          <div className="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
             <i className="fa-solid fa-users-gear text-lg"></i>
           </div>
           <div>
-            <span className="font-orbitron font-bold text-[18px] text-gray-100 uppercase tracking-wider block">MANAJEMEN HAK AKSES SISTEM</span>
-            <span className="text-[10px] text-cyan-500/60 font-mono uppercase tracking-[0.2em]">Regional Multi-Tier Authorization Matrix</span>
+            <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">MANAJEMEN HAK AKSES SISTEM</span>
+            <span className="text-[10px] text-cyan-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
+              Matriks Otorisasi • Akses Regional
+            </span>
           </div>
         </div>
         <div className="grid grid-cols-4 gap-4 relative z-10">
@@ -320,15 +318,23 @@ Jika GPS Error "Error code 1", sistem otomatis akan menggunakan IP Geolocation s
       </div>
 
       {/* TRACKING LOGS SECTION (PERSONNEL IDENTIFICATION UNITS) */}
-      <div className="ews-card p-6 relative overflow-hidden group z-10">
-        <div className="flex items-center justify-between mb-8 relative z-10 border-b border-gray-800/50 pb-4">
+      <div className="ews-card p-6 relative overflow-hidden group/card z-10">
+        <div className="ews-hud-corner ews-hud-tl" />
+        <div className="ews-hud-corner ews-hud-tr" />
+        <div className="ews-hud-corner ews-hud-bl" />
+        <div className="ews-hud-corner ews-hud-br" />
+        <div className="ews-card-header-bar" />
+        <div className="flex items-center justify-between mb-8 relative z-10">
           <div className="flex items-center gap-4">
-             <div className="w-12 h-12 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
-              <i className="fa-solid fa-fingerprint text-xl"></i>
+             <div className="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
+              <i className="fa-solid fa-fingerprint text-lg"></i>
             </div>
             <div>
-              <span className="font-orbitron font-bold text-[18px] text-gray-100 uppercase tracking-wider block">VERIFIKASI PERSONEL & GEO-MAPPING</span>
-              <span className="text-[10px] text-cyan-500/60 font-mono uppercase tracking-[0.2em]">Personnel Authenticity Log Feed</span>
+              <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">VERIFIKASI PERSONEL</span>
+              <span className="text-[10px] text-cyan-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
+                Umpan Log Verifikasi • Autentikasi Personel
+              </span>
             </div>
           </div>
           <div className="flex gap-4">
@@ -369,7 +375,12 @@ Jika GPS Error "Error code 1", sistem otomatis akan menggunakan IP Geolocation s
             </div>
           ) : (
             trackingLogs.map((log) => (
-              <div key={log.id} className="ews-card p-0 overflow-hidden flex flex-col group/log hover:border-cyan-500/50 transition-all duration-300">
+              <div key={log.id} className="ews-card p-0 overflow-hidden flex flex-col group/log hover:border-cyan-500/50 transition-all duration-300 relative group/card">
+                <div className="ews-hud-corner ews-hud-tl" />
+                <div className="ews-hud-corner ews-hud-tr" />
+                <div className="ews-hud-corner ews-hud-bl" />
+                <div className="ews-hud-corner ews-hud-br" />
+                <div className="ews-card-header-bar opacity-30" />
                 <div className="relative aspect-[4/3] bg-black/40 overflow-hidden">
                   {/* SCANLINE OVERLAY */}
                   <div className="absolute inset-0 pointer-events-none z-10 bg-scanline opacity-[0.03]" />

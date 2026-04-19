@@ -14,32 +14,6 @@ export default function SecurityMitigation() {
 
   return (
     <div className={`space-y-6 ${mounted ? 'ews-animate-fade-in' : ''}`}>
-      {/* DATA SOURCE & METHODOLOGY SECTION */}
-      <div className="ews-card p-6 border-l-4 border-red-500 bg-red-500/5 mb-8 relative overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-        <div className="flex items-start justify-between relative z-10">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 shadow-[0_0_15px_rgba(239,68,68,0.1)]">
-              <i className="fa-solid fa-user-shield text-xl"></i>
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-orbitron font-bold text-xs text-white uppercase tracking-widest">DATA SOURCE & TEKNIK PENGOLAHAN</h3>
-              </div>
-              <p className="text-[13px] text-gray-400 leading-relaxed font-rajdhani max-w-4xl">
-                Analisis strategi pencegahan kriminalitas berdasarkan tren titik rawan, rasio personel dilapangan, dan protokol respons cepat mitigasi kejahatan wilayah.
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <div className="flex flex-col items-end pr-4">
-              <span className="text-[11px] text-gray-400 font-bold uppercase tracking-widest">Source</span>
-              <span className="font-orbitron text-lg font-bold text-red-500">INTELKAM</span>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* HUD STATS GRID */}
       <div className="grid grid-cols-4 gap-5 mb-8 relative z-10">
@@ -83,18 +57,24 @@ export default function SecurityMitigation() {
       {/* MAIN CONTENT GRID */}
       <div className="grid grid-cols-2 gap-6 relative z-10">
         {/* RISK MATRIX TABLE */}
-        <div className="ews-card p-6 relative overflow-hidden group">
-          <div className="flex items-center justify-between mb-6 relative z-10 border-b border-gray-800/50 pb-4">
+        <div className="ews-card p-6 relative overflow-hidden group/card">
+          <div className="ews-hud-corner ews-hud-tl" />
+          <div className="ews-hud-corner ews-hud-tr" />
+          <div className="ews-hud-corner ews-hud-bl" />
+          <div className="ews-hud-corner ews-hud-br" />
+          <div className="ews-card-header-bar" />
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+              <div className="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
                 <i className="fa-solid fa-map-location-dot text-lg"></i>
               </div>
               <div>
-                <span className="font-orbitron font-bold text-[18px] text-gray-100 uppercase tracking-wider block">MATRIKS RISIKO PER KECAMATAN</span>
-                <span className="text-[11px] text-cyan-500/60 font-mono uppercase tracking-[0.2em]">Regional Threat Assessment Matrix</span>
+                <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">MATRIKS RISIKO PER KECAMATAN</span>
+                <span className="text-[10px] text-cyan-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
+                  Penilaian Ancaman • Matriks Regional
+                </span>
               </div>
             </div>
-          </div>
           
           <div className="overflow-x-auto">
             <table className="ews-table w-full">
@@ -149,15 +129,23 @@ export default function SecurityMitigation() {
         </div>
 
         {/* CROWD MONITORING FEED */}
-        <div className="ews-card p-6 relative overflow-hidden group">
-          <div className="flex items-center justify-between mb-6 relative z-10 border-b border-gray-800/50 pb-4">
+        <div className="ews-card p-6 relative overflow-hidden group/card">
+          <div className="ews-hud-corner ews-hud-tl" />
+          <div className="ews-hud-corner ews-hud-tr" />
+          <div className="ews-hud-corner ews-hud-bl" />
+          <div className="ews-hud-corner ews-hud-br" />
+          <div className="ews-card-header-bar" />
+          <div className="flex items-center justify-between mb-6 relative z-10">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500">
+              <div className="w-10 h-10 rounded bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.1)]">
                 <i className="fa-solid fa-users-viewfinder text-lg"></i>
               </div>
               <div>
-                <span className="font-orbitron font-bold text-[18px] text-gray-100 uppercase tracking-wider block">PANTAUAN KERUMUNAN REAL-TIME</span>
-                <span className="text-[11px] text-amber-500/60 font-mono uppercase tracking-[0.2em]">Active Gathering Sensing</span>
+                <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">PANTAUAN KERUMUNAN REAL-TIME</span>
+                <span className="text-[10px] text-amber-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  Sensor Massa • Deteksi Kerumunan
+                </span>
               </div>
             </div>
             <span className="text-[10px] text-gray-500 font-mono">UPDATED: JUST NOW</span>
@@ -201,14 +189,22 @@ export default function SecurityMitigation() {
       {/* BOTTOM ANALYSIS GRID */}
       <div className="grid grid-cols-3 gap-6 relative z-10">
         {/* VITAL OBJECTS STATUS */}
-        <div className="ews-card p-6 relative overflow-hidden group">
-          <div className="flex items-center gap-3 mb-6 relative z-10 border-b border-gray-800/50 pb-4">
-            <div className="w-10 h-10 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+        <div className="ews-card p-6 relative overflow-hidden group/card">
+          <div className="ews-hud-corner ews-hud-tl" />
+          <div className="ews-hud-corner ews-hud-tr" />
+          <div className="ews-hud-corner ews-hud-bl" />
+          <div className="ews-hud-corner ews-hud-br" />
+          <div className="ews-card-header-bar" />
+          <div className="flex items-center gap-3 mb-6 relative z-10">
+            <div className="w-10 h-10 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
               <i className="fa-solid fa-building-shield text-lg"></i>
             </div>
             <div>
-              <span className="font-orbitron font-bold text-[18px] text-gray-100 uppercase tracking-wider block">OBVITNAS MONITORING</span>
-              <span className="text-[11px] text-emerald-500/60 font-mono uppercase tracking-[0.2em]">National Vital Assets</span>
+              <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">OBVITNAS MONITORING</span>
+              <span className="text-[10px] text-emerald-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Aset Vital • Monitoring Keamanan
+              </span>
             </div>
           </div>
           <div className="space-y-3 relative z-10">
@@ -241,14 +237,22 @@ export default function SecurityMitigation() {
         </div>
 
         {/* PUBLIC UTILITIES OVERLAY */}
-        <div className="ews-card p-6 relative overflow-hidden group">
-          <div className="flex items-center gap-3 mb-6 relative z-10 border-b border-gray-800/50 pb-4">
-            <div className="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+        <div className="ews-card p-6 relative overflow-hidden group/card">
+          <div className="ews-hud-corner ews-hud-tl" />
+          <div className="ews-hud-corner ews-hud-tr" />
+          <div className="ews-hud-corner ews-hud-bl" />
+          <div className="ews-hud-corner ews-hud-br" />
+          <div className="ews-card-header-bar" />
+          <div className="flex items-center gap-3 mb-6 relative z-10">
+            <div className="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
               <i className="fa-solid fa-bolt-lightning text-lg"></i>
             </div>
             <div>
-              <span className="font-orbitron font-bold text-[18px] text-gray-100 uppercase tracking-wider block">UTILITAS & LOGISTIK</span>
-              <span className="text-[11px] text-cyan-500/60 font-mono uppercase tracking-[0.2em]">Supply Chain Integrity</span>
+              <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">UTILITAS & LOGISTIK</span>
+              <span className="text-[10px] text-cyan-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
+                Integritas Pasokan • Rantai Logistik
+              </span>
             </div>
           </div>
           <div className="space-y-5 relative z-10">
@@ -278,14 +282,22 @@ export default function SecurityMitigation() {
         </div>
 
         {/* AI STRATEGIC BRIEFING */}
-        <div className="ews-card p-6 relative overflow-hidden group">
-          <div className="flex items-center gap-3 mb-6 relative z-10 border-b border-gray-800/50 pb-4">
-            <div className="w-10 h-10 rounded bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+        <div className="ews-card p-6 relative overflow-hidden group/card">
+          <div className="ews-hud-corner ews-hud-tl" />
+          <div className="ews-hud-corner ews-hud-tr" />
+          <div className="ews-hud-corner ews-hud-bl" />
+          <div className="ews-hud-corner ews-hud-br" />
+          <div className="ews-card-header-bar" />
+          <div className="flex items-center gap-3 mb-6 relative z-10">
+            <div className="w-10 h-10 rounded bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
               <i className="fa-solid fa-brain text-lg"></i>
             </div>
             <div>
-              <span className="font-orbitron font-bold text-[18px] text-gray-100 uppercase tracking-wider block">REKOMENDASI MITIGASI AI</span>
-              <span className="text-[11px] text-purple-500/60 font-mono uppercase tracking-[0.2em]">Strategic Neural Advisory</span>
+              <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">REKOMENDASI MITIGASI AI</span>
+              <span className="text-[10px] text-purple-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
+                Saran Strategis • Analisis AI
+              </span>
             </div>
           </div>
           <div className="space-y-3 relative z-10">

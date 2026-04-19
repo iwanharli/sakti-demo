@@ -76,33 +76,6 @@ export default function PredictiveAnalytics() {
   return (
     <div className={`space-y-6 ${mounted ? 'ews-animate-fade-in' : ''}`}>
 
-      {/* DATA SOURCE & METHODOLOGY SECTION */}
-      <div className="ews-card p-6 border-l-4 border-cyan-500 bg-cyan-500/5 mb-8 relative overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-        <div className="flex items-start justify-between relative z-10">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(6,211,234,0.1)]">
-              <i className="fa-solid fa-brain text-xl"></i>
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-orbitron font-bold text-xs text-white uppercase tracking-widest">DATA SOURCE & TEKNIK PENGOLAHAN</h3>
-              </div>
-              <p className="text-[13px] text-gray-400 leading-relaxed font-rajdhani max-w-4xl">
-                Menggunakan pemrosesan Neural Network pada data historis kriminalitas 5 tahun terakhir untuk menghasilkan Heatmap probabilitas kejadian berdasarkan variabel waktu dan lokasi dengan tingkat akurasi tinggi.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="flex flex-col items-end pr-4">
-              <span className="text-[11px] text-gray-400 font-bold uppercase tracking-widest">Source</span>
-              <span className="font-orbitron text-lg font-bold text-cyan-400">NEURAL NET</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* HUD STATS GRID */}
       <div className="grid grid-cols-4 gap-5 mb-8 relative z-10">
         <div className="ews-stat-card red cursor-pointer" onClick={() => addToast('Detail akurasi model AI', 'info')}>
@@ -149,20 +122,25 @@ export default function PredictiveAnalytics() {
       </div>
 
       {/* FULL-WIDTH RISK TREND CHART */}
-      <div className="bg-[#0a0f1d]/60 border border-gray-800 rounded-xl p-6 relative overflow-hidden group mb-6">
+      <div className="ews-card p-6 relative overflow-hidden group/card mb-6">
+        <div className="ews-hud-corner ews-hud-tl" />
+        <div className="ews-hud-corner ews-hud-tr" />
+        <div className="ews-hud-corner ews-hud-bl" />
+        <div className="ews-hud-corner ews-hud-br" />
+        <div className="ews-card-header-bar" />
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
              style={{ backgroundImage: 'radial-gradient(#ef4444 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
         
         <div className="flex items-center justify-between mb-8 relative z-10">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500">
-              <i className="fa-solid fa-chart-line text-xl"></i>
+            <div className="w-10 h-10 rounded bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.1)]">
+              <i className="fa-solid fa-chart-line text-lg"></i>
             </div>
             <div>
-              <span className="font-orbitron font-bold text-sm text-gray-100 uppercase tracking-wider block">Aggregate Crime Risk Index</span>
+              <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">INDEKS RISIKO KEJAHATAN AGREGAT</span>
               <span className="text-[10px] text-red-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                Processing Vector Clusters • High Fidelity
+                Estimasi Risiko • Proyeksi Spasial
               </span>
             </div>
           </div>
@@ -225,11 +203,24 @@ export default function PredictiveAnalytics() {
       {/* Main Content Grid */}
       <div className="grid grid-cols-3 gap-5">
         {/* SUBJECT TRACKING MATRIX */}
-        <div className="bg-[#0a0f1d]/60 border border-gray-800 rounded-xl overflow-hidden relative group">
-          <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-[#0d1425]/80">
-            <div className="flex items-center gap-2">
-              <i className="fa-solid fa-users-viewfinder text-cyan-500 text-xs"></i>
-              <span className="font-orbitron font-bold text-[15px] tracking-wider text-white uppercase">SUBJECT TRACKING</span>
+        <div className="ews-card relative overflow-hidden group/card shadow-2xl">
+          <div className="ews-hud-corner ews-hud-tl" />
+          <div className="ews-hud-corner ews-hud-tr" />
+          <div className="ews-hud-corner ews-hud-bl" />
+          <div className="ews-hud-corner ews-hud-br" />
+          <div className="ews-card-header-bar" />
+          <div className="p-6 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
+                <i className="fa-solid fa-users-viewfinder text-lg"></i>
+              </div>
+              <div>
+                <span className="font-orbitron font-bold text-[15px] tracking-wider text-white uppercase block">MATRIKS PELACAKAN SUBJEK</span>
+                <span className="text-[10px] text-cyan-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
+                  Monitoring Target • Profil Risiko
+                </span>
+              </div>
             </div>
           </div>
           <div className="p-3 space-y-2 max-h-[600px] overflow-auto ews-scrollbar">
@@ -272,7 +263,24 @@ export default function PredictiveAnalytics() {
 
         {/* PREDICTIVE ANALYTICS MAIN ENGINE */}
         <div className="col-span-2 space-y-5">
-          <div className="bg-[#0a0f1d]/60 border border-gray-800 rounded-xl relative overflow-hidden">
+          <div className="ews-card relative overflow-hidden p-6 group/card shadow-2xl">
+            <div className="ews-hud-corner ews-hud-tl" />
+            <div className="ews-hud-corner ews-hud-tr" />
+            <div className="ews-hud-corner ews-hud-bl" />
+            <div className="ews-hud-corner ews-hud-br" />
+            <div className="ews-card-header-bar" />
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
+                <i className="fa-solid fa-microchip text-lg"></i>
+              </div>
+              <div>
+                <span className="font-orbitron font-bold text-[15px] tracking-wider text-white uppercase block">MESIN ANALISIS PREDIKTIF</span>
+                <span className="text-[10px] text-cyan-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
+                  Forecasting Matrix • AI Analysis
+                </span>
+              </div>
+            </div>
             {/* Spatio-Temporal Matrix Visualization */}
             <div className="p-5">
               <div className="grid grid-cols-2 gap-8 mb-6">
@@ -368,11 +376,24 @@ export default function PredictiveAnalytics() {
           </div>
 
           {/* INTELLIGENCE FEED SOURCES */}
-          <div className="bg-[#0a0f1d]/60 border border-gray-800 rounded-xl relative overflow-hidden group">
-            <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-[#0d1425]/80">
-              <div className="flex items-center gap-2">
-                <i className="fa-solid fa-server text-purple-500 text-xs"></i>
-                <span className="font-orbitron font-bold text-[15px] tracking-wider text-white uppercase">Active Intelligence Sources</span>
+          <div className="ews-card relative overflow-hidden group/card shadow-2xl">
+            <div className="ews-hud-corner ews-hud-tl" />
+            <div className="ews-hud-corner ews-hud-tr" />
+            <div className="ews-hud-corner ews-hud-bl" />
+            <div className="ews-hud-corner ews-hud-br" />
+            <div className="ews-card-header-bar" />
+            <div className="p-6 flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
+                  <i className="fa-solid fa-server text-lg"></i>
+                </div>
+                <div>
+                  <span className="font-orbitron font-bold text-[15px] tracking-wider text-white uppercase block">SUMBER INTELIJEN AKTIF</span>
+                  <span className="text-[10px] text-purple-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
+                    Umpan Data • Integrasi Sensor
+                  </span>
+                </div>
               </div>
             </div>
             

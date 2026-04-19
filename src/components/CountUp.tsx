@@ -3,14 +3,24 @@ import { useEffect, useState, useRef } from 'react';
 interface CountUpProps {
   value: number;
   duration?: number;
+  decimals?: number;
   formatter?: (v: number) => string;
 }
 
 export default function CountUp({ 
   value, 
   duration = 1000, 
-  formatter = (v: number) => Math.floor(v).toLocaleString('id-ID') 
+  decimals = 0,
+  formatter
 }: CountUpProps) {
+  const defaultFormatter = (v: number) => {
+    return v.toLocaleString('id-ID', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
+    });
+  };
+
+  const activeFormatter = formatter || defaultFormatter;
   const [displayValue, setDisplayValue] = useState(0);
   const startTimestamp = useRef<number | null>(null);
   const startValue = useRef(0);
@@ -44,5 +54,5 @@ export default function CountUp({
     };
   }, [value, duration]);
 
-  return <>{formatter(displayValue)}</>;
+  return <>{activeFormatter(displayValue)}</>;
 }

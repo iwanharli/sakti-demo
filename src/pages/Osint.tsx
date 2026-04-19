@@ -125,32 +125,6 @@ export default function Osint() {
 
   return (
     <div className={`space-y-6 ${mounted ? 'ews-animate-fade-in' : ''}`}>
-      {/* DATA SOURCE & METHODOLOGY SECTION */}
-      <div className="ews-card p-6 border-l-4 border-cyan-500 bg-cyan-500/5 mb-8 relative overflow-hidden group">
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-        <div className="flex items-start justify-between relative z-10">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(6,211,234,0.1)]">
-              <i className="fa-solid fa-satellite-dish text-xl"></i>
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-orbitron font-bold text-xs text-white uppercase tracking-widest">DATA SOURCE & TEKNIK PENGOLAHAN</h3>
-              </div>
-              <p className="text-[13px] text-gray-400 leading-relaxed font-rajdhani max-w-4xl">
-                Data bersumber dari intersep sinyal OSINT platform media sosial global (X, Meta, TikTok) yang diolah melalui mesin Natural Language Processing (NLP) untuk deteksi sentimen dan analisis jaringan aktor secara real-time.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="flex flex-col items-end pr-4">
-              <span className="text-[11px] text-gray-400 font-bold uppercase tracking-widest">Source</span>
-              <span className="font-orbitron text-lg font-bold text-cyan-400">SOCIAL MEDIA</span>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-4 gap-5">
@@ -195,21 +169,26 @@ export default function Osint() {
       </div>
 
       {/* Real-time Sentiment - Full Width */}
-        <div className="ews-card p-6 relative overflow-hidden group">
+        <div className="ews-card p-6 relative overflow-hidden group/card">
+          <div className="ews-hud-corner ews-hud-tl" />
+          <div className="ews-hud-corner ews-hud-tr" />
+          <div className="ews-hud-corner ews-hud-bl" />
+          <div className="ews-hud-corner ews-hud-br" />
+          <div className="ews-card-header-bar" />
           {/* Subtle background grid */}
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
                style={{ backgroundImage: 'radial-gradient(#06b6d4 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
           
           <div className="flex items-center justify-between mb-8 relative z-10">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
-                <i className="fa-solid fa-chart-line text-xl"></i>
+              <div className="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
+                <i className="fa-solid fa-chart-line text-lg"></i>
               </div>
               <div>
-                <span className="font-orbitron font-bold text-sm text-gray-100 uppercase tracking-wider block">SENTIMENT SURVEILLANCE HUB</span>
+                <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">HUB SURVEILANS SENTIMEN</span>
                 <span className="text-[10px] text-cyan-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
-                  Sensing Active • Intelligence Window
+                  Analisis Volume • Pelacakan Polaritas
                 </span>
               </div>
             </div>
@@ -350,7 +329,12 @@ export default function Osint() {
               { platform: 'THREADS', value: '2.1K', icon: 'fa-brands fa-threads', color: 'text-white', pos: 45, neg: 55 },
               { platform: 'YOUTUBE', value: '9.8K', icon: 'fa-brands fa-youtube', color: 'text-red-500', pos: 62, neg: 38 },
             ].map((item) => (
-              <div key={item.platform} className="p-5 bg-gray-900 border border-gray-800 rounded-xl group hover:border-cyan-500/50 hover:bg-gray-800/50 transition-all duration-500 cursor-pointer relative overflow-hidden">
+              <div key={item.platform} className="p-5 bg-gray-900 border border-gray-800 rounded-xl group hover:border-cyan-500/50 hover:bg-gray-800/50 transition-all duration-500 cursor-pointer relative overflow-hidden group/card">
+                <div className="ews-hud-corner ews-hud-tl" />
+                <div className="ews-hud-corner ews-hud-tr" />
+                <div className="ews-hud-corner ews-hud-bl" />
+                <div className="ews-hud-corner ews-hud-br" />
+                <div className="ews-card-header-bar opacity-30" />
                 {/* Decorative background icon */}
                 <i className={`${item.icon} absolute -right-4 -bottom-4 text-6xl opacity-[0.03] group-hover:opacity-[0.07] transition-all`}></i>
                 
@@ -379,21 +363,26 @@ export default function Osint() {
           </div>
         </div>
 
-        <div className="ews-card p-7 relative overflow-hidden group">
+        <div className="ews-card p-7 relative overflow-hidden group/card">
+          <div className="ews-hud-corner ews-hud-tl" />
+          <div className="ews-hud-corner ews-hud-tr" />
+          <div className="ews-hud-corner ews-hud-bl" />
+          <div className="ews-hud-corner ews-hud-br" />
+          <div className="ews-card-header-bar" />
           {/* Subtle background grid */}
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
                style={{ backgroundImage: 'radial-gradient(#06b6d4 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
           
-          <div className="flex items-center justify-between mb-8 relative z-10 border-b border-gray-800/50 pb-6">
+          <div className="flex items-center justify-between mb-8 relative z-10 pb-6">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.1)]">
-                <i className="fa-solid fa-share-nodes text-2xl"></i>
+              <div className="w-10 h-10 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.1)]">
+                <i className="fa-solid fa-share-nodes text-lg"></i>
               </div>
               <div>
-                <span className="font-orbitron font-bold text-sm text-gray-100 uppercase tracking-wider block">SOCIAL NETWORK SURVEILLANCE</span>
-                <span className="text-[11px] text-red-500/70 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                  Tracing Node Dependencies • Critical Vector Found
+                <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">SURVEILANS JARINGAN SOSIAL</span>
+                <span className="text-[10px] text-red-500/70 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                  Pemetaan Aktor • Node Berpengaruh
                 </span>
               </div>
             </div>
@@ -523,19 +512,25 @@ export default function Osint() {
       </div>
 
       {/* Keyword Alerting Intelligence Feed */}
-      <div className="ews-card p-6 relative overflow-hidden group/table">
+      <div className="ews-card p-6 relative overflow-hidden group/card">
+        <div className="ews-hud-corner ews-hud-tl" />
+        <div className="ews-hud-corner ews-hud-tr" />
+        <div className="ews-hud-corner ews-hud-bl" />
+        <div className="ews-hud-corner ews-hud-br" />
+        <div className="ews-card-header-bar" />
         {/* Subtle background scanline */}
         <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 via-transparent to-transparent h-1 w-full animate-[scan_4s_linear_infinite] pointer-events-none opacity-20" />
         
-        <div className="flex items-center justify-between mb-3 relative z-10 border-b border-gray-800/80 pb-4">
+        <div className="flex items-center justify-between mb-3 relative z-10 pb-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.1)]">
               <i className="fa-solid fa-satellite-dish text-lg"></i>
             </div>
             <div>
-              <span className="font-orbitron font-bold text-sm text-gray-100 uppercase tracking-wider block">KEYWORD INTELLIGENCE FEED</span>
+              <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">UMPAN INTELIJEN KATA KUNCI</span>
               <span className="text-[10px] text-red-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
-                Scanning Active • High-Spike Vectors Detected
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                Umpan Intelijen • Deteksi Anomali
               </span>
             </div>
           </div>

@@ -128,6 +128,15 @@ export default function Topbar({ title, subtitle, currentTime, alertCount, onAle
                   <i className="fa-solid fa-briefcase text-gray-500 group-hover:text-cyan-400"></i>
                   <span>Akses Sistem</span>
                 </button>
+                {user?.role === 'admin' && (
+                  <button 
+                    onClick={() => { window.location.hash = '#/security-integrity'; setIsMenuOpen(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-all text-left group"
+                  >
+                    <i className="fa-solid fa-shield-halved text-gray-500 group-hover:text-cyan-400"></i>
+                    <span>Integritas & Keamanan</span>
+                  </button>
+                )}
                 <div className="my-2 border-t border-gray-800"></div>
                 <button 
                   onClick={handleLogout}

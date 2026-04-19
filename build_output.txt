@@ -1,0 +1,13 @@
+Now using node v22.22.0 (npm v10.9.4)
+
+> my-app@0.0.0 build
+> tsc -b && vite build
+
+src/components/CommandCenter/features/CommodityIndex.tsx(121,21): error TS6133: 'isHigh' is declared but its value is never read.
+src/components/CommandCenter/features/KamtibmasRiskIndex.tsx(11,78): error TS6133: 'addToast' is declared but its value is never read.
+src/components/CommandCenter/features/MapSection.tsx(91,3): error TS6133: 'setRadarIndex' is declared but its value is never read.
+src/components/CommandCenter/features/TopSummary.tsx(4,1): error TS6133: 'TacticalCard' is declared but its value is never read.
+src/hooks/useDisasterData.ts(44,9): error TS6133: 'addToast' is declared but its value is never read.
+src/pages/DisasterHistory.tsx(1,20): error TS6133: 'useMemo' is declared but its value is never read.
+src/pages/DisasterHistory.tsx(21,10): error TS6133: 'hoveredEvent' is declared but its value is never read.
+src/pages/TrafficAccidentMitigation.tsx(29,9): error TS6133: 'provinces' is declared but its value is never read.

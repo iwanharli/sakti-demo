@@ -506,19 +506,22 @@ export default function KamtibmasManagement() {
         {/* Crime Distribution */}
         <div className="ews-card p-6 relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-transparent pointer-events-none opacity-20" />
-          <div className="flex items-center justify-between mb-8 relative z-10 border-b border-gray-800/50 pb-4">
+          <div className="flex items-center justify-between mb-8 relative z-10">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
                 <i className="fa-solid fa-chart-pie text-lg"></i>
               </div>
               <div>
                 <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">KLASIFIKASI KRIMINAL</span>
-                <span className="text-[11px] text-cyan-500/50 font-mono tracking-widest uppercase block">Kumpulan Data Taktis (3 Hari Terakhir)</span>
+                <span className="text-[10px] text-cyan-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
+                  Metrik Kategori • Distribusi Kasus
+                </span>
               </div>
             </div>
             <div className="flex flex-col items-end">
                 <div className="text-[10px] text-cyan-500/60 font-mono">RASIO_KEPADATAN</div>
-                <div className="text-[9px] text-gray-600 font-mono">REF_ID: 0x8F2C</div>
+                <div className="text-[9px] text-gray-600 font-mono uppercase tracking-widest">REF_ID: 0x8F2C</div>
             </div>
           </div>
           <div className="flex items-center gap-10 relative z-10">
@@ -599,12 +602,18 @@ export default function KamtibmasManagement() {
         {/* Unjuk Rasa / Demo Analytics */}
         <div className="ews-card p-6 relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-tr from-amber-500/5 via-transparent to-transparent pointer-events-none opacity-20" />
-          <div className="flex items-center justify-between mb-6 relative z-10 border-b border-gray-800/50 pb-4">
+          <div className="flex items-center justify-between mb-6 relative z-10">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.1)]">
                 <i className="fa-solid fa-people-group text-lg"></i>
               </div>
-              <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">WAWASAN UNJUK RASA</span>
+              <div>
+                <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">WAWASAN UNJUK RASA</span>
+                <span className="text-[10px] text-cyan-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  Monitoring Aktivitas • Sentimen Massa
+                </span>
+              </div>
             </div>
 
             <button 
