@@ -27,7 +27,8 @@ const TrafficAccidentMitigation: React.FC = () => {
     page,
     setPage,
     pagination,
-    refresh
+    refresh,
+    resetFilters
   } = useTrafficAccidentData();
   
   const [focusCoord, setFocusCoord] = useState<string | undefined>(undefined);
