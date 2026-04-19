@@ -39,7 +39,7 @@ const TrafficAccidentMitigation: React.FC = () => {
       <AccidentStats stats={stats} isLoading={isStatsLoading} />
 
       {/* Panoramic Tactical Map */}
-      <div className="w-full h-[500px] rounded-2xl overflow-hidden border border-white/5 shadow-2xl shadow-cyan-500/5">
+      <div className="w-full h-[650px] rounded-2xl overflow-hidden border border-white/5 shadow-2xl shadow-cyan-500/5">
         <AccidentMap accidents={accidents} focusCoord={focusCoord} />
       </div>
 
