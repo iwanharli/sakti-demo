@@ -19,6 +19,7 @@ interface AccidentTableProps {
   setStartDate: (d: string) => void;
   endDate: string;
   setEndDate: (d: string) => void;
+  onViewOnMap: (latlong: string) => void;
   refresh: () => void;
 }
 
@@ -40,6 +41,7 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
   setStartDate, 
   endDate, 
   setEndDate, 
+  onViewOnMap,
   refresh
 }) => {
   const totalPages = pagination?.totalPages || 1;
@@ -246,7 +248,10 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
                       </p>
                       {acc.location_latlong && (
                         <button 
-                          onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${acc.location_latlong}`, '_blank')}
+                          onClick={() => {
+                            onViewOnMap(acc.location_latlong);
+                            document.getElementById('accident-map-container')?.scrollIntoView({ behavior: 'smooth' });
+                          }}
                           className="mt-2 inline-flex items-center gap-1.5 text-[10px] font-black text-cyan-500 hover:text-cyan-400 uppercase tracking-widest transition-colors group/map"
                         >
                           <i className="fa-solid fa-map-location-dot" />

@@ -1,15 +1,33 @@
-import React from 'react';
-import { MapContainer, TileLayer, Marker, Popup, ZoomControl } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import type { TrafficAccident } from '../../hooks/useTrafficAccidentData';
 import 'leaflet/dist/leaflet.css';
 
 interface AccidentMapProps {
   accidents: TrafficAccident[];
+  focusCoord?: string;
 }
 
+const MapController: React.FC<{ coords?: string }> = ({ coords }) => {
+  const map = useMap();
+  
+  React.useEffect(() => {
+    if (coords) {
+      const [lat, lng] = coords.split(',').map(s => parseFloat(s.trim()));
+      if (!isNaN(lat) && !isNaN(lng)) {
+        map.flyTo([lat, lng], 16, {
+          duration: 1.5,
+          animate: true
+        });
+      }
+    }
+  }, [coords, map]);
+
+  return null;
+};
+
 const createCustomIcon = (status: string) => {
-  const color = status === 'MD' ? '#ef4444' : status === 'LB' ? '#f59e0b' : '#06b6d4';
+  const color = status === 'MD' ? '#ef4444' : status === 'LL' ? '#06b6d4' : '#9ca3af';
   const html = `
     <div class="relative flex items-center justify-center">
       <div class="absolute w-6 h-6 bg-${color} rounded-full blur-[4px] opacity-40 animate-pulse" style="background-color: ${color}"></div>
@@ -24,17 +42,18 @@ const createCustomIcon = (status: string) => {
   });
 };
 
-export const AccidentMap: React.FC<AccidentMapProps> = ({ accidents }) => {
+export const AccidentMap: React.FC<AccidentMapProps> = ({ accidents, focusCoord }) => {
   const center: [number, number] = [-2.5489, 118.0149]; // Indonesia Center
 
   return (
-    <div className="w-full h-full relative rounded-2xl overflow-hidden border border-white/5 bg-[#0a0e17]">
+    <div className="w-full h-full relative rounded-2xl overflow-hidden border border-white/5 bg-[#0a0e17]" id="accident-map-container">
       <MapContainer 
         center={center} 
         zoom={5} 
         style={{ height: '100%', width: '100%' }}
         zoomControl={false}
       >
+        <MapController coords={focusCoord} />
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'

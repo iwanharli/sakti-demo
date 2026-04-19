@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTrafficAccidentData } from '../hooks/useTrafficAccidentData';
 import { AccidentStats } from '../components/TrafficAccident/AccidentStats';
 import { AccidentMap } from '../components/TrafficAccident/AccidentMap';
@@ -27,6 +27,8 @@ const TrafficAccidentMitigation: React.FC = () => {
     pagination,
     refresh
   } = useTrafficAccidentData();
+  
+  const [focusCoord, setFocusCoord] = useState<string | undefined>(undefined);
 
 
   return (
@@ -36,7 +38,7 @@ const TrafficAccidentMitigation: React.FC = () => {
 
       {/* Panoramic Tactical Map */}
       <div className="w-full h-[500px] rounded-2xl overflow-hidden border border-white/5 shadow-2xl shadow-cyan-500/5">
-        <AccidentMap accidents={accidents} />
+        <AccidentMap accidents={accidents} focusCoord={focusCoord} />
       </div>
 
       {/* Detailed Logs (Full Width with Integrated Controls) */}
@@ -59,6 +61,7 @@ const TrafficAccidentMitigation: React.FC = () => {
           setStartDate={setStartDate}
           endDate={endDate}
           setEndDate={setEndDate}
+          onViewOnMap={setFocusCoord}
           refresh={refresh}
         />
       </div>
