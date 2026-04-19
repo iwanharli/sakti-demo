@@ -3,7 +3,7 @@ import TacticalCard from '../shared/TacticalCard';
 
 interface TacticalTimelineProps {
   filter: string;
-  setFilter: (f: 'all' | 'cuaca' | 'gempa') => void;
+  setFilter: (f: 'all' | 'bmkg' | 'issue') => void;
   filteredTimeline: any[];
 }
 
@@ -25,8 +25,8 @@ const TacticalTimeline: React.FC<TacticalTimelineProps> = ({
         <div className="flex p-1 bg-black/40 backdrop-blur-md rounded-lg border border-white/10 shadow-[inner_0_1px_2px_rgba(255,255,255,0.05)]">
           {[
             { id: 'all', label: 'ALL FEED', icon: 'fa-layer-group' },
-            { id: 'cuaca', label: 'CUACA', icon: 'fa-cloud-bolt' },
-            { id: 'gempa', label: 'GEMPA', icon: 'fa-house-crack' }
+            { id: 'bmkg', label: 'BMKG', icon: 'fa-tower-broadcast' },
+            { id: 'issue', label: 'ISSUE', icon: 'fa-triangle-exclamation' }
           ].map((btn) => (
             <button
               key={btn.id}
@@ -48,7 +48,7 @@ const TacticalTimeline: React.FC<TacticalTimelineProps> = ({
         </div>
       </div>
 
-      <div className="flex-1 ews-timeline overflow-y-auto ews-scrollbar space-y-3 pr-2 border-b border-gray-800/50 mb-1 min-h-0 max-h-[970px]">
+      <div className="flex-1 ews-timeline overflow-y-auto ews-scrollbar space-y-3 pr-2 border-b border-gray-800/50 mb-1 min-h-0 max-h-[1330px]">
         {filteredTimeline.length > 0 ? (
           filteredTimeline.map((item, idx) => {
             const icon = item.tags.includes('LANTAS') ? 'fa-solid fa-car-burst' : 
@@ -118,7 +118,7 @@ const TacticalTimeline: React.FC<TacticalTimelineProps> = ({
                        <i className="fa-solid fa-location-crosshairs text-[8px]"></i> Sector Monitoring: {item.region}
                     </div>
                     <div className="relative group/tags">
-                      <div className="flex flex-wrap gap-1.5 max-h-[100px] overflow-y-auto ews-scrollbar-hide pr-2">
+                      <div className="flex flex-wrap gap-1.5 pr-2">
                         {item.subRegions.map((loc: string, i: number) => (
                           <span key={i} className="text-[9px] bg-white/[0.03] text-gray-400 px-2 py-0.5 rounded border border-white/5 font-mono hover:bg-cyan-500/10 hover:text-cyan-400 hover:border-cyan-500/20 transition-all cursor-default">
                             {loc}

@@ -15,7 +15,7 @@ export default function CommandCenter() {
   if (!data.mounted) return null;
 
   return (
-    <div className="flex-1 overflow-y-auto p-1 space-y-6 relative z-10 custom-dashboard-layout selection:bg-cyan-500/30 ews-scrollbar h-[calc(100vh-100px)]">
+    <div className="flex-1 p-1 space-y-6 relative z-10 custom-dashboard-layout selection:bg-cyan-500/30">
       {/* News Ticker & Quick Analytical Stats */}
       <TopSummary 
         nationalKamtibmasStats={data.nationalKamtibmasStats}

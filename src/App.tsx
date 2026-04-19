@@ -260,12 +260,12 @@ function App() {
   const isStandalonePage = currentPage === 'login' || currentPage === 'api-docs';
 
   return (
-    <div className="min-h-screen bg-[#070a12] text-gray-100 font-rajdhani ews-grid-bg ews-scanline">
+    <div className="h-screen bg-[#070a12] text-gray-100 font-rajdhani ews-grid-bg ews-scanline overflow-hidden">
       {!isStandalonePage && (
         <Sidebar currentPage={currentPage} />
       )}
 
-      <div className={`${isStandalonePage ? '' : 'ml-72'} min-h-screen flex flex-col`}>
+      <div className={`${isStandalonePage ? '' : 'ml-72'} h-full flex flex-col`}>
         {!isStandalonePage && (
           <Topbar 
             title={pageTitles[currentPage]}
@@ -276,7 +276,7 @@ function App() {
           />
         )}
 
-        <main className={`${isStandalonePage ? 'p-0' : 'flex-1 p-5'} relative overflow-hidden`}>
+        <main className={`${isStandalonePage ? 'p-0' : 'flex-1 p-5'} relative overflow-y-auto ews-scrollbar`}>
           <PageTransitionLoader isVisible={isTransitioning} isStandalone={isStandalonePage} />
           {renderPage()}
         </main>

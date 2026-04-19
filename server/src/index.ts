@@ -460,6 +460,467 @@ app.get('/api/analytics/risk-scores', authenticateToken, async (req, res) => {
 
 /**
  * @openapi
+ * /api/analytics/sosmed-sentiment:
+ *   get:
+ *     summary: Get social media sentiment aggregation
+ *     responses:
+ *       200:
+ *         description: Sentiment counts and percentages.
+ */
+app.get('/api/analytics/sosmed-sentiment', authenticateToken, async (req, res) => {
+  const { date } = req.query;
+  try {
+    let targetDate: any = date;
+
+    // If no date provided, follow the logic: Today -> Yesterday -> Latest Available
+    if (!targetDate) {
+      const today = new Date().toISOString().split('T')[0];
+      const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+      // Check Today
+      const checkToday = await dbPrimary.execute(sql`SELECT 1 FROM sample_sosmed_post_data WHERE post_timestamp::date = ${today} LIMIT 1`);
+      if (checkToday.rows.length > 0) {
+        targetDate = today;
+      } else {
+        // Check Yesterday
+        const checkYesterday = await dbPrimary.execute(sql`SELECT 1 FROM sample_sosmed_post_data WHERE post_timestamp::date = ${yesterday} LIMIT 1`);
+        if (checkYesterday.rows.length > 0) {
+          targetDate = yesterday;
+        } else {
+          // Fallback to absolute latest
+          const latestDateRes = await dbPrimary.execute(sql`SELECT MAX(post_timestamp::date) as max_d FROM sample_sosmed_post_data`);
+          targetDate = latestDateRes.rows[0].max_d;
+        }
+      }
+    }
+
+    if (!targetDate) {
+      return res.json({ total: 0, stats: [], last_update: null, keyword_count: 0, keywords: [], filtered_date: null });
+    }
+
+    // Ensure targetDate is a string (YYYY-MM-DD)
+    const formattedDate = typeof targetDate === 'string' ? targetDate : new Date(targetDate).toISOString().split('T')[0];
+
+    const results = await dbPrimary.execute(sql`
+      SELECT 
+        sentiment, 
+        COUNT(*)::int as count
+      FROM sample_sosmed_post_data 
+      WHERE post_timestamp::date = ${formattedDate}::date
+      GROUP BY sentiment
+      ORDER BY count DESC
+    `);
+    
+    const latestTimestampRes = await dbPrimary.execute(sql`
+      SELECT MAX(created_at) as last_update 
+      FROM sample_sosmed_post_data 
+      WHERE post_timestamp::date = ${formattedDate}::date
+    `);
+    const lastUpdate = latestTimestampRes.rows[0].last_update;
+
+    // Get keyword count and list for the date
+    const keywordRes = await dbPrimary.execute(sql`
+      SELECT COUNT(DISTINCT keyword)::int as kw_count 
+      FROM sample_sosmed_post_data 
+      WHERE post_timestamp::date = ${formattedDate}::date
+    `);
+    const keywordCount = keywordRes.rows[0].kw_count;
+
+    const keywordListRes = await dbPrimary.execute(sql`
+      SELECT DISTINCT keyword 
+      FROM sample_sosmed_post_data 
+      WHERE post_timestamp::date = ${formattedDate}::date
+      AND keyword IS NOT NULL
+      ORDER BY keyword ASC
+    `);
+    const keywords = (keywordListRes.rows as { keyword: string }[]).map(r => r.keyword);
+
+    const rows = results.rows as { sentiment: string, count: number }[];
+    const total = rows.reduce((sum, r) => sum + r.count, 0);
+    
+    const stats = rows.map(r => ({
+      sentiment: r.sentiment,
+      count: r.count,
+      percentage: total > 0 ? parseFloat(((r.count / total) * 100).toFixed(2)) : 0
+    }));
+
+    res.json({
+      total,
+      stats,
+      last_update: lastUpdate,
+      keyword_count: keywordCount,
+      keywords: keywords,
+      filtered_date: formattedDate
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/osint/summary:
+ *   get:
+ *     summary: Get overall OSINT metrics and platform distribution
+ */
+app.get('/api/osint/summary', authenticateToken, async (req, res) => {
+    const { startDate, endDate, keyword, platform } = req.query;
+    try {
+    const latestDateRes = await dbPrimary.execute(sql`SELECT MAX(post_timestamp::date) as max_d FROM sample_sosmed_post_data`);
+    const defaultDate = latestDateRes.rows[0].max_d;
+    
+    const sDate = startDate || defaultDate;
+    const eDate = endDate || startDate || defaultDate;
+
+    if (!sDate) return res.json({ platforms: [], keywords: [] });
+
+    let whereClauseBase = sql`WHERE post_timestamp::date BETWEEN ${sDate}::date AND ${eDate}::date`;
+    
+    if (platform && platform !== 'All') {
+      whereClauseBase = sql`${whereClauseBase} AND post_source ILIKE ${platform as string}`;
+    }
+
+    let whereClauseFiltered = whereClauseBase;
+
+    if (keyword && keyword !== 'All') {
+      const keywords = (keyword as string).split(',');
+      const inParams = keywords.map(k => sql`${k}`);
+      whereClauseFiltered = sql`${whereClauseBase} AND keyword IN (${sql.join(inParams, sql`, `)})`;
+    }
+
+    const platformRes = await dbPrimary.execute(sql`
+      SELECT 
+        post_source as platform, 
+        COUNT(*)::int as count,
+        COUNT(CASE WHEN sentiment = 'Positif' THEN 1 END)::int as pos_count,
+        COUNT(CASE WHEN sentiment = 'Negatif' THEN 1 END)::int as neg_count
+      FROM sample_sosmed_post_data 
+      ${whereClauseFiltered}
+      GROUP BY post_source 
+      ORDER BY count DESC
+    `);
+
+    // Calculate previous period for growth comparison (spike)
+    const start = new Date(sDate as string);
+    const end = new Date(eDate as string);
+    const duration = end.getTime() - start.getTime() + (24 * 60 * 60 * 1000);
+    const pSDate = new Date(start.getTime() - duration).toISOString().split('T')[0];
+    const pEDate = new Date(start.getTime() - (24 * 60 * 60 * 1000)).toISOString().split('T')[0];
+
+    // Build common filter for keywords (Current & Previous)
+    const platformFilter = platform && platform !== 'All' ? sql`AND post_source ILIKE ${platform as string}` : sql``;
+
+    const keywordRes = await dbPrimary.execute(sql`
+      WITH current_data AS (
+        SELECT keyword, 
+               COUNT(*)::int as volume,
+               COUNT(CASE WHEN sentiment = 'Negatif' THEN 1 END)::int as neg_count,
+               COUNT(CASE WHEN sentiment = 'Positif' THEN 1 END)::int as pos_count,
+               COUNT(CASE WHEN sentiment = 'Netral' THEN 1 END)::int as neut_count,
+               ARRAY_AGG(DISTINCT post_source) as platforms
+        FROM sample_sosmed_post_data 
+        WHERE post_timestamp::date BETWEEN ${sDate}::date AND ${eDate}::date
+        ${platformFilter}
+        GROUP BY keyword
+      ),
+      previous_data AS (
+        SELECT keyword, COUNT(*)::int as prev_volume
+        FROM sample_sosmed_post_data 
+        WHERE post_timestamp::date BETWEEN ${pSDate}::date AND ${pEDate}::date
+        ${platformFilter}
+        GROUP BY keyword
+      )
+      SELECT c.*, 
+             COALESCE(p.prev_volume, 0) as prev_volume,
+             CASE 
+               WHEN COALESCE(p.prev_volume, 0) = 0 THEN 500
+               ELSE ((c.volume - p.prev_volume)::float / p.prev_volume * 100)::int 
+             END as spike
+      FROM current_data c
+      LEFT JOIN previous_data p ON c.keyword = p.keyword
+      ORDER BY c.volume DESC 
+      LIMIT 10
+    `);
+
+    const keywords = keywordRes.rows;
+
+    const emotionRes = await dbPrimary.execute(sql`
+      SELECT emotion, COUNT(*)::int as count
+      FROM sample_sosmed_post_data 
+      ${whereClauseFiltered}
+      AND emotion IS NOT NULL
+      GROUP BY emotion
+    `);
+
+    const emotions = {
+      anger: 0,
+      fear: 0,
+      sadness: 0,
+      joy: 0,
+      surprise: 0
+    };
+
+    emotionRes.rows.forEach((row: any) => {
+      const val = (row.emotion || '').toLowerCase().trim();
+      
+      // Multi-lingual mapping (Indonesian & English)
+      if (val.includes('anger') || val.includes('marah') || val.includes('geram') || val.includes('kesal')) {
+        emotions.anger += row.count;
+      } else if (val.includes('fear') || val.includes('takut') || val.includes('khawatir') || val.includes('cemas')) {
+        emotions.fear += row.count;
+      } else if (val.includes('sadness') || val.includes('sad') || val.includes('sedih') || val.includes('duka') || val.includes('kecewa')) {
+        emotions.sadness += row.count;
+      } else if (val.includes('joy') || val.includes('happy') || val.includes('senang') || val.includes('bahagia') || val.includes('gembira')) {
+        emotions.joy += row.count;
+      } else if (val.includes('surprise') || val.includes('kaget') || val.includes('terkejut')) {
+        emotions.surprise += row.count;
+      }
+    });
+
+    res.json({
+      startDate: sDate,
+      endDate: eDate,
+      platforms: platformRes.rows,
+      keywords: keywords,
+      emotions: emotions,
+      rawEmotions: emotionRes.rows // Debugging raw database values
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/osint/sentiment-trend:
+ *   get:
+ *     summary: Get sentiment distribution over time for charting
+ */
+app.get('/api/osint/sentiment-trend', authenticateToken, async (req, res) => {
+    const { startDate, endDate, keyword, platform } = req.query;
+    try {
+    const latestDateRes = await dbPrimary.execute(sql`SELECT MAX(post_timestamp::date) as max_d FROM sample_sosmed_post_data`);
+    const defaultDate = latestDateRes.rows[0].max_d;
+    
+    const sDate = startDate || defaultDate;
+    const eDate = endDate || startDate || defaultDate;
+
+    if (!sDate) return res.json([]);
+
+    let whereClause = sql`WHERE post_timestamp::date BETWEEN ${sDate}::date AND ${eDate}::date`;
+    
+    if (platform && platform !== 'All') {
+      whereClause = sql`${whereClause} AND post_source ILIKE ${platform as string}`;
+    }
+
+    if (keyword && keyword !== 'All') {
+      const keywords = (keyword as string).split(',');
+      const inParams = keywords.map(k => sql`${k}`);
+      whereClause = sql`${whereClause} AND keyword IN (${sql.join(inParams, sql`, `)})`;
+    }
+
+    const trendRes = await dbPrimary.execute(sql`
+      SELECT 
+        date_trunc('hour', post_timestamp) as hour,
+        COUNT(CASE WHEN sentiment = 'Positif' THEN 1 END)::int as pos,
+        COUNT(CASE WHEN sentiment = 'Negatif' THEN 1 END)::int as neg,
+        COUNT(CASE WHEN sentiment = 'Netral' THEN 1 END)::int as neut
+      FROM sample_sosmed_post_data 
+      ${whereClause}
+      GROUP BY hour 
+      ORDER BY hour ASC
+    `);
+
+    res.json(trendRes.rows);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/osint/posts:
+ *   get:
+ *     summary: Get paginated post feed for live monitoring
+ */
+app.get('/api/osint/posts', authenticateToken, async (req, res) => {
+    const { startDate, endDate, limit = 50, page = 1, sentiment, keyword, platform, search } = req.query;
+    try {
+    const latestDateRes = await dbPrimary.execute(sql`SELECT MAX(post_timestamp::date) as max_d FROM sample_sosmed_post_data`);
+    const defaultDate = latestDateRes.rows[0].max_d;
+    
+    const sDate = startDate || defaultDate;
+    const eDate = endDate || startDate || defaultDate;
+    const offset = (Number(page) - 1) * Number(limit);
+
+    let whereClause = sql`WHERE post_timestamp::date BETWEEN ${sDate}::date AND ${eDate}::date`;
+    if (sentiment && sentiment !== 'All') whereClause = sql`${whereClause} AND sentiment = ${sentiment as string}`;
+    if (platform && platform !== 'All') whereClause = sql`${whereClause} AND post_source ILIKE ${platform as string}`;
+    if (search) whereClause = sql`${whereClause} AND post_author ILIKE ${'%' + (search as string) + '%'}`;
+    if (keyword && keyword !== 'All') {
+      const keywords = (keyword as string).split(',');
+      const inParams = keywords.map(k => sql`${k}`);
+      whereClause = sql`${whereClause} AND keyword IN (${sql.join(inParams, sql`, `)})`;
+    }
+
+    const postsRes = await dbPrimary.execute(sql`
+      SELECT id, post_author as username, post_content, post_source as platform, sentiment, post_timestamp, keyword
+      FROM sample_sosmed_post_data 
+      ${whereClause}
+      ORDER BY post_timestamp DESC
+    `);
+
+    res.json(postsRes.rows);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/osint/network:
+ *   get:
+ *     summary: Get interaction network data (authors and keywords)
+ */
+app.get('/api/osint/network', authenticateToken, async (req, res) => {
+    const { startDate, endDate, sentiment, keyword, platform, limit = 1000 } = req.query;
+    try {
+    const L = Math.min(3000, Number(limit));
+    const authorsLimit = Math.floor(L * 0.6);
+    const hashtagsLimit = Math.floor(L * 0.3);
+    const keywordsLimit = Math.max(20, Math.floor(L * 0.1));
+    const latestDateRes = await dbPrimary.execute(sql`SELECT MAX(post_timestamp::date) as max_d FROM sample_sosmed_post_data`);
+    const defaultDate = latestDateRes.rows[0].max_d;
+    
+    const sDate = startDate || defaultDate;
+    const eDate = endDate || startDate || defaultDate;
+
+    if (!sDate) return res.json({ nodes: [], links: [] });
+
+    let whereClause = sql`WHERE p.post_timestamp::date BETWEEN ${sDate}::date AND ${eDate}::date`;
+    
+    if (sentiment && sentiment !== 'All') {
+      whereClause = sql`${whereClause} AND p.sentiment = ${sentiment as string}`;
+    }
+
+    if (platform && platform !== 'All') {
+      whereClause = sql`${whereClause} AND p.post_source ILIKE ${platform as string}`;
+    }
+
+    if (keyword && keyword !== 'All') {
+      const keywords = (keyword as string).split(',');
+      const inParams = keywords.map(k => sql`${k}`);
+      whereClause = sql`${whereClause} AND p.keyword IN (${sql.join(inParams, sql`, `)})`;
+    }
+
+    // 1. Get Top Authors (Primaries) - Limit to 100 for performance
+    const authorsRes = await dbPrimary.execute(sql`
+      SELECT 
+        post_author as id, 
+        SUM(COALESCE(likes_count,0) + COALESCE(comment_count,0) + COALESCE(share_count,0) + COALESCE(retweet_count,0))::int + 10 as val,
+        'user' as type
+      FROM sample_sosmed_post_data p
+      ${whereClause}
+      GROUP BY post_author 
+      ORDER BY val DESC 
+      LIMIT ${authorsLimit}
+    `);
+
+    // 2. Get All Active Keywords in this period
+    const keywordsRes = await dbPrimary.execute(sql`
+      SELECT 
+        p.keyword as id, 
+        (COUNT(p.id)::int * 5) + 30 as val, 
+        'keyword' as type
+      FROM sample_sosmed_post_data p
+      ${whereClause}
+      GROUP BY p.keyword 
+      ORDER BY val DESC 
+      LIMIT ${keywordsLimit}
+    `);
+
+    // 3. Get Top Hashtags for this period
+    const hashtagRes = await dbPrimary.execute(sql`
+      SELECT 
+        h.tag as id,
+        COUNT(h.id)::int * 3 + 10 as val,
+        'hashtag' as type
+      FROM sample_sosmed_hashtag_data h
+      JOIN sample_sosmed_post_data p ON h.post_code = p.post_code
+      ${whereClause}
+      GROUP BY h.tag
+      ORDER BY val DESC
+      LIMIT ${hashtagsLimit}
+    `);
+
+    const nodesMap = new Map();
+    authorsRes.rows.forEach(r => nodesMap.set(r.id, r));
+    keywordsRes.rows.forEach(r => nodesMap.set(r.id, r));
+    hashtagRes.rows.forEach(r => nodesMap.set(r.id, r));
+
+    // 4. Extract Links (Keyword + Mentions + Hashtags)
+    const rawPosts = await dbPrimary.execute(sql`
+      SELECT p.post_code, p.post_author, p.post_content, p.keyword, h.tag as hashtag
+      FROM sample_sosmed_post_data p
+      LEFT JOIN sample_sosmed_hashtag_data h ON p.post_code = h.post_code
+      ${whereClause}
+      LIMIT ${L * 3}
+    `);
+
+    const links: any[] = [];
+    const linkKeys = new Set();
+
+    rawPosts.rows.forEach((post: any) => {
+      // User-Keyword Link
+      if (post.keyword && nodesMap.has(post.keyword) && nodesMap.has(post.post_author)) {
+        const key = `k:${post.post_author}->${post.keyword}`;
+        if (!linkKeys.has(key)) {
+          links.push({ source: post.post_author, target: post.keyword, value: 5 });
+          linkKeys.add(key);
+        }
+      }
+
+      // User-Hashtag Link
+      if (post.hashtag && nodesMap.has(post.hashtag) && nodesMap.has(post.post_author)) {
+        const key = `h:${post.post_author}->${post.hashtag}`;
+        if (!linkKeys.has(key)) {
+          links.push({ source: post.post_author, target: post.hashtag, value: 3 });
+          linkKeys.add(key);
+        }
+      }
+
+      // User-User (Mention) Link logic remains as it scans content for on-the-fly links
+      const content = String(post.post_content || '');
+      const mentions = content.match(/@(\w+)/g);
+      if (mentions) {
+        mentions.forEach((m: string) => {
+          const targetUser = m.replace('@', '');
+          if (targetUser === post.post_author) return;
+
+          // Only link to authors we already have to prevent unlinked star-bursts in 7d view
+          if (nodesMap.has(post.post_author)) {
+             if (!nodesMap.has(targetUser)) {
+               nodesMap.set(targetUser, { id: targetUser, val: 5, type: 'user' });
+             }
+             const key = `m:${post.post_author}->${targetUser}`;
+             if (!linkKeys.has(key)) {
+               links.push({ source: post.post_author, target: targetUser, value: 2 });
+               linkKeys.add(key);
+             }
+          }
+        });
+      }
+    });
+    res.json({ 
+      nodes: Array.from(nodesMap.values()), 
+      links: links 
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+/**
+ * @openapi
  * /api/analytics/food-risk:
  *   get:
  *     summary: Get live food risk scores (aggregated)

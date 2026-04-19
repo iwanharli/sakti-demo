@@ -66,7 +66,7 @@ export const authFetch = async (url: string, options: RequestInit = {}) => {
           sessionStorage.removeItem('sakti_auth');
           sessionStorage.removeItem('sakti_token');
           window.location.href = '/#/login'; 
-          throw new Error('Sesi Berakhir. Silakan Login Kembali.');
+          return response; // Return immediately to bypass the retry loop which catches thrown errors
         }
 
         return response;

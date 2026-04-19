@@ -9,7 +9,7 @@ export const useCommandCenterData = () => {
   const [mounted, setMounted] = useState(false);
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
   const [timelineData, setTimelineData] = useState<TimelineItem[]>(timelineItems);
-  const [filter, setFilter] = useState<'all' | 'cuaca' | 'gempa'>('all');
+  const [filter, setFilter] = useState<'all' | 'bmkg' | 'issue'>('all');
   const [riskScores, setRiskScores] = useState<RiskScore[]>([]);
   
   // Kamtibmas Index Stats
@@ -24,6 +24,11 @@ export const useCommandCenterData = () => {
   const [isCommodityLoading, setIsCommodityLoading] = useState(false);
   const [foodRiskData, setFoodRiskData] = useState<any[]>([]);
   const [foodRegion, setFoodRegion] = useState('Nasional');
+  
+  // Sosmed Sentiment
+  const [sosmedSentiment, setSosmedSentiment] = useState<any>(null);
+  const [sosmedDate, setSosmedDate] = useState<string>('');
+  const [isSosmedLoading, setIsSosmedLoading] = useState(false);
   
   // Map Geospatial State
   const [mapCities, setMapCities] = useState<any[]>([]);
@@ -63,11 +68,10 @@ export const useCommandCenterData = () => {
   const filteredTimeline = useMemo(() => {
     if (filter === 'all') return timelineData;
     return timelineData.filter(item => {
-      const isGempa = item.tags.some(t => t.toUpperCase().includes('GEMPA'));
-      const isCuaca = item.tags.some(t => t.toUpperCase().includes('CUACA')) || (!isGempa && item.tags.includes('BMKG_ALERT'));
+      const isBMKG = item.tags.some(t => t.toUpperCase().includes('BMKG_ALERT') || t.toUpperCase().includes('GEMPA') || t.toUpperCase().includes('CUACA'));
       
-      if (filter === 'gempa') return isGempa;
-      if (filter === 'cuaca') return isCuaca;
+      if (filter === 'bmkg') return isBMKG;
+      if (filter === 'issue') return !isBMKG;
       return true;
     });
   }, [timelineData, filter]);
@@ -276,7 +280,24 @@ export const useCommandCenterData = () => {
         } as TimelineItem;
       });
 
-      setTimelineData(bmkgItems);
+      const uniqueBmkgItems: TimelineItem[] = [];
+      const seenGempa = new Set<string>();
+
+      bmkgItems.forEach(item => {
+        const isGempa = item.tags.some(t => t.toUpperCase() === 'GEMPA');
+        if (isGempa) {
+          // Create a unique key for Gempa based on its defining physical parameters
+          const key = `${item.magnitude}-${item.depth}-${item.coordinates}-${item.epicenter}`;
+          if (!seenGempa.has(key)) {
+            seenGempa.add(key);
+            uniqueBmkgItems.push(item);
+          }
+        } else {
+          uniqueBmkgItems.push(item);
+        }
+      });
+
+      setTimelineData(uniqueBmkgItems);
     } catch (err) {
       console.error('BMKG Fetch Error:', err);
     }
@@ -320,6 +341,28 @@ export const useCommandCenterData = () => {
       console.error('Food Risk Fetch Error:', err);
     }
   };
+  
+  const fetchSosmedSentiment = async (dateOverride?: string) => {
+    setIsSosmedLoading(true);
+    try {
+      const targetDate = dateOverride || sosmedDate;
+      const dateParam = targetDate ? `?date=${targetDate}` : '';
+      const response = await authFetch(`${getApiBase()}/analytics/sosmed-sentiment${dateParam}`);
+      if (response.ok) {
+        const data = await response.json();
+        setSosmedSentiment(data);
+        // If we didn't specify a date, sync with what the backend found as latest
+        if (!targetDate && data.filtered_date) {
+          const d = new Date(data.filtered_date).toISOString().split('T')[0];
+          setSosmedDate(d);
+        }
+      }
+    } catch (err) {
+      console.error('Sosmed Sentiment Fetch Error:', err);
+    } finally {
+      setIsSosmedLoading(false);
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -335,6 +378,7 @@ export const useCommandCenterData = () => {
     fetchMapCities();
     fetchCities();
     fetchMapBoundaries();
+    fetchSosmedSentiment();
   }, []);
 
   useEffect(() => {
@@ -345,6 +389,12 @@ export const useCommandCenterData = () => {
   useEffect(() => {
     fetchCommodityMatrix('sp2kp', foodRegion);
   }, [foodRegion]);
+
+  useEffect(() => {
+    if (sosmedDate) {
+      fetchSosmedSentiment(sosmedDate);
+    }
+  }, [sosmedDate]);
 
   useEffect(() => {
     if (selectedCity) {
@@ -460,6 +510,11 @@ export const useCommandCenterData = () => {
     crimeTrendData,
     currentTime,
     alertCount,
-    handleAlertClick
+    handleAlertClick,
+    sosmedSentiment,
+    sosmedDate,
+    setSosmedDate,
+    isSosmedLoading,
+    fetchSosmedSentiment
   };
 };
