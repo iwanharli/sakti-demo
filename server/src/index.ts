@@ -2,7 +2,7 @@ import express from 'express';
 import 'dotenv/config';
 import cors from 'cors';
 import swaggerJsdoc from 'swagger-jsdoc';
-import { dbPrimary, dbSecondary } from './db';
+import { dbPrimary, dbSecondary } from './db.js';
 import { sql } from 'drizzle-orm';
 
 import bcrypt from 'bcryptjs';
