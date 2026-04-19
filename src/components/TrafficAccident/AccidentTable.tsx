@@ -234,7 +234,7 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
                            acc.injury_status === 'LL' ? 'bg-cyan-500 shadow-[0_0_5px_#06b6d4]' :
                            'bg-gray-500'
                          }`} />
-                         {acc.injury_status === 'MD' ? 'MD' : acc.injury_status === 'LL' ? 'LL' : 'T/K'}
+                         {acc.injury_status === 'MD' ? 'Meninggal Dunia' : acc.injury_status === 'LL' ? 'Luka Luka' : 'Tanpa Kondisi'}
                        </span>
                     </div>
                   </div>
@@ -265,9 +265,9 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
       <div className="p-4 border-t border-white/5 bg-white/[0.02] flex flex-col md:flex-row gap-4 justify-between items-center">
         <div className="flex items-center gap-4">
           <div className="text-xs text-gray-500 font-bold flex gap-3">
-              <span className="flex items-center gap-1.5 uppercase tracking-tighter"><div className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_5px_#ef4444]" /> MD</span>
-              <span className="flex items-center gap-1.5 uppercase tracking-tighter"><div className="w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_5px_#06b6d4]" /> LL</span>
-              <span className="flex items-center gap-1.5 uppercase tracking-tighter"><div className="w-1.5 h-1.5 rounded-full bg-gray-600" /> T/K</span>
+              <span className="flex items-center gap-1.5 uppercase tracking-tighter"><div className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_5px_#ef4444]" /> Meninggal Dunia</span>
+              <span className="flex items-center gap-1.5 uppercase tracking-tighter"><div className="w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_5px_#06b6d4]" /> Luka Luka</span>
+              <span className="flex items-center gap-1.5 uppercase tracking-tighter"><div className="w-1.5 h-1.5 rounded-full bg-gray-600" /> Tanpa Kondisi</span>
           </div>
           <div className="h-4 w-[1px] bg-white/5 hidden md:block" />
           <div className="flex items-center gap-1">
