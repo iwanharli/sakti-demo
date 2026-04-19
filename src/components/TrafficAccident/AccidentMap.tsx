@@ -91,6 +91,7 @@ export const AccidentMap: React.FC<AccidentMapProps> = ({ accidents, focusCoord 
         zoom={5} 
         style={{ height: '100%', width: '100%' }}
         zoomControl={false}
+        attributionControl={false}
       >
         <MapController coords={focusCoord} />
         <TileLayer
