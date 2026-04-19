@@ -45,7 +45,7 @@ const TrafficAccidentMitigation: React.FC = () => {
       </div>
 
       {/* Detailed Logs (Full Width with Integrated Controls) */}
-      <div className="w-full h-[1000px] overflow-hidden">
+      <div className="w-full">
         <AccidentTable 
           accidents={accidents} 
           isLoading={isLoading} 

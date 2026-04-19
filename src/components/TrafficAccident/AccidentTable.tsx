@@ -120,7 +120,7 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#0d121f]/40 backdrop-blur-md rounded-2xl border border-white/5 overflow-hidden">
+    <div className="flex flex-col bg-[#0d121f]/40 backdrop-blur-md rounded-2xl border border-white/5">
       {/* Unified Tactical Command Header */}
       <div className="p-4 border-b border-white/5 flex flex-col gap-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -233,7 +233,7 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto ews-scrollbar">
+      <div className="w-full">
         <table className="w-full text-left border-collapse min-w-[1200px]">
           <thead className="sticky top-0 bg-[#0d121f] z-10">
             <tr className="border-b border-white/10">
