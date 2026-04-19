@@ -143,7 +143,6 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
               <i className="fa-solid fa-rotate text-sm"></i>
             </button>
           </div>
-          </div>
         </div>
 
         <div className="flex flex-col lg:flex-row lg:items-center gap-6">
