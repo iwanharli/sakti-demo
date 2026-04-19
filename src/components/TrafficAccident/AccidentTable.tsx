@@ -264,38 +264,32 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
 
       {/* Table Footer / Pagination */}
       <div className="p-4 border-t border-white/5 bg-white/[0.02] flex flex-col md:flex-row gap-4 justify-between items-center">
-        <div className="flex items-center gap-4">
-          <div className="text-xs text-gray-500 font-bold flex gap-3">
-              <span className="flex items-center gap-1.5 uppercase tracking-tighter"><div className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_5px_#ef4444]" /> Meninggal Dunia</span>
-              <span className="flex items-center gap-1.5 uppercase tracking-tighter"><div className="w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_5px_#06b6d4]" /> Luka Luka</span>
-              <span className="flex items-center gap-1.5 uppercase tracking-tighter"><div className="w-1.5 h-1.5 rounded-full bg-gray-600" /> Tanpa Kondisi</span>
-          </div>
-          <div className="h-4 w-[1px] bg-white/5 hidden md:block" />
-          <div className="flex items-center gap-1">
-            <button 
-              onClick={() => setPage(Math.max(1, page - 1))}
-              disabled={page <= 1 || isLoading}
-              className="px-3 h-8 bg-white/5 border border-white/10 rounded text-xs text-white hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent transition-all uppercase font-black"
-            >
-              Prev
-            </button>
-            
-            <div className="flex items-center gap-1 mx-2">
-              {renderPagination()}
-            </div>
-
-            <button 
-              onClick={() => setPage(Math.min(totalPages, page + 1))}
-              disabled={page >= totalPages || isLoading}
-              className="px-3 h-8 bg-white/5 border border-white/10 rounded text-xs text-white hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent transition-all uppercase font-black"
-            >
-              Next
-            </button>
-          </div>
+        <div className="text-xs text-gray-500 font-bold flex gap-3">
+            <span className="flex items-center gap-1.5 uppercase tracking-tighter"><div className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_5px_#ef4444]" /> Meninggal Dunia</span>
+            <span className="flex items-center gap-1.5 uppercase tracking-tighter"><div className="w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_5px_#06b6d4]" /> Luka Luka</span>
+            <span className="flex items-center gap-1.5 uppercase tracking-tighter"><div className="w-1.5 h-1.5 rounded-full bg-gray-600" /> Tanpa Kondisi</span>
         </div>
+
         <div className="flex items-center gap-1">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-xs text-emerald-500/80 font-black uppercase tracking-[0.2em]">{isLoading ? 'Syncing Radar...' : 'Real-time Sync'}</span>
+          <button 
+            onClick={() => setPage(Math.max(1, page - 1))}
+            disabled={page <= 1 || isLoading}
+            className="px-3 h-8 bg-white/5 border border-white/10 rounded text-xs text-white hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent transition-all uppercase font-black"
+          >
+            Prev
+          </button>
+          
+          <div className="flex items-center gap-1 mx-2">
+            {renderPagination()}
+          </div>
+
+          <button 
+            onClick={() => setPage(Math.min(totalPages, page + 1))}
+            disabled={page >= totalPages || isLoading}
+            className="px-3 h-8 bg-white/5 border border-white/10 rounded text-xs text-white hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent transition-all uppercase font-black"
+          >
+            Next
+          </button>
         </div>
       </div>
     </div>
