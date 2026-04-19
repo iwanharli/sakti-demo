@@ -151,13 +151,13 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
             </div>
 
             <div className="flex items-center gap-3 bg-black/40 px-4 py-3 rounded-2xl border-2 border-white/5 focus-within:border-cyan-500/30 transition-all shadow-inner hover:border-white/10">
-              <span className="text-[11px] text-cyan-500/60 font-black uppercase tracking-widest border-r border-white/10 pr-3">Polres</span>
+              <span className="text-[11px] text-cyan-500/60 font-black uppercase tracking-widest border-r border-white/10 pr-3">Satuan</span>
               <select 
                 value={polres} 
                 onChange={(e) => setPolres(e.target.value)} 
                 className="bg-transparent text-sm font-bold text-white focus:outline-none cursor-pointer uppercase hover:text-cyan-400 transition-colors max-w-[150px]"
               >
-                <option value="Semua" className="bg-[#0d121f]">Semua Polres</option>
+                <option value="Semua" className="bg-[#0d121f]">Semua Satuan</option>
                 {uniquePolres.map(p => (
                   <option key={p} value={p} className="bg-[#0d121f]">{p}</option>
                 ))}
@@ -178,7 +178,7 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
             <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-cyan-400 transition-colors text-base" />
             <input 
               type="text"
-              placeholder="Search victim, city, polres..."
+              placeholder="Search victim, city, satuan..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full bg-black/40 border-2 border-white/5 rounded-2xl py-3.5 pl-12 pr-10 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50 focus:shadow-[0_0_20px_rgba(6,182,212,0.1)] transition-all"

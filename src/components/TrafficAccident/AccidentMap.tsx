@@ -153,11 +153,11 @@ export const AccidentMap: React.FC<AccidentMapProps> = ({ accidents, focusCoord 
                       
                       <div className="grid grid-cols-2 gap-4 pt-2 border-t border-white/5">
                         <div className="flex flex-col gap-1">
-                          <span className="text-[9px] text-white/30 uppercase font-black tracking-widest">Kesatuan</span>
+                          <span className="text-[9px] text-white/30 uppercase font-black tracking-widest">Satuan</span>
                           <span className="text-[10px] text-cyan-400 font-bold truncate">{acc.polres}</span>
                         </div>
                         <div className="flex flex-col gap-1 text-right">
-                          <span className="text-[9px] text-white/30 uppercase font-black tracking-widest">Wilayah Kota</span>
+                          <span className="text-[9px] text-white/30 uppercase font-black tracking-widest">Wilayah</span>
                           <span className="text-[10px] text-white/80 font-bold uppercase truncate">{acc.city_name}</span>
                         </div>
                       </div>
