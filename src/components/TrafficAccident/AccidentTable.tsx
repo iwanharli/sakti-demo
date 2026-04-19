@@ -217,7 +217,7 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
                   <div className="flex flex-col gap-1">
                     <span className="text-sm font-bold text-white whitespace-nowrap">{new Date(acc.accident_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                     <span className="text-xs text-gray-500 uppercase tracking-tight font-black">{acc.city_name}</span>
-                    <span className="text-[11px] text-cyan-500/50 font-mono">{acc.polres}</span>
+                    <span className="text-[11px] text-cyan-400 font-mono font-bold">{acc.polres}</span>
                   </div>
                 </td>
                 <td className="p-4 min-w-[250px]">
@@ -262,7 +262,7 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
                     <div className="flex items-center gap-3 border-t border-white/5 pt-2">
                        <div className="flex flex-col items-end">
                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-black text-gray-300 uppercase tracking-wide truncate max-w-[150px]">{acc.officer_name || '-'}</span>
+                            <span className="text-[10px] font-black text-white uppercase tracking-wide truncate max-w-[150px]">{acc.officer_name || '-'}</span>
                             <div className="w-1 h-1 rounded-full bg-cyan-500/40 shadow-[0_0_5px_rgba(6,182,212,0.2)]" />
                          </div>
                          <span className="text-[10px] text-gray-500 font-mono tracking-tighter bg-white/5 px-2 py-0.5 rounded border border-white/5 mt-1">{acc.report_number}</span>
