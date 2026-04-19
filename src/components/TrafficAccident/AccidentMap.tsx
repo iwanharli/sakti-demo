@@ -73,23 +73,45 @@ export const AccidentMap: React.FC<AccidentMapProps> = ({ accidents, focusCoord 
               icon={createCustomIcon(acc.injury_status)}
             >
               <Popup className="ews-popup">
-                <div className="p-1 font-rajdhani">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className={`px-2 py-0.5 rounded text-xs font-black ${
-                      acc.injury_status === 'MD' ? 'bg-red-500/20 text-red-400' : 
-                      acc.injury_status === 'LB' ? 'bg-amber-500/20 text-amber-400' : 
-                      (acc.injury_status === 'LR' || acc.injury_status === 'LL') ? 'bg-cyan-500/20 text-cyan-400' : 
-                      'bg-gray-500/20 text-gray-400'
+                <div className="p-2 min-w-[200px]">
+                  <div className="flex items-center justify-between gap-4 mb-3">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest border ${
+                      acc.injury_status === 'MD' ? 'bg-red-500/10 text-red-400 border-red-500/30' : 
+                      acc.injury_status === 'LB' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' : 
+                      (acc.injury_status === 'LR' || acc.injury_status === 'LL') ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30' : 
+                      'bg-white/5 text-gray-400 border-white/10'
                     }`}>
-                      {acc.injury_status === 'MD' ? 'MENINGGAL DUNIA (MD)' : 
+                      {acc.injury_status === 'MD' ? 'MENINGGAL DUNIA' : 
                        acc.injury_status === 'LB' ? 'LUKA BERAT' : 
                        (acc.injury_status === 'LR' || acc.injury_status === 'LL') ? 'LUKA RINGAN' : 'TANPA KONDISI'}
                     </span>
-                    <span className="text-xs text-gray-500">{new Date(acc.accident_date).toLocaleDateString('id-ID')}</span>
+                    <span className="text-[10px] text-gray-500 font-bold">{new Date(acc.accident_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                   </div>
-                  <div className="text-sm font-bold text-white mb-1">{acc.victim_name}</div>
-                  <div className="text-xs text-gray-400 leading-tight mb-2">{acc.location_description}</div>
-                  <div className="text-xs text-cyan-500/80 font-mono tracking-tight">{acc.polres}</div>
+                  
+                  <div className="mb-3">
+                    <div className="text-sm font-bold text-white uppercase tracking-tight">{acc.victim_name}</div>
+                    <div className="text-[10px] text-cyan-400 font-bold uppercase tracking-tighter opacity-80">{acc.victim_status}</div>
+                  </div>
+
+                  <div className="space-y-2 pt-2 border-t border-white/5">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Lokasi Kejadian</span>
+                      <p className="text-[11px] text-gray-300 leading-relaxed italic">
+                        "{acc.location_description.replace(/,?\s*TITIK KOORDINAT.*$/i, '')}"
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center justify-between gap-4 pt-1">
+                      <div className="flex flex-col">
+                        <span className="text-[9px] text-gray-500 uppercase font-bold">Kesatuan</span>
+                        <span className="text-[10px] text-cyan-500 font-bold">{acc.polres}</span>
+                      </div>
+                      <div className="flex flex-col text-right">
+                        <span className="text-[9px] text-gray-500 uppercase font-bold">Wilayah</span>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase">{acc.city_name}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </Popup>
             </Marker>
