@@ -476,7 +476,8 @@
   box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
 }
 
-.ews-stat-card.green::before {
+.ews-stat-card.green::before,
+.ews-stat-card.emerald::before {
   @apply bg-emerald-500;
   box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
 }
@@ -484,6 +485,11 @@
 .ews-stat-card.cyan::before {
   @apply bg-cyan-500;
   box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+}
+
+.ews-stat-card.indigo::before {
+  @apply bg-indigo-500;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
 }
 
 .ews-stat-card.purple::before {
