@@ -30,6 +30,7 @@ npm run build
 # 4. Prepare & Build Backend
 echo "📡 Menyiapkan Backend Intelligence..."
 cd server
+cp ../.env .
 npm install
 echo "🏗️ Mengompilasi TypeScript ke JavaScript (Optimized)..."
 npm run build
