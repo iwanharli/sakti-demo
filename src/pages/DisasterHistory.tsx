@@ -78,48 +78,64 @@ export default function DisasterHistory() {
   return (
     <div className="space-y-6 ews-animate-fade-in">
       {/* HERO STATS - REAL AGGREGATION */}
-      <div className="grid grid-cols-4 gap-6">
-        <div className="ews-card p-6 border-l-4 border-red-600 bg-red-500/[0.02]">
-          <div className="text-[11px] text-gray-500 font-black uppercase tracking-[0.2em] mb-2">Total Meninggal</div>
-          <div className="font-orbitron text-4xl font-black text-red-500 leading-none">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Total Meninggal */}
+        <div className="ews-stat-card red group cursor-default">
+          <div className="text-[11px] text-gray-500 uppercase font-orbitron tracking-widest mb-3">Total Meninggal</div>
+          <div className="font-orbitron text-4xl font-bold text-red-500 mb-1">
             <CountUp value={Number(stats?.deaths || 0)} />
           </div>
-          <div className="mt-3 flex items-center gap-2">
-             <span className="text-[10px] text-red-500/60 font-mono tracking-widest uppercase">Casualty Log</span>
-             <div className="flex-1 h-px bg-red-500/10" />
+          <div className="flex items-center gap-1.5 text-[11px] font-rajdhani font-bold text-red-500/80 uppercase tracking-widest">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+            Casualty Log
+          </div>
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-5xl opacity-10 text-red-500 group-hover:opacity-20 transition-opacity">
+            <i className="fa-solid fa-skull-crossbones"></i>
           </div>
         </div>
 
-        <div className="ews-card p-6 border-l-4 border-amber-600 bg-amber-500/[0.02]">
-          <div className="text-[11px] text-gray-500 font-black uppercase tracking-[0.2em] mb-2">Korban Luka</div>
-          <div className="font-orbitron text-4xl font-black text-amber-500 leading-none">
+        {/* Korban Luka */}
+        <div className="ews-stat-card amber group cursor-default">
+          <div className="text-[11px] text-gray-500 uppercase font-orbitron tracking-widest mb-3">Korban Luka</div>
+          <div className="font-orbitron text-4xl font-bold text-amber-500 mb-1">
             <CountUp value={Number(stats?.injured || 0)} />
           </div>
-          <div className="mt-3 flex items-center gap-2">
-             <span className="text-[10px] text-amber-500/60 font-mono tracking-widest uppercase">Medical Response</span>
-             <div className="flex-1 h-px bg-amber-500/10" />
+          <div className="flex items-center gap-1.5 text-[11px] font-rajdhani font-bold text-amber-500/80 uppercase tracking-widest">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+            Medical Response
+          </div>
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-5xl opacity-10 text-amber-500 group-hover:opacity-20 transition-opacity">
+            <i className="fa-solid fa-user-injured"></i>
           </div>
         </div>
 
-        <div className="ews-card p-6 border-l-4 border-cyan-600 bg-cyan-500/[0.02]">
-          <div className="text-[11px] text-gray-500 font-black uppercase tracking-[0.2em] mb-2">Rumah Terdampak</div>
-          <div className="font-orbitron text-4xl font-black text-cyan-400 leading-none">
+        {/* Rumah Terdampak */}
+        <div className="ews-stat-card cyan group cursor-default">
+          <div className="text-[11px] text-gray-500 uppercase font-orbitron tracking-widest mb-3">Rumah Terdampak</div>
+          <div className="font-orbitron text-4xl font-bold text-cyan-400 mb-1">
             <CountUp value={Number(stats?.damage || 0)} />
           </div>
-          <div className="mt-3 flex items-center gap-2">
-             <span className="text-[10px] text-cyan-500/60 font-mono tracking-widest uppercase">Infrastructure</span>
-             <div className="flex-1 h-px bg-cyan-500/10" />
+          <div className="flex items-center gap-1.5 text-[11px] font-rajdhani font-bold text-cyan-500/80 uppercase tracking-widest">
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
+            Infrastructure
+          </div>
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-5xl opacity-10 text-cyan-400 group-hover:opacity-20 transition-opacity">
+            <i className="fa-solid fa-house-crack"></i>
           </div>
         </div>
 
-        <div className="ews-card p-6 border-l-4 border-emerald-600 bg-emerald-500/[0.02]">
-          <div className="text-[11px] text-gray-500 font-black uppercase tracking-[0.2em] mb-2">Total Kejadian</div>
-          <div className="font-orbitron text-4xl font-black text-emerald-400 leading-none">
+        {/* Total Kejadian */}
+        <div className="ews-stat-card emerald group cursor-default">
+          <div className="text-[11px] text-gray-500 uppercase font-orbitron tracking-widest mb-3">Total Kejadian</div>
+          <div className="font-orbitron text-4xl font-bold text-emerald-400 mb-1">
             <CountUp value={Number(stats?.total_events || 0)} />
           </div>
-          <div className="mt-3 flex items-center gap-2">
-             <span className="text-[10px] text-emerald-500/60 font-mono tracking-widest uppercase">Event Record</span>
-             <div className="flex-1 h-px bg-emerald-500/10" />
+          <div className="flex items-center gap-1.5 text-[11px] font-rajdhani font-bold text-emerald-500/80 uppercase tracking-widest">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            Event Record
+          </div>
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-5xl opacity-10 text-emerald-400 group-hover:opacity-20 transition-opacity">
+            <i className="fa-solid fa-triangle-exclamation"></i>
           </div>
         </div>
       </div>
