@@ -73,9 +73,15 @@ export const AccidentMap: React.FC<AccidentMapProps> = ({ accidents, focusCoord 
               icon={createCustomIcon(acc.injury_status)}
             >
               <Popup className="ews-popup">
-                <div className="p-2 min-w-[200px]">
-                  <div className="flex items-center justify-between gap-4 mb-3">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest border ${
+                <div className="p-3 min-w-[240px] relative overflow-hidden group">
+                  {/* Tactical Brackets */}
+                  <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-cyan-500/50" />
+                  <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-cyan-500/50" />
+                  <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-cyan-500/50" />
+                  <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-cyan-500/50" />
+
+                  <div className="flex items-center justify-between gap-6 mb-4">
+                    <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-[0.15em] border ${
                       acc.injury_status === 'MD' ? 'bg-red-500/10 text-red-400 border-red-500/30' : 
                       acc.injury_status === 'LB' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' : 
                       (acc.injury_status === 'LR' || acc.injury_status === 'LL') ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30' : 
@@ -85,30 +91,39 @@ export const AccidentMap: React.FC<AccidentMapProps> = ({ accidents, focusCoord 
                        acc.injury_status === 'LB' ? 'LUKA BERAT' : 
                        (acc.injury_status === 'LR' || acc.injury_status === 'LL') ? 'LUKA RINGAN' : 'TANPA KONDISI'}
                     </span>
-                    <span className="text-[10px] text-gray-500 font-bold">{new Date(acc.accident_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                    <div className="text-right">
+                      <div className="text-[10px] text-white/40 uppercase font-bold tracking-tighter">Accident Date</div>
+                      <div className="text-[10px] text-white font-bold">{new Date(acc.accident_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                    </div>
                   </div>
                   
-                  <div className="mb-3">
-                    <div className="text-sm font-bold text-white uppercase tracking-tight">{acc.victim_name}</div>
-                    <div className="text-[10px] text-cyan-400 font-bold uppercase tracking-tighter opacity-80">{acc.victim_status}</div>
+                  <div className="mb-4 relative">
+                    <div className="text-base font-black text-white uppercase tracking-tight leading-tight mb-0.5">{acc.victim_name}</div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-1 h-1 rounded-full bg-cyan-500 shadow-[0_0_5px_#06b6d4]" />
+                      <div className="text-[10px] text-cyan-400 font-bold uppercase tracking-widest">{acc.victim_status}</div>
+                    </div>
                   </div>
 
-                  <div className="space-y-2 pt-2 border-t border-white/5">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Lokasi Kejadian</span>
-                      <p className="text-[11px] text-gray-300 leading-relaxed italic">
+                  <div className="space-y-4 pt-4 border-t border-white/10">
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center gap-1.5 text-[9px] text-white/30 uppercase font-black tracking-widest">
+                        <i className="fa-solid fa-location-dot" />
+                        <span>Incident Location</span>
+                      </div>
+                      <p className="text-[11px] text-gray-300 leading-relaxed italic pr-2">
                         "{acc.location_description.replace(/,?\s*TITIK KOORDINAT.*$/i, '')}"
                       </p>
                     </div>
                     
-                    <div className="flex items-center justify-between gap-4 pt-1">
-                      <div className="flex flex-col">
-                        <span className="text-[9px] text-gray-500 uppercase font-bold">Kesatuan</span>
-                        <span className="text-[10px] text-cyan-500 font-bold">{acc.polres}</span>
+                    <div className="grid grid-cols-2 gap-4 pt-2 border-t border-white/5">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[9px] text-white/30 uppercase font-black tracking-widest">Kesatuan</span>
+                        <span className="text-[10px] text-cyan-400 font-bold truncate">{acc.polres}</span>
                       </div>
-                      <div className="flex flex-col text-right">
-                        <span className="text-[9px] text-gray-500 uppercase font-bold">Wilayah</span>
-                        <span className="text-[10px] text-gray-400 font-bold uppercase">{acc.city_name}</span>
+                      <div className="flex flex-col gap-1 text-right">
+                        <span className="text-[9px] text-white/30 uppercase font-black tracking-widest">Wilayah Kota</span>
+                        <span className="text-[10px] text-white/80 font-bold uppercase truncate">{acc.city_name}</span>
                       </div>
                     </div>
                   </div>
