@@ -31,15 +31,15 @@ const createCustomIcon = (status: string) => {
   const color = status === 'MD' ? '#ef4444' : status === 'LL' ? '#06b6d4' : '#9ca3af';
   const html = `
     <div class="relative flex items-center justify-center">
-      <div class="absolute w-6 h-6 bg-${color} rounded-full blur-[4px] opacity-40 animate-pulse" style="background-color: ${color}"></div>
-      <div class="relative w-3 h-3 bg-white border-2 border-${color} rounded-full" style="border-color: ${color}"></div>
+      <div class="absolute w-4 h-4 rounded-full border border-${color}/40 bg-${color}/10" style="border-color: ${color}66; background-color: ${color}1a"></div>
+      <div class="relative w-2 h-2 rounded-full border border-white/80" style="background-color: ${color}"></div>
     </div>
   `;
   return L.divIcon({
     className: 'custom-marker',
     html,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12]
+    iconSize: [20, 20],
+    iconAnchor: [10, 10]
   });
 };
 
