@@ -199,15 +199,14 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
             <tr className="border-b border-white/10">
               <th className="p-4 text-xs font-black text-cyan-500/60 uppercase tracking-widest min-w-[150px]">Waktu & Lokasi</th>
               <th className="p-4 text-xs font-black text-cyan-500/60 uppercase tracking-widest min-w-[300px]">Detail Korban & Kondisi</th>
-              <th className="p-4 text-xs font-black text-cyan-500/60 uppercase tracking-widest min-w-[350px]">Deskripsi Kejadian</th>
-              <th className="p-4 text-xs font-black text-cyan-500/60 uppercase tracking-widest min-w-[250px] text-right">Administrasi</th>
+              <th className="p-4 text-xs font-black text-cyan-500/60 uppercase tracking-widest min-w-[450px] text-right">Detail Kejadian & Administrasi</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/[0.03]">
             {isLoading ? (
               Array.from({ length: 8 }).map((_, i) => (
                 <tr key={i} className="animate-pulse">
-                  <td colSpan={4} className="p-8"><div className="h-4 bg-white/5 rounded w-full" /></td>
+                  <td colSpan={3} className="p-8"><div className="h-4 bg-white/5 rounded w-full" /></td>
                 </tr>
               ))
             ) : accidents.map((acc) => (
@@ -239,20 +238,22 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
                     </div>
                   </div>
                 </td>
-                <td className="p-4">
-                  <div className="max-w-[400px]">
-                    <p className="text-xs text-gray-400 leading-relaxed italic whitespace-normal">
-                      "{acc.location_description}"
-                    </p>
-                  </div>
-                </td>
                 <td className="p-4 text-right">
-                  <div className="flex flex-col items-end gap-1.5">
-                    <div className="flex items-center gap-2">
-                       <span className="text-[10px] font-black text-gray-300 uppercase tracking-wide truncate max-w-[150px]">{acc.officer_name || '-'}</span>
-                       <div className="w-1 h-1 rounded-full bg-cyan-500/40 shadow-[0_0_5px_rgba(6,182,212,0.2)]" />
+                  <div className="flex flex-col items-end gap-3">
+                    <div className="max-w-[500px]">
+                      <p className="text-xs text-gray-400 leading-relaxed italic whitespace-normal text-right">
+                        "{acc.location_description}"
+                      </p>
                     </div>
-                    <span className="text-[10px] text-gray-500 font-mono tracking-tighter bg-white/5 px-2 py-0.5 rounded border border-white/5">{acc.report_number}</span>
+                    <div className="flex items-center gap-3 border-t border-white/5 pt-2">
+                       <div className="flex flex-col items-end">
+                         <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black text-gray-300 uppercase tracking-wide truncate max-w-[150px]">{acc.officer_name || '-'}</span>
+                            <div className="w-1 h-1 rounded-full bg-cyan-500/40 shadow-[0_0_5px_rgba(6,182,212,0.2)]" />
+                         </div>
+                         <span className="text-[10px] text-gray-500 font-mono tracking-tighter bg-white/5 px-2 py-0.5 rounded border border-white/5 mt-1">{acc.report_number}</span>
+                       </div>
+                    </div>
                   </div>
                 </td>
               </tr>
