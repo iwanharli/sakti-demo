@@ -242,8 +242,17 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
                   <div className="flex flex-col items-end gap-3">
                     <div className="max-w-[500px]">
                       <p className="text-xs text-gray-400 leading-relaxed italic whitespace-normal text-right">
-                        "{acc.location_description}"
+                        "{acc.location_description.replace(/,?\s*TITIK KOORDINAT.*$/i, '')}"
                       </p>
+                      {acc.location_latlong && (
+                        <button 
+                          onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${acc.location_latlong}`, '_blank')}
+                          className="mt-2 inline-flex items-center gap-1.5 text-[10px] font-black text-cyan-500 hover:text-cyan-400 uppercase tracking-widest transition-colors group/map"
+                        >
+                          <i className="fa-solid fa-map-location-dot" />
+                          <span className="border-b border-cyan-500/20 group-hover/map:border-cyan-400/50 transition-all">Lihat di Peta</span>
+                        </button>
+                      )}
                     </div>
                     <div className="flex items-center gap-3 border-t border-white/5 pt-2">
                        <div className="flex flex-col items-end">
