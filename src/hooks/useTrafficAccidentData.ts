@@ -83,14 +83,20 @@ export const useTrafficAccidentData = () => {
       if (startDate) params.append('start_date', startDate);
       if (endDate) params.append('end_date', endDate);
       if (search) params.append('search', search);
-      params.append('limit', limit.toString());
-      params.append('page', page.toString());
+      
+      // Always fetch 500 latest for map density, ignoring UI pagination for the API
+      params.append('limit', '500');
+      params.append('page', '1');
 
       const res = await authFetch(`${getApiBase()}/analytics/traffic-accidents?${params.toString()}`);
       if (res.ok) {
         const result = await res.json();
         setAccidents(result.data || []);
-        setPagination(result.pagination || null);
+        // Total from API is accurate, but we'll recalculate pages locally based on the 500 limit if needed.
+        setPagination({
+          total: result.pagination?.total || (result.data?.length || 0),
+          totalPages: Math.ceil((result.data?.length || 0) / 5) // Local total pages for 5-per-page UI
+        });
       }
     } catch (err) {
       console.error('Failed to fetch accidents:', err);
@@ -98,7 +104,7 @@ export const useTrafficAccidentData = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [province, injuryStatus, victimStatus, polres, startDate, endDate, search, limit, page, addToast]);
+  }, [province, injuryStatus, victimStatus, polres, startDate, endDate, search, addToast]);
 
   // Reset page when filters change
   useEffect(() => {

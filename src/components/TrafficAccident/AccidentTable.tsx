@@ -249,7 +249,7 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
                   <td colSpan={3} className="p-8"><div className="h-4 bg-white/5 rounded w-full" /></td>
                 </tr>
               ))
-            ) : accidents.map((acc) => (
+            ) : accidents.slice((page - 1) * 5, page * 5).map((acc) => (
               <tr key={acc.id} className="hover:bg-white/[0.03] transition-colors group align-top">
                 <td className="p-4">
                   <div className="flex flex-col gap-1">
