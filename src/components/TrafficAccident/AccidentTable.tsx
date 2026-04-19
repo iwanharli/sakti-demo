@@ -201,15 +201,14 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
               <th className="p-4 text-xs font-black text-cyan-500/60 uppercase tracking-widest min-w-[180px]">Detail Korban</th>
               <th className="p-4 text-xs font-black text-cyan-500/60 uppercase tracking-widest min-w-[300px]">Deskripsi Kejadian</th>
               <th className="p-4 text-xs font-black text-cyan-500/60 uppercase tracking-widest min-w-[120px]">Status</th>
-              <th className="p-4 text-xs font-black text-cyan-500/60 uppercase tracking-widest min-w-[150px]">Petugas</th>
-              <th className="p-4 text-xs font-black text-cyan-500/60 uppercase tracking-widest text-right min-w-[180px]">Laporan</th>
+              <th className="p-4 text-xs font-black text-cyan-500/60 uppercase tracking-widest min-w-[250px] text-right">Administrasi</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/[0.03]">
             {isLoading ? (
               Array.from({ length: 8 }).map((_, i) => (
                 <tr key={i} className="animate-pulse">
-                  <td colSpan={6} className="p-8"><div className="h-4 bg-white/5 rounded w-full" /></td>
+                  <td colSpan={5} className="p-8"><div className="h-4 bg-white/5 rounded w-full" /></td>
                 </tr>
               ))
             ) : accidents.map((acc) => (
@@ -250,15 +249,13 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
                     {acc.injury_status === 'MD' ? 'Meninggal Dunia' : acc.injury_status === 'LL' ? 'Luka Luka' : 'Tanpa Kondisi'}
                   </span>
                 </td>
-                <td className="p-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse shadow-[0_0_5px_#06b6d4]" />
-                    <span className="text-xs font-black text-gray-300 uppercase tracking-wide">{acc.officer_name || '-'}</span>
-                  </div>
-                </td>
                 <td className="p-4 text-right">
-                  <div className="flex flex-col items-end gap-1">
-                    <span className="text-xs text-gray-400 font-mono tracking-tighter bg-white/5 px-2 py-0.5 rounded border border-white/5">{acc.report_number}</span>
+                  <div className="flex flex-col items-end gap-1.5">
+                    <div className="flex items-center gap-2">
+                       <span className="text-[10px] font-black text-gray-300 uppercase tracking-wide truncate max-w-[150px]">{acc.officer_name || '-'}</span>
+                       <div className="w-1 h-1 rounded-full bg-cyan-500/40 shadow-[0_0_5px_rgba(6,182,212,0.2)]" />
+                    </div>
+                    <span className="text-[10px] text-gray-500 font-mono tracking-tighter bg-white/5 px-2 py-0.5 rounded border border-white/5">{acc.report_number}</span>
                   </div>
                 </td>
               </tr>
