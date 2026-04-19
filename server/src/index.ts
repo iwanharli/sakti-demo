@@ -575,7 +575,7 @@ app.get('/api/analytics/disaster-stats', authenticateToken, async (req, res) => 
  *     summary: Get detailed traffic accident records (Last 3 Days default)
  */
 app.get('/api/analytics/traffic-accidents', authenticateToken, async (req, res) => {
-  const { province, injury_status, start_date, search, limit = 50, page = 1 } = req.query;
+  const { province, injury_status, victim_status, start_date, search, limit = 50, page = 1 } = req.query;
   try {
     const startDateVal = start_date ? String(start_date) : null;
     const endDateVal = req.query.end_date ? String(req.query.end_date) : null;
@@ -595,8 +595,11 @@ app.get('/api/analytics/traffic-accidents', authenticateToken, async (req, res) 
     if (province && province !== 'Nasional') {
       query = sql`${query} AND p.region_name = ${province as string}`;
     }
-    if (injury_status && injury_status !== 'Semua') {
+    if (injury_status !== undefined && injury_status !== 'Semua') {
       query = sql`${query} AND p.injury_status = ${injury_status as string}`;
+    }
+    if (victim_status && victim_status !== 'Semua') {
+      query = sql`${query} AND p.victim_status = ${victim_status as string}`;
     }
     if (searchVal) {
       query = sql`${query} AND (
@@ -619,7 +622,8 @@ app.get('/api/analytics/traffic-accidents', authenticateToken, async (req, res) 
       WHERE p.accident_date >= COALESCE(${startDateVal}::date, l.max_d - INTERVAL '7 days')
       ${endDateVal ? sql` AND p.accident_date <= ${endDateVal}::date` : sql``}
       ${province && province !== 'Nasional' ? sql` AND p.region_name = ${province as string}` : sql``}
-      ${injury_status && injury_status !== 'Semua' ? sql` AND p.injury_status = ${injury_status as string}` : sql``}
+      ${injury_status !== undefined && injury_status !== 'Semua' ? sql` AND p.injury_status = ${injury_status as string}` : sql``}
+      ${victim_status && victim_status !== 'Semua' ? sql` AND p.victim_status = ${victim_status as string}` : sql``}
       ${searchVal ? sql` AND (p.victim_name ILIKE ${searchVal} OR p.city_name ILIKE ${searchVal} OR p.polres ILIKE ${searchVal} OR p.report_number ILIKE ${searchVal})` : sql``}
     `;
     const countRes = await dbPrimary.execute(countQuery);
@@ -657,8 +661,8 @@ app.get('/api/analytics/traffic-accident-stats', authenticateToken, async (req, 
       SELECT 
         COUNT(*)::int as total,
         COUNT(CASE WHEN injury_status = 'MD' THEN 1 END)::int as fatal,
-        COUNT(CASE WHEN injury_status = 'LB' THEN 1 END)::int as heavy,
-        COUNT(CASE WHEN injury_status = 'LR' THEN 1 END)::int as light
+        COUNT(CASE WHEN injury_status = 'LL' THEN 1 END)::int as light,
+        COUNT(CASE WHEN injury_status = '' OR injury_status IS NULL THEN 1 END)::int as heavy
       FROM sample_polisi_kecelakaan_data p, latest l
       WHERE p.accident_date >= COALESCE(${startDateVal}::date, l.max_d - INTERVAL '7 days')
     `;

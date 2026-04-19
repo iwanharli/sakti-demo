@@ -13,6 +13,8 @@ interface AccidentTableProps {
   setProvince: (p: string) => void;
   injuryStatus: string;
   setInjuryStatus: (s: string) => void;
+  victimStatus: string;
+  setVictimStatus: (s: string) => void;
   startDate: string;
   setStartDate: (d: string) => void;
   endDate: string;
@@ -30,18 +32,35 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
   setSearch,
   province,
   setProvince,
-  injuryStatus,
-  setInjuryStatus,
-  startDate,
-  setStartDate,
-  endDate,
-  setEndDate,
+  injuryStatus, 
+  setInjuryStatus, 
+  victimStatus,
+  setVictimStatus,
+  startDate, 
+  setStartDate, 
+  endDate, 
+  setEndDate, 
   refresh
 }) => {
   const totalPages = pagination?.totalPages || 1;
   const provinces = [
     'Nasional', 'DKI JAKARTA', 'JAWA BARAT', 'JAWA TENGAH', 'JAWA TIMUR', 
     'BALI', 'BANTEN', 'NUSA TENGGARA TIMUR', 'SUMATERA UTARA'
+  ];
+
+  const victimRoleOptions = [
+    { label: 'Semua Peran', value: 'Semua' },
+    { label: 'PENGENDARA', value: 'PENGENDARA' },
+    { label: 'PENUMPANG', value: 'PENUMPANG' },
+    { label: 'PEJALAN KAKI', value: 'PEJALAN KAKI' },
+    { label: 'PEMBONCENG', value: 'PEMBONCENG' }
+  ];
+
+  const conditionOptions = [
+    { label: 'Semua Kondisi', value: 'Semua' },
+    { label: 'Meninggal Dunia', value: 'MD' },
+    { label: 'Luka Luka', value: 'LL' },
+    { label: 'Tanpa Kondisi', value: '' }
   ];
 
   const renderPagination = () => {
@@ -94,23 +113,26 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
             <h2 className="font-orbitron text-lg font-black text-white tracking-widest uppercase truncate">Traffic Log</h2>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/5 shadow-inner">
-              {['Semua', 'MD', 'LB', 'LR'].map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setInjuryStatus(s)}
-                  className={`
-                    px-4 py-1.5 rounded-lg text-xs font-black tracking-widest uppercase transition-all duration-300
-                    ${injuryStatus === s 
-                      ? 'bg-cyan-500 text-black shadow-[0_0_15px_rgba(6,182,212,0.3)]' 
-                      : 'text-gray-500 hover:text-white hover:bg-white/5'
-                    }
-                  `}
-                >
-                  {s === 'Semua' ? 'All' : s}
-                </button>
-              ))}
+            <div className="flex items-center gap-3 bg-black/40 px-4 py-3 rounded-2xl border-2 border-white/5 focus-within:border-cyan-500/30 transition-all shadow-inner hover:border-white/10">
+              <span className="text-[11px] text-cyan-500/60 font-black uppercase tracking-widest border-r border-white/10 pr-3">Kondisi</span>
+              <select 
+                value={injuryStatus} 
+                onChange={(e) => setInjuryStatus(e.target.value)} 
+                className="bg-transparent text-sm font-black text-white focus:outline-none cursor-pointer uppercase font-orbitron hover:text-cyan-400 transition-colors"
+              >
+                {conditionOptions.map(opt => <option key={opt.value} value={opt.value} className="bg-[#0d121f]">{opt.label}</option>)}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-3 bg-black/40 px-4 py-3 rounded-2xl border-2 border-white/5 focus-within:border-cyan-500/30 transition-all shadow-inner hover:border-white/10">
+              <span className="text-[11px] text-cyan-500/60 font-black uppercase tracking-widest border-r border-white/10 pr-3">Peran</span>
+              <select 
+                value={victimStatus} 
+                onChange={(e) => setVictimStatus(e.target.value)} 
+                className="bg-transparent text-sm font-black text-white focus:outline-none cursor-pointer uppercase font-orbitron hover:text-cyan-400 transition-colors"
+              >
+                {victimRoleOptions.map(opt => <option key={opt.value} value={opt.value} className="bg-[#0d121f]">{opt.label}</option>)}
+              </select>
             </div>
             
             <button 
@@ -200,8 +222,10 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
                 </td>
                 <td className="p-4">
                   <div className="flex flex-col gap-1">
-                    <span className="text-sm font-black text-amber-400 group-hover:text-amber-300 transition-colors uppercase leading-tight">{acc.victim_name}</span>
-                    <span className="text-xs text-gray-500 italic">{acc.victim_status}</span>
+                    <span className="text-sm font-black text-amber-400 group-hover:text-amber-300 transition-colors uppercase leading-tight tracking-wide">{acc.victim_name}</span>
+                    <div className="flex items-center gap-2">
+                       <span className="text-[10px] bg-white/5 text-gray-500 px-1.5 py-0.5 rounded border border-white/5 font-black uppercase tracking-tighter">{acc.victim_status}</span>
+                    </div>
                   </div>
                 </td>
                 <td className="p-4">
@@ -212,12 +236,17 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
                   </div>
                 </td>
                 <td className="p-4">
-                  <span className={`inline-flex items-center px-3 py-1 rounded-md text-xs font-black uppercase tracking-wider ${
-                    acc.injury_status === 'MD' ? 'bg-red-500/10 text-red-400 border border-red-500/20 shadow-[0_0_10px_rgba(239,68,68,0.1)]' : 
-                    acc.injury_status === 'LB' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.1)]' : 
-                    'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-[0_0_10px_rgba(34,211,238,0.1)]'
+                  <span className={`inline-flex items-center px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all duration-300 ${
+                    acc.injury_status === 'MD' ? 'bg-red-500/10 text-red-500 border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.1)]' : 
+                    acc.injury_status === 'LL' ? 'bg-cyan-500/10 text-cyan-500 border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.1)]' : 
+                    'bg-gray-500/10 text-gray-400 border-white/10'
                   }`}>
-                    {acc.injury_status === 'MD' ? 'Meninggal Dunia' : acc.injury_status === 'LB' ? 'Luka Berat' : 'Luka Ringan'}
+                    <div className={`w-1.5 h-1.5 rounded-full mr-2 ${
+                      acc.injury_status === 'MD' ? 'bg-red-500 shadow-[0_0_8px_#ef4444]' :
+                      acc.injury_status === 'LL' ? 'bg-cyan-500 shadow-[0_0_8px_#06b6d4]' :
+                      'bg-gray-500'
+                    }`} />
+                    {acc.injury_status === 'MD' ? 'Meninggal Dunia' : acc.injury_status === 'LL' ? 'Luka Luka' : 'Tanpa Kondisi'}
                   </span>
                 </td>
                 <td className="p-4">
@@ -229,7 +258,6 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
                 <td className="p-4 text-right">
                   <div className="flex flex-col items-end gap-1">
                     <span className="text-xs text-gray-400 font-mono tracking-tighter bg-white/5 px-2 py-0.5 rounded border border-white/5">{acc.report_number}</span>
-                    <button className="text-xs text-cyan-500 hover:text-cyan-300 font-bold uppercase tracking-widest underline-offset-4 hover:underline transition-all">ARSIP LP <i className="fa-solid fa-arrow-up-right-from-square ml-1 text-[10px]" /></button>
                   </div>
                 </td>
               </tr>
@@ -241,10 +269,10 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
       {/* Table Footer / Pagination */}
       <div className="p-4 border-t border-white/5 bg-white/[0.02] flex flex-col md:flex-row gap-4 justify-between items-center">
         <div className="flex items-center gap-4">
-          <div className="text-xs text-gray-500 font-bold flex gap-2">
-              <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-red-500" /> MD</span>
-              <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-amber-500" /> LB</span>
-              <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-cyan-500" /> LR</span>
+          <div className="text-xs text-gray-500 font-bold flex gap-3">
+              <span className="flex items-center gap-1.5 uppercase tracking-tighter"><div className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_5px_#ef4444]" /> MD</span>
+              <span className="flex items-center gap-1.5 uppercase tracking-tighter"><div className="w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_5px_#06b6d4]" /> LL</span>
+              <span className="flex items-center gap-1.5 uppercase tracking-tighter"><div className="w-1.5 h-1.5 rounded-full bg-gray-600" /> T/K</span>
           </div>
           <div className="h-4 w-[1px] bg-white/5 hidden md:block" />
           <div className="flex items-center gap-1">

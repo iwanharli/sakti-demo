@@ -14,6 +14,8 @@ const TrafficAccidentMitigation: React.FC = () => {
     setProvince,
     injuryStatus,
     setInjuryStatus,
+    victimStatus,
+    setVictimStatus,
     startDate,
     setStartDate,
     endDate,
@@ -51,6 +53,8 @@ const TrafficAccidentMitigation: React.FC = () => {
           setProvince={setProvince}
           injuryStatus={injuryStatus}
           setInjuryStatus={setInjuryStatus}
+          victimStatus={victimStatus}
+          setVictimStatus={setVictimStatus}
           startDate={startDate}
           setStartDate={setStartDate}
           endDate={endDate}

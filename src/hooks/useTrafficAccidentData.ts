@@ -11,7 +11,7 @@ export interface TrafficAccident {
   polres: string;
   accident_date: string;
   victim_name: string;
-  injury_status: 'MD' | 'LB' | 'LR';
+  injury_status: 'MD' | 'LL' | '';
   victim_status: string;
   location_description: string;
   location_latlong: string;
@@ -36,6 +36,7 @@ export const useTrafficAccidentData = () => {
   // Filters
   const [province, setProvince] = useState('Nasional');
   const [injuryStatus, setInjuryStatus] = useState('Semua');
+  const [victimStatus, setVictimStatus] = useState('Semua');
   
   // Default to last 7 days from now (2026-04-19)
   const [startDate, setStartDate] = useState(() => {
@@ -76,6 +77,7 @@ export const useTrafficAccidentData = () => {
       const params = new URLSearchParams();
       if (province !== 'Nasional') params.append('province', province);
       if (injuryStatus !== 'Semua') params.append('injury_status', injuryStatus);
+      if (victimStatus !== 'Semua') params.append('victim_status', victimStatus);
       if (startDate) params.append('start_date', startDate);
       if (endDate) params.append('end_date', endDate);
       if (search) params.append('search', search);
@@ -99,7 +101,7 @@ export const useTrafficAccidentData = () => {
   // Reset page when filters change
   useEffect(() => {
     setPage(1);
-  }, [province, injuryStatus, startDate, endDate, search]);
+  }, [province, injuryStatus, victimStatus, startDate, endDate, search]);
 
   useEffect(() => {
     fetchStats();
@@ -118,6 +120,8 @@ export const useTrafficAccidentData = () => {
     setProvince,
     injuryStatus,
     setInjuryStatus,
+    victimStatus,
+    setVictimStatus,
     startDate,
     setStartDate,
     endDate,

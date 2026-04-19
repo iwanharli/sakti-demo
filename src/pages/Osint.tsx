@@ -129,7 +129,7 @@ export default function Osint() {
       {/* Stats Grid */}
       <div className="grid grid-cols-4 gap-5">
         <div className="ews-stat-card purple cursor-pointer" onClick={() => addToast('Detail postingan dipantau', 'info')}>
-          <div className="text-[12px] text-gray-500 uppercase tracking-wider mb-2">Postingan Dipantau</div>
+          <div className="text-[12px] text-gray-500 uppercase tracking-wider mb-2">Jumlah Postingan</div>
           <div className="font-orbitron text-4xl font-bold text-purple-400 mb-1">24.7K</div>
           <div className="text-[13px] text-gray-500">Dalam 24 jam terakhir</div>
           <div className="absolute right-4 top-1/2 -translate-y-1/2 text-5xl opacity-20 text-purple-500">
@@ -138,7 +138,7 @@ export default function Osint() {
         </div>
 
         <div className="ews-stat-card red cursor-pointer" onClick={() => addToast('Detail alert provokasi', 'alert')}>
-          <div className="text-[12px] text-gray-500 uppercase tracking-wider mb-2">Alert Provokasi</div>
+          <div className="text-[12px] text-gray-500 uppercase tracking-wider mb-2">Keyword Dipantau</div>
           <div className="font-orbitron text-4xl font-bold text-red-400 mb-1">7</div>
           <div className="flex items-center gap-2 text-[13px]">
             <span className="text-red-400 uppercase font-black">▲ 3 INCR</span>
@@ -150,7 +150,7 @@ export default function Osint() {
         </div>
 
         <div className="ews-stat-card amber cursor-pointer" onClick={() => addToast('Detail akun dipantau', 'info')}>
-          <div className="text-[12px] text-gray-500 uppercase tracking-wider mb-2">Akun Dipantau</div>
+          <div className="text-[12px] text-gray-500 uppercase tracking-wider mb-2">Sentiment Negative % Per Keyword (Detail)</div>
           <div className="font-orbitron text-4xl font-bold text-amber-400 mb-1">312</div>
           <div className="text-[13px] text-gray-500 italic">Berpotensi provokatif</div>
           <div className="absolute right-4 top-1/2 -translate-y-1/2 text-5xl opacity-20 text-amber-500">
@@ -159,7 +159,7 @@ export default function Osint() {
         </div>
 
         <div className="ews-stat-card cyan cursor-pointer" onClick={() => addToast('Detail platform aktif', 'info')}>
-          <div className="text-[12px] text-gray-500 uppercase tracking-wider mb-2">Platform Aktif</div>
+          <div className="text-[12px] text-gray-500 uppercase tracking-wider mb-2">Emotion</div>
           <div className="font-orbitron text-4xl font-bold text-cyan-400 mb-1">6</div>
           <div className="text-[13px] text-gray-500">X · FB · TikTok · IG · TH · YT</div>
           <div className="absolute right-4 top-1/2 -translate-y-1/2 text-5xl opacity-20 text-cyan-500">

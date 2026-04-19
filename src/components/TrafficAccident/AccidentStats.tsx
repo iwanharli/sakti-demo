@@ -9,9 +9,9 @@ interface AccidentStatsProps {
 export const AccidentStats: React.FC<AccidentStatsProps> = ({ stats, isLoading }) => {
   const cards = [
     { label: 'TOTAL KEJADIAN', value: stats?.total || 0, icon: 'fa-car-burst', color: 'cyan' },
-    { label: 'KORBAN MENINGGAL DUNIA', value: stats?.fatal || 0, icon: 'fa-skull-crossbones', color: 'red' },
-    { label: 'LUKA BERAT (LB)', value: stats?.heavy || 0, icon: 'fa-user-injured', color: 'orange' },
-    { label: 'LUKA RINGAN (LR)', value: stats?.light || 0, icon: 'fa-bandage', color: 'blue' },
+    { label: 'MENINGGAL DUNIA', value: stats?.fatal || 0, icon: 'fa-skull-crossbones', color: 'red' },
+    { label: 'LUKA-LUKA (LL)', value: stats?.light || 0, icon: 'fa-user-injured', color: 'amber' },
+    { label: 'TANPA KONDISI', value: stats?.heavy || 0, icon: 'fa-question', color: 'gray' },
   ];
 
   return (
