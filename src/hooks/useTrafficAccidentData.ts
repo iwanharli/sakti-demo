@@ -37,6 +37,7 @@ export const useTrafficAccidentData = () => {
   const [province, setProvince] = useState('Nasional');
   const [injuryStatus, setInjuryStatus] = useState('Semua');
   const [victimStatus, setVictimStatus] = useState('Semua');
+  const [polres, setPolres] = useState('Semua');
   
   // Default to last 7 days from now (2026-04-19)
   const [startDate, setStartDate] = useState(() => {
@@ -78,6 +79,7 @@ export const useTrafficAccidentData = () => {
       if (province !== 'Nasional') params.append('province', province);
       if (injuryStatus !== 'Semua') params.append('injury_status', injuryStatus);
       if (victimStatus !== 'Semua') params.append('victim_status', victimStatus);
+      if (polres !== 'Semua') params.append('polres', polres);
       if (startDate) params.append('start_date', startDate);
       if (endDate) params.append('end_date', endDate);
       if (search) params.append('search', search);
@@ -96,12 +98,12 @@ export const useTrafficAccidentData = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [province, injuryStatus, victimStatus, startDate, endDate, search, limit, page, addToast]);
+  }, [province, injuryStatus, victimStatus, polres, startDate, endDate, search, limit, page, addToast]);
 
   // Reset page when filters change
   useEffect(() => {
     setPage(1);
-  }, [province, injuryStatus, victimStatus, startDate, endDate, search]);
+  }, [province, injuryStatus, victimStatus, polres, startDate, endDate, search]);
 
   useEffect(() => {
     fetchStats();
@@ -122,6 +124,8 @@ export const useTrafficAccidentData = () => {
     setInjuryStatus,
     victimStatus,
     setVictimStatus,
+    polres,
+    setPolres,
     startDate,
     setStartDate,
     endDate,

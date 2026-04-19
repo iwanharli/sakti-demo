@@ -20,6 +20,8 @@ interface AccidentTableProps {
   endDate: string;
   setEndDate: (d: string) => void;
   onViewOnMap: (latlong: string) => void;
+  polres: string;
+  setPolres: (p: string) => void;
   refresh: () => void;
 }
 
@@ -42,6 +44,8 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
   endDate, 
   setEndDate, 
   onViewOnMap,
+  polres,
+  setPolres,
   refresh
 }) => {
   const totalPages = pagination?.totalPages || 1;
@@ -64,6 +68,12 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
     { label: 'Luka Luka', value: 'LL' },
     { label: 'Tanpa Kondisi', value: '' }
   ];
+
+  const uniquePolres = React.useMemo(() => {
+    const set = new Set(accidents.map(a => a.polres).filter(Boolean));
+    if (polres !== 'Semua') set.add(polres);
+    return Array.from(set).sort();
+  }, [accidents, polres]);
 
   const renderPagination = () => {
     const pages = [];
@@ -135,6 +145,20 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
                 className="bg-transparent text-sm font-black text-white focus:outline-none cursor-pointer uppercase font-orbitron hover:text-cyan-400 transition-colors"
               >
                 {victimRoleOptions.map(opt => <option key={opt.value} value={opt.value} className="bg-[#0d121f]">{opt.label}</option>)}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-3 bg-black/40 px-4 py-3 rounded-2xl border-2 border-white/5 focus-within:border-cyan-500/30 transition-all shadow-inner hover:border-white/10">
+              <span className="text-[11px] text-cyan-500/60 font-black uppercase tracking-widest border-r border-white/10 pr-3">Polres</span>
+              <select 
+                value={polres} 
+                onChange={(e) => setPolres(e.target.value)} 
+                className="bg-transparent text-sm font-black text-white focus:outline-none cursor-pointer uppercase font-orbitron hover:text-cyan-400 transition-colors max-w-[150px]"
+              >
+                <option value="Semua" className="bg-[#0d121f]">Semua Polres</option>
+                {uniquePolres.map(p => (
+                  <option key={p} value={p} className="bg-[#0d121f]">{p}</option>
+                ))}
               </select>
             </div>
             

@@ -575,7 +575,7 @@ app.get('/api/analytics/disaster-stats', authenticateToken, async (req, res) => 
  *     summary: Get detailed traffic accident records (Last 3 Days default)
  */
 app.get('/api/analytics/traffic-accidents', authenticateToken, async (req, res) => {
-  const { province, injury_status, victim_status, start_date, search, limit = 50, page = 1 } = req.query;
+  const { province, injury_status, victim_status, polres, start_date, search, limit = 50, page = 1 } = req.query;
   try {
     const startDateVal = start_date ? String(start_date) : null;
     const endDateVal = req.query.end_date ? String(req.query.end_date) : null;
@@ -601,6 +601,9 @@ app.get('/api/analytics/traffic-accidents', authenticateToken, async (req, res) 
     if (victim_status && victim_status !== 'Semua') {
       query = sql`${query} AND p.victim_status = ${victim_status as string}`;
     }
+    if (polres && polres !== 'Semua') {
+      query = sql`${query} AND p.polres = ${polres as string}`;
+    }
     if (searchVal) {
       query = sql`${query} AND (
         p.victim_name ILIKE ${searchVal} OR 
@@ -624,6 +627,7 @@ app.get('/api/analytics/traffic-accidents', authenticateToken, async (req, res) 
       ${province && province !== 'Nasional' ? sql` AND p.region_name = ${province as string}` : sql``}
       ${injury_status !== undefined && injury_status !== 'Semua' ? sql` AND p.injury_status = ${injury_status as string}` : sql``}
       ${victim_status && victim_status !== 'Semua' ? sql` AND p.victim_status = ${victim_status as string}` : sql``}
+      ${polres && polres !== 'Semua' ? sql` AND p.polres = ${polres as string}` : sql``}
       ${searchVal ? sql` AND (p.victim_name ILIKE ${searchVal} OR p.city_name ILIKE ${searchVal} OR p.polres ILIKE ${searchVal} OR p.report_number ILIKE ${searchVal})` : sql``}
     `;
     const countRes = await dbPrimary.execute(countQuery);
