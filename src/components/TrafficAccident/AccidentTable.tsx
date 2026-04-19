@@ -259,8 +259,16 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
                 <td className="p-4 min-w-[250px]">
                   <div className="flex flex-col gap-2">
                     <span className="text-base font-bold text-amber-500 group-hover:text-amber-400 transition-colors uppercase leading-tight tracking-wide">{acc.victim_name}</span>
-                    <div className="flex flex-wrap items-center gap-2">
-                       <span className="text-[10px] bg-white/10 text-gray-300 px-2 py-0.5 rounded border border-white/10 font-black uppercase tracking-tighter">{acc.victim_status}</span>
+                      <div className="flex flex-wrap items-center gap-2">
+                         <span className={`text-[10px] px-2 py-0.5 rounded border font-black uppercase tracking-tighter ${
+                           acc.victim_status === 'PENGENDARA' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30' :
+                           acc.victim_status === 'PENUMPANG' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
+                           acc.victim_status === 'PEJALAN KAKI' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
+                           acc.victim_status === 'PEMBONCENG' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30' :
+                           'bg-white/10 text-gray-300 border-white/10'
+                         }`}>
+                           {acc.victim_status}
+                         </span>
                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border transition-all duration-300 ${
                          acc.injury_status === 'MD' ? 'bg-red-500/10 text-red-500 border-red-500/30' : 
                          acc.injury_status === 'LB' ? 'bg-amber-500/10 text-amber-500 border-amber-500/30' : 
