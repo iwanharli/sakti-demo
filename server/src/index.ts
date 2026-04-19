@@ -665,7 +665,7 @@ app.get('/api/analytics/traffic-accident-stats', authenticateToken, async (req, 
       SELECT 
         COUNT(*)::int as total,
         COUNT(CASE WHEN injury_status = 'MD' THEN 1 END)::int as fatal,
-        COUNT(CASE WHEN injury_status = 'LL' THEN 1 END)::int as light,
+        COUNT(CASE WHEN injury_status IN ('LL', 'LB', 'LR') THEN 1 END)::int as light,
         COUNT(CASE WHEN injury_status = '' OR injury_status IS NULL THEN 1 END)::int as heavy
       FROM sample_polisi_kecelakaan_data p, latest l
       WHERE p.accident_date >= COALESCE(${startDateVal}::date, l.max_d - INTERVAL '7 days')

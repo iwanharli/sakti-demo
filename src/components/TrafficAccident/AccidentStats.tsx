@@ -23,18 +23,18 @@ export const AccidentStats: React.FC<AccidentStatsProps> = ({ stats, isLoading }
       subtext: 'Korban Fatalitas' 
     },
     { 
-      label: 'Luka Berat', 
-      value: stats?.heavy || 0, 
-      icon: 'fa-ambulance', 
-      color: 'amber',
-      subtext: 'Penanganan Intensif' 
-    },
-    { 
-      label: 'Luka Ringan', 
+      label: 'Luka Luka', 
       value: stats?.light || 0, 
       icon: 'fa-user-injured', 
+      color: 'amber',
+      subtext: 'Bantuan Medis' 
+    },
+    { 
+      label: 'Tanpa Kondisi', 
+      value: stats?.heavy || 0, 
+      icon: 'fa-clipboard-question', 
       color: 'emerald',
-      subtext: 'Bantuan Medis Dasar' 
+      subtext: 'Data Belum Lengkap' 
     },
   ];
 
