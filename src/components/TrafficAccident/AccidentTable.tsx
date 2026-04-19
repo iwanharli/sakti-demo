@@ -221,7 +221,7 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
             </div>
 
             <div className="flex flex-col items-end shrink-0 ml-auto border-l-2 border-white/5 pl-6 min-w-[120px]">
-              <span className="text-sm text-gray-500 font-black tracking-widest uppercase mb-0.5">{pagination?.total || 0} Records</span>
+              <span className="text-sm text-gray-500 font-black tracking-widest uppercase mb-0.5"><span className="text-amber-400">{pagination?.total || 0}</span> Records</span>
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
                 <span className="text-sm text-cyan-500 font-bold tracking-tight">PAGE {page}/{totalPages}</span>
