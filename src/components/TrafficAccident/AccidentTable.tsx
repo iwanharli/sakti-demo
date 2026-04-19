@@ -113,6 +113,7 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
             <h2 className="font-orbitron text-lg font-black text-white tracking-widest uppercase truncate">Traffic Log</h2>
           </div>
 
+          <div className="flex items-center gap-4">
             <div className="flex items-center gap-3 bg-black/40 px-4 py-3 rounded-2xl border-2 border-white/5 focus-within:border-cyan-500/30 transition-all shadow-inner hover:border-white/10">
               <span className="text-[11px] text-cyan-500/60 font-black uppercase tracking-widest border-r border-white/10 pr-3">Kondisi</span>
               <select 
@@ -141,6 +142,7 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
             >
               <i className="fa-solid fa-rotate text-sm"></i>
             </button>
+          </div>
           </div>
         </div>
 
