@@ -67,6 +67,7 @@ const TrafficAccidentMitigation: React.FC = () => {
           setEndDate={setEndDate}
           onViewOnMap={setFocusCoord}
           refresh={refresh}
+          resetFilters={resetFilters}
         />
       </div>
 

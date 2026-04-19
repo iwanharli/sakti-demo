@@ -137,6 +137,18 @@ export const useTrafficAccidentData = () => {
     page,
     setPage,
     pagination,
+    resetFilters: () => {
+      setProvince('Nasional');
+      setInjuryStatus('Semua');
+      setVictimStatus('Semua');
+      setPolres('Semua');
+      setSearch('');
+      const d = new Date('2026-04-19');
+      setEndDate('2026-04-19');
+      d.setDate(d.getDate() - 7);
+      setStartDate(d.toISOString().split('T')[0]);
+      setPage(1);
+    },
     refresh: () => { fetchStats(); fetchAccidents(); }
   };
 };

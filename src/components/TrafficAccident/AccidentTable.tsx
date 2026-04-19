@@ -23,6 +23,7 @@ interface AccidentTableProps {
   polres: string;
   setPolres: (p: string) => void;
   refresh: () => void;
+  resetFilters: () => void;
 }
 
 export const AccidentTable: React.FC<AccidentTableProps> = ({ 
@@ -46,7 +47,8 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
   onViewOnMap,
   polres,
   setPolres,
-  refresh
+  refresh,
+  resetFilters
 }) => {
   const totalPages = pagination?.totalPages || 1;
   const provinces = [
@@ -166,9 +168,19 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
             
             <button 
               onClick={refresh}
+              title="Refresh Data"
               className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white transition-all active:scale-95"
             >
               <i className="fa-solid fa-rotate text-sm"></i>
+            </button>
+
+            <button 
+              onClick={resetFilters}
+              title="Reset Filters"
+              className="px-4 h-10 flex items-center justify-center gap-2 rounded-xl bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 text-red-500 transition-all active:scale-95"
+            >
+              <i className="fa-solid fa-filter-circle-xmark text-sm"></i>
+              <span className="text-[11px] font-bold uppercase tracking-widest hidden sm:inline">Reset</span>
             </button>
           </div>
         </div>
