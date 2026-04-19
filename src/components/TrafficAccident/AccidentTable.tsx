@@ -122,7 +122,7 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-1 h-5 bg-cyan-500 rounded-full shadow-[0_0_10px_#06b6d4]" />
-            <h2 className="font-orbitron text-lg font-black text-white tracking-widest uppercase truncate">Traffic Log</h2>
+            <h2 className="text-xl font-bold text-white tracking-widest uppercase truncate leading-none">Traffic Log</h2>
           </div>
 
           <div className="flex items-center gap-4">
@@ -131,7 +131,7 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
               <select 
                 value={injuryStatus} 
                 onChange={(e) => setInjuryStatus(e.target.value)} 
-                className="bg-transparent text-sm font-black text-white focus:outline-none cursor-pointer uppercase font-orbitron hover:text-cyan-400 transition-colors"
+                className="bg-transparent text-sm font-bold text-white focus:outline-none cursor-pointer uppercase hover:text-cyan-400 transition-colors"
               >
                 {conditionOptions.map(opt => <option key={opt.value} value={opt.value} className="bg-[#0d121f]">{opt.label}</option>)}
               </select>
@@ -142,7 +142,7 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
               <select 
                 value={victimStatus} 
                 onChange={(e) => setVictimStatus(e.target.value)} 
-                className="bg-transparent text-sm font-black text-white focus:outline-none cursor-pointer uppercase font-orbitron hover:text-cyan-400 transition-colors"
+                className="bg-transparent text-sm font-bold text-white focus:outline-none cursor-pointer uppercase hover:text-cyan-400 transition-colors"
               >
                 {victimRoleOptions.map(opt => <option key={opt.value} value={opt.value} className="bg-[#0d121f]">{opt.label}</option>)}
               </select>
@@ -153,7 +153,7 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
               <select 
                 value={polres} 
                 onChange={(e) => setPolres(e.target.value)} 
-                className="bg-transparent text-sm font-black text-white focus:outline-none cursor-pointer uppercase font-orbitron hover:text-cyan-400 transition-colors max-w-[150px]"
+                className="bg-transparent text-sm font-bold text-white focus:outline-none cursor-pointer uppercase hover:text-cyan-400 transition-colors max-w-[150px]"
               >
                 <option value="Semua" className="bg-[#0d121f]">Semua Polres</option>
                 {uniquePolres.map(p => (
@@ -179,7 +179,7 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
               placeholder="Search victim, city, polres..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-black/40 border-2 border-white/5 rounded-2xl py-3.5 pl-12 pr-10 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50 focus:shadow-[0_0_20px_rgba(6,182,212,0.1)] transition-all font-mono"
+              className="w-full bg-black/40 border-2 border-white/5 rounded-2xl py-3.5 pl-12 pr-10 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/50 focus:shadow-[0_0_20px_rgba(6,182,212,0.1)] transition-all"
             />
             {search && (
               <button 
@@ -195,15 +195,15 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
             <div className="flex items-center gap-3 bg-black/40 px-4 py-3 rounded-2xl border-2 border-white/5 focus-within:border-cyan-500/30 transition-all shadow-inner">
               <span className="text-[11px] text-cyan-500/60 font-black uppercase tracking-widest border-r border-white/10 pr-3">Range</span>
               <div className="flex items-center gap-3">
-                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-transparent text-sm text-white focus:outline-none uppercase font-mono cursor-pointer hover:text-cyan-400 transition-colors" />
+                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-transparent text-sm text-white focus:outline-none uppercase cursor-pointer hover:text-cyan-400 transition-colors font-bold" />
                 <span className="text-gray-600 font-bold">/</span>
-                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-transparent text-sm text-white focus:outline-none uppercase font-mono cursor-pointer hover:text-cyan-400 transition-colors" />
+                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-transparent text-sm text-white focus:outline-none uppercase cursor-pointer hover:text-cyan-400 transition-colors font-bold" />
               </div>
             </div>
 
             <div className="flex items-center gap-3 bg-black/40 px-4 py-3 rounded-2xl border-2 border-white/5 focus-within:border-cyan-500/30 transition-all shadow-inner">
               <span className="text-[11px] text-cyan-500/60 font-black uppercase tracking-widest border-r border-white/10 pr-3">Region</span>
-              <select value={province} onChange={(e) => setProvince(e.target.value)} className="bg-transparent text-sm font-black text-white focus:outline-none cursor-pointer uppercase font-orbitron hover:text-cyan-400 transition-colors">
+              <select value={province} onChange={(e) => setProvince(e.target.value)} className="bg-transparent text-sm font-bold text-white focus:outline-none cursor-pointer uppercase hover:text-cyan-400 transition-colors">
                 {provinces.map(p => <option key={p} value={p} className="bg-[#0d121f]">{p}</option>)}
               </select>
             </div>
@@ -212,7 +212,7 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
               <span className="text-sm text-gray-500 font-black tracking-widest uppercase mb-0.5">{pagination?.total || 0} Records</span>
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
-                <span className="text-xs text-cyan-500/60 font-mono font-bold tracking-tighter">PAGE {page}/{totalPages}</span>
+                <span className="text-sm text-cyan-500 font-bold tracking-tight">PAGE {page}/{totalPages}</span>
               </div>
             </div>
           </div>
@@ -223,9 +223,9 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
         <table className="w-full text-left border-collapse min-w-[1200px]">
           <thead className="sticky top-0 bg-[#0d121f] z-10">
             <tr className="border-b border-white/10">
-              <th className="p-4 text-xs font-black text-cyan-500/60 uppercase tracking-widest min-w-[150px]">Waktu & Lokasi</th>
-              <th className="p-4 text-xs font-black text-cyan-500/60 uppercase tracking-widest min-w-[300px]">Detail Korban & Kondisi</th>
-              <th className="p-4 text-xs font-black text-cyan-500/60 uppercase tracking-widest min-w-[450px] text-right">Detail Kejadian & Administrasi</th>
+              <th className="p-4 text-sm font-bold text-cyan-500/80 uppercase tracking-widest min-w-[150px]">Waktu & Lokasi</th>
+              <th className="p-4 text-sm font-bold text-cyan-500/80 uppercase tracking-widest min-w-[300px]">Detail Korban & Kondisi</th>
+              <th className="p-4 text-sm font-bold text-cyan-500/80 uppercase tracking-widest min-w-[450px] text-right">Detail Kejadian & Administrasi</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/[0.03]">
@@ -240,13 +240,13 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
                 <td className="p-4">
                   <div className="flex flex-col gap-1">
                     <span className="text-sm font-bold text-white whitespace-nowrap">{new Date(acc.accident_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                    <span className="text-xs text-gray-500 uppercase tracking-tight font-black">{acc.city_name}</span>
-                    <span className="text-[11px] text-cyan-400 font-mono font-bold">{acc.polres}</span>
+                    <span className="text-[12px] text-gray-400 uppercase tracking-tight font-bold">{acc.city_name}</span>
+                    <span className="text-[12px] text-cyan-400 font-bold">{acc.polres}</span>
                   </div>
                 </td>
                 <td className="p-4 min-w-[250px]">
                   <div className="flex flex-col gap-2">
-                    <span className="text-sm font-black text-amber-400 group-hover:text-amber-300 transition-colors uppercase leading-tight tracking-wide">{acc.victim_name}</span>
+                    <span className="text-base font-bold text-amber-500 group-hover:text-amber-400 transition-colors uppercase leading-tight tracking-wide">{acc.victim_name}</span>
                     <div className="flex flex-wrap items-center gap-2">
                        <span className="text-[10px] bg-white/10 text-gray-300 px-2 py-0.5 rounded border border-white/10 font-black uppercase tracking-tighter">{acc.victim_status}</span>
                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border transition-all duration-300 ${
