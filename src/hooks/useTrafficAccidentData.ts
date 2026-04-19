@@ -42,7 +42,7 @@ export const useTrafficAccidentData = () => {
   // Default to last 7 days from now (2026-04-19)
   const [startDate, setStartDate] = useState(() => {
     const d = new Date('2026-04-19');
-    d.setDate(d.getDate() - 7);
+    d.setDate(d.getDate() - 3);
     return d.toISOString().split('T')[0];
   });
   const [endDate, setEndDate] = useState('2026-04-19');
@@ -145,7 +145,7 @@ export const useTrafficAccidentData = () => {
       setSearch('');
       const d = new Date('2026-04-19');
       setEndDate('2026-04-19');
-      d.setDate(d.getDate() - 7);
+      d.setDate(d.getDate() - 3);
       setStartDate(d.toISOString().split('T')[0]);
       setPage(1);
     },

@@ -586,7 +586,7 @@ app.get('/api/analytics/traffic-accidents', authenticateToken, async (req, res) 
       WITH latest AS (SELECT MAX(accident_date) as max_d FROM sample_polisi_kecelakaan_data)
       SELECT p.* 
       FROM sample_polisi_kecelakaan_data p, latest l
-      WHERE p.accident_date >= COALESCE(${startDateVal}::date, l.max_d - INTERVAL '7 days')
+      WHERE p.accident_date >= COALESCE(${startDateVal}::date, l.max_d - INTERVAL '3 days')
     `;
 
     if (endDateVal) {
@@ -622,7 +622,7 @@ app.get('/api/analytics/traffic-accidents', authenticateToken, async (req, res) 
       WITH latest AS (SELECT MAX(accident_date) as max_d FROM sample_polisi_kecelakaan_data)
       SELECT COUNT(*)::int as total
       FROM sample_polisi_kecelakaan_data p, latest l
-      WHERE p.accident_date >= COALESCE(${startDateVal}::date, l.max_d - INTERVAL '7 days')
+      WHERE p.accident_date >= COALESCE(${startDateVal}::date, l.max_d - INTERVAL '3 days')
       ${endDateVal ? sql` AND p.accident_date <= ${endDateVal}::date` : sql``}
       ${province && province !== 'Nasional' ? sql` AND p.region_name = ${province as string}` : sql``}
       ${injury_status !== undefined && injury_status !== 'Semua' ? sql` AND p.injury_status = ${injury_status as string}` : sql``}
