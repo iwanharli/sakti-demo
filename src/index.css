@@ -816,3 +816,341 @@
 .ews-scrollbar-hide::-webkit-scrollbar {
   display: none; /* Chrome, Safari and Opera */
 }
+
+/* Regional Summary Modal (V3 Tactical Dashboard) */
+.regional-summary-modal-overlay {
+  position: absolute;
+  top: -7rem; /* Full bleed over parent padding */
+  left: -1rem;
+  right: -1rem;
+  bottom: -1rem;
+  margin: 0 !important; /* Force override any space-y margins from parent */
+  background: rgba(2, 6, 23, 0.4);
+  backdrop-filter: blur(15px);
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  padding: 0;
+  pointer-events: none;
+}
+
+.regional-summary-container {
+  pointer-events: auto;
+  width: 100%;
+  max-width: 1240px;
+  height: 90%; /* Fixed relative height */
+  background: rgba(2, 6, 23, 0.95);
+  border-radius: 40px;
+  border: 1px solid rgba(34, 211, 238, 0.2);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.9);
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.regional-summary-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  padding: 2.5rem;
+  overflow-y: auto;
+  background: radial-gradient(circle at 50% 0%, rgba(30, 41, 59, 0.3) 0%, transparent 100%);
+  /* Custom Scrollbar for Tactical Look */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(34, 211, 238, 0.2) transparent;
+}
+
+.regional-summary-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.regional-summary-grid::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.regional-summary-grid::-webkit-scrollbar-thumb {
+  background: rgba(34, 211, 238, 0.2);
+  border-radius: 999px;
+}
+
+.regional-summary-grid::-webkit-scrollbar-thumb:hover {
+  background: rgba(34, 211, 238, 0.4);
+}
+
+.summary-section-v3 {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.2) 100%);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 28px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  width: 100%;
+}
+
+.summary-section-v3:hover {
+  transform: translateY(-5px) scale(1.01);
+  border-color: rgba(56, 189, 248, 0.25);
+  box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.6);
+}
+
+.score-widget-v3 {
+  position: relative;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.score-widget-v3.safe { border-color: rgba(16, 185, 129, 0.3); }
+.score-widget-v3.warning { border-color: rgba(245, 158, 11, 0.3); }
+.score-widget-v3.danger { border-color: rgba(239, 68, 68, 0.3); }
+
+.isu-card-detailed {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 18px;
+  align-items: center;
+}
+
+.ai-insight-box {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.6) 0%, rgba(30, 41, 59, 0.4) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  border-radius: 24px;
+}
+
+.ai-pulse-glow {
+  animation: ai-pulse 2s infinite;
+}
+
+@keyframes ai-pulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(56, 189, 248, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+}
+
+.data-table-mini {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.mini-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.k-grid-v3 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.k-cell-v3 {
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* --- TACTICAL MAP HUD V3 (MAPECO PARITY) --- */
+
+.status-badge-v3 {
+  padding: 0.75rem 2.5rem;
+  border-radius: 99px;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 100%);
+  backdrop-filter: blur(20px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.05);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  color: white;
+}
+
+.status-badge-v3.aman { background: linear-gradient(180deg, #10b981 0%, #059669 100%); box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
+.status-badge-v3.waspada { background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%); box-shadow: 0 0 20px rgba(245, 158, 11, 0.4); }
+.status-badge-v3.bahaya { background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%); box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); animation: aura-pulse-red 2s infinite; }
+.status-badge-v3.kritis { background: linear-gradient(180deg, #8b1e1e 0%, #611111 100%); box-shadow: 0 0 30px rgba(139, 30, 30, 0.6); animation: aura-pulse-red 1s infinite; }
+
+.status-icon-v3 {
+  font-size: 1.2rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.province-monitor-v3 {
+  background: rgba(15, 23, 42, 0.1);
+  backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+  width: auto;
+  min-width: 240px;
+  max-width: 320px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+.province-monitor-v3:hover {
+  background: rgba(15, 23, 42, 0.25);
+  border-color: rgba(34, 211, 238, 0.3);
+  transform: translateY(-2px);
+}
+
+.monitor-header-v3 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.monitor-label-v3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.monitor-label-v3 span {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #22d3ee;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.monitor-meta-v3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.m-score { 
+  font-size: 0.8rem;
+  font-weight: 900;
+  color: #fff; 
+}
+
+.m-score.aman { color: #10b981; }
+.m-score.waspada { color: #f59e0b; }
+.m-score.bahaya, .m-score.kritis { color: #ef4444; }
+
+.m-divider { width: 1px; height: 10px; background: rgba(255, 255, 255, 0.1); }
+.m-status { text-transform: uppercase; }
+.m-status.aman { color: #10b981; }
+.m-status.waspada { color: #f59e0b; }
+.m-status.bahaya, .m-status.kritis { color: #ef4444; }
+
+.monitor-content-v3 {
+  display: flex;
+  flex-direction: column;
+}
+
+.province-title-v3 {
+  font-size: 1.15rem;
+  line-height: 1.2;
+  font-weight: 900;
+  color: #fff;
+  text-transform: uppercase;
+  margin: 0;
+  word-wrap: break-word;
+}
+
+.pulse-dot {
+  width: 6px;
+  height: 6px;
+  background: #22d3ee;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #22d3ee;
+  animation: aura-pulse-cyan 2s infinite;
+}
+
+.monitor-progress-v3 {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: #22d3ee;
+  box-shadow: 0 0 10px #22d3ee;
+  width: 100%;
+  animation: monitor-progress 5s linear infinite;
+  transform-origin: left;
+}
+
+@keyframes monitor-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+/* --- MAP AURA BREATHING ANIMATIONS --- */
+
+.map-aura-aura {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 5;
+  transition: all 1s ease-in-out;
+}
+
+.map-aura-aura.aman { box-shadow: inset 0 0 40px rgba(16, 185, 129, 0.15); }
+.map-aura-aura.waspada { box-shadow: inset 0 0 60px rgba(245, 158, 11, 0.25); animation: aura-breath-orange 4s infinite; }
+.map-aura-aura.bahaya { box-shadow: inset 0 0 80px rgba(239, 68, 68, 0.35); animation: aura-breath-red 2s infinite; }
+.map-aura-aura.kritis { box-shadow: inset 0 0 120px rgba(139, 30, 30, 0.5); animation: aura-breath-red 1s infinite; }
+
+@keyframes aura-breath-orange {
+  0%, 100% { box-shadow: inset 0 0 30px rgba(245, 158, 11, 0.2); }
+  50% { box-shadow: inset 0 0 80px rgba(245, 158, 11, 0.45); }
+}
+
+@keyframes aura-breath-red {
+  0%, 100% { box-shadow: inset 0 0 40px rgba(239, 68, 68, 0.3); }
+  50% { box-shadow: inset 0 0 120px rgba(239, 68, 68, 0.6); }
+}
+
+@keyframes aura-pulse-cyan {
+  0% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(34, 211, 238, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0); }
+}
+
+@keyframes aura-pulse-red {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}

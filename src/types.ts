@@ -47,6 +47,7 @@ export interface TimelineItem {
   coordinates?: string;
   epicenter?: string;
   status?: string;
+  percentage?: number;
 }
 
 export interface CaseItem {

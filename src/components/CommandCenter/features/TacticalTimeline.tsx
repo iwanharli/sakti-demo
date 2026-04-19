@@ -22,7 +22,7 @@ const TacticalTimeline: React.FC<TacticalTimelineProps> = ({
       className="flex-1 shadow-2xl border-cyan-500/10"
     >
       <div className="mb-6">
-        <div className="flex p-1 bg-black/40 backdrop-blur-md rounded-lg border border-white/10 shadow-[inner_0_1px_2px_rgba(255,255,255,0.05)]">
+        <div className="flex p-1 bg-black/60 backdrop-blur-md rounded-lg border border-white/10 shadow-[inner_0_1px_2px_rgba(255,255,255,0.05)]">
           {[
             { id: 'all', label: 'ALL FEED', icon: 'fa-layer-group' },
             { id: 'bmkg', label: 'BMKG', icon: 'fa-tower-broadcast' },
@@ -32,9 +32,9 @@ const TacticalTimeline: React.FC<TacticalTimelineProps> = ({
               key={btn.id}
               onClick={() => setFilter(btn.id as any)}
               className={`
-                flex-1 flex items-center justify-center gap-2.5 py-2 px-5 rounded-md text-[10px] font-bold tracking-[0.15em] transition-all duration-300 uppercase font-rajdhani
+                flex-1 flex items-center justify-center gap-2.5 py-2.5 px-5 rounded-md text-[10px] font-bold tracking-[0.2em] transition-all duration-300 uppercase font-rajdhani relative
                 ${filter === btn.id 
-                  ? 'text-cyan-400 bg-white/5 shadow-[0_0_15px_rgba(34,211,238,0.1)]' 
+                  ? 'text-cyan-400 bg-white/5 shadow-[0_0_20px_rgba(34,211,238,0.1)]' 
                   : 'text-gray-500 hover:text-gray-300 hover:bg-white/[0.02]'}
               `}
             >
@@ -48,143 +48,130 @@ const TacticalTimeline: React.FC<TacticalTimelineProps> = ({
         </div>
       </div>
 
-      <div className="flex-1 ews-timeline overflow-y-auto ews-scrollbar space-y-3 pr-2 border-b border-gray-800/50 mb-1 min-h-0 max-h-[1330px]">
+      <div className="flex-1 ews-timeline overflow-y-auto ews-scrollbar space-y-4 pr-2 border-b border-gray-800/50 mb-1 min-h-0 max-h-[1330px]">
         {filteredTimeline.length > 0 ? (
           filteredTimeline.map((item, idx) => {
-            const icon = item.tags.includes('LANTAS') ? 'fa-solid fa-car-burst' : 
+            const isIssue = item.tags.includes('ISSUE');
+            const icon = isIssue ? 'fa-solid fa-triangle-exclamation' :
+                         item.tags.includes('LANTAS') ? 'fa-solid fa-car-burst' : 
                          item.tags.includes('RESKRIM') ? 'fa-solid fa-fingerprint' : 
                          item.tags.includes('INTELKAM') ? 'fa-solid fa-masks-theater' : 
                          item.tags.includes('MONITORING') ? 'fa-solid fa-display' : 
-                         'fa-solid fa-triangle-exclamation';
+                         'fa-solid fa-bolt-lightning';
             
-            const priorityColor = item.color === 'red' ? 'border-red-500' : 
-                                  item.color === 'amber' ? 'border-amber-500' : 
-                                  item.color === 'green' ? 'border-emerald-500' : 'border-cyan-500';
+            const pColor = item.color === 'red' ? '#ef4444' : 
+                           item.color === 'amber' ? '#f59e0b' : 
+                           item.color === 'emerald' || item.color === 'green' ? '#10b981' : '#06b6d4';
 
-            const priorityBg = item.color === 'red' ? 'bg-red-500/10' : 
-                               item.color === 'amber' ? 'bg-amber-500/10' : 
-                               item.color === 'green' ? 'bg-emerald-500/10' : 'bg-cyan-500/10';
+            const glowClass = item.color === 'red' ? 'shadow-[0_0_15px_rgba(239,68,68,0.2)]' : 
+                              item.color === 'amber' ? 'shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 
+                              'shadow-[0_0_15px_rgba(6,182,212,0.15)]';
             
             return (
               <div 
                 key={idx} 
                 className={`
-                  relative p-5 rounded-xl bg-white/[0.01] border border-white/5 border-l-4 ${priorityColor}
-                  hover:bg-white/[0.03] hover:border-r-white/10 transition-all duration-500 group cursor-pointer
-                  backdrop-blur-sm overflow-hidden
+                  relative p-4 rounded-lg bg-black/20 border border-white/5 
+                  hover:bg-white/[0.04] hover:border-white/10 transition-all duration-300 group cursor-pointer
+                  backdrop-blur-md overflow-hidden ews-animate-fade-in
                 `}
+                style={{ animationDelay: `${idx * 80}ms` }}
               >
-                <div className="absolute top-0 right-0 w-32 h-[1px] bg-gradient-to-l from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`flex items-center justify-center w-7 h-7 rounded-lg bg-black/40 border border-white/5 shadow-inner ${item.color === 'red' ? 'text-red-400' : item.color === 'amber' ? 'text-amber-400' : 'text-cyan-400'}`}>
-                      <i className={`${icon} text-[11px]`}></i>
+                {/* Minimalist Priority Indicator */}
+                <div 
+                   className={`absolute left-0 top-0 bottom-0 w-[2px] transition-all duration-300 group-hover:w-[4px]`}
+                   style={{ 
+                     backgroundColor: pColor,
+                     boxShadow: `0 0 10px ${pColor}40`
+                   }}
+                />
+
+                <div className="flex flex-col gap-2 relative z-10">
+                  {/* Top Row: Meta Information */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                       <i className={`${icon} text-[10px] opacity-60`} style={{ color: pColor }}></i>
+                       <span className="text-[9px] font-orbitron font-bold text-gray-500 uppercase tracking-[0.2em]">
+                         {item.tags?.[0] || 'GENERAL'}
+                       </span>
+                       <span className="text-[9px] font-mono text-gray-600 tracking-tighter">{item.time}</span>
                     </div>
-                    <div>
-                      <span className="text-[11px] font-orbitron font-bold text-gray-200 block leading-none mb-1">
-                        {item.tags?.[0] || 'GENERAL'}
-                      </span>
-                      <span className="text-[10px] font-mono font-medium text-gray-500 uppercase tracking-tight">{item.time}</span>
-                    </div>
+                    
+                    {item.percentage !== undefined && (
+                      <div className="flex items-center gap-2">
+                        <div className="w-12 h-[1px] bg-white/5 rounded-full overflow-hidden">
+                           <div className="h-full bg-cyan-500/60" style={{ width: `${item.percentage}%` }} />
+                        </div>
+                        <span className="text-[9px] font-orbitron text-cyan-500/80 tracking-widest">{item.percentage}%</span>
+                      </div>
+                    )}
                   </div>
-                  
-                  {idx === 0 ? (
-                    <div className="flex items-center gap-2 px-2.5 py-1 rounded bg-red-500/5 border border-red-500/20 shadow-[0_0_10px_rgba(239,68,68,0.05)]">
-                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444] ews-animate-blink" />
-                      <span className="text-[10px] font-black text-red-500 tracking-[0.15em]">LIVE FEED</span>
-                    </div>
-                  ) : (
-                    <div className={`px-2 py-0.5 rounded-md border border-white/5 text-[9px] font-black bg-white/5 text-gray-500 tracking-widest uppercase`}>
-                      ARCHIVE
+
+                  {/* Middle Row: Content (Capitalized) */}
+                  <div className="text-[12px] font-bold text-gray-100 leading-tight uppercase tracking-wide group-hover:text-cyan-400 transition-colors">
+                    {item.content}
+                  </div>
+
+                  {/* Event Tag */}
+                  {item.event && (
+                    <div className="text-[8px] font-black text-white/40 uppercase tracking-[0.2em] flex items-center gap-1.5">
+                       <span className="w-1 h-1 rounded-full" style={{ backgroundColor: pColor }} />
+                       {item.event}
                     </div>
                   )}
-                </div>
 
-                {item.event && (
-                  <div className={`text-[10px] font-black text-white px-2.5 py-1 mb-3 inline-flex items-center gap-2 rounded-md border border-white/10 uppercase tracking-widest font-orbitron ${priorityBg}`}>
-                     <span className={`w-1 h-1 rounded-full ${item.color === 'red' ? 'bg-red-500' : item.color === 'amber' ? 'bg-amber-500' : 'bg-cyan-500'}`} />
-                     {item.event}
-                  </div>
-                )}
-
-                <div className="text-[13px] font-medium text-gray-300 leading-relaxed mb-4 group-hover:text-gray-100 transition-colors">
-                  {item.content}
-                </div>
-
-                {item.subRegions && item.subRegions.length > 0 && (
-                  <div className="mb-4 space-y-2">
-                    <div className="text-[9px] font-black text-cyan-500/80 uppercase tracking-widest flex items-center gap-2">
-                       <i className="fa-solid fa-location-crosshairs text-[8px]"></i> Sector Monitoring: {item.region}
-                    </div>
-                    <div className="relative group/tags">
-                      <div className="flex flex-wrap gap-1.5 pr-2">
-                        {item.subRegions.map((loc: string, i: number) => (
-                          <span key={i} className="text-[9px] bg-white/[0.03] text-gray-400 px-2 py-0.5 rounded border border-white/5 font-mono hover:bg-cyan-500/10 hover:text-cyan-400 hover:border-cyan-500/20 transition-all cursor-default">
-                            {loc}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {item.magnitude && (
-                  <div className="mb-4 p-4 bg-gradient-to-br from-red-500/5 to-transparent border border-red-500/10 rounded-xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-2 opacity-10">
-                      <i className="fa-solid fa-waveform text-4xl text-red-500"></i>
-                    </div>
-                    <div className="text-[9px] font-black text-red-500/80 uppercase tracking-widest mb-3 flex items-center gap-2">
-                       <i className="fa-solid fa-tower-broadcast"></i> Seismic Alert Component
-                    </div>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="border-r border-white/5">
-                        <div className="text-[9px] text-gray-500 uppercase font-black tracking-tighter mb-1">Magnitude</div>
-                        <div className="text-[16px] font-orbitron font-bold text-red-500 leading-none">{item.magnitude} <span className="text-[10px]">SR</span></div>
-                      </div>
-                      <div className="border-r border-white/5">
-                        <div className="text-[9px] text-gray-500 uppercase font-black tracking-tighter mb-1">Depth</div>
-                        <div className="text-[16px] font-orbitron font-bold text-gray-300 leading-none">{item.depth} <span className="text-[10px]">KM</span></div>
+                  {/* Components (Seismic, Maps, etc.) - Minimalist Versions */}
+                  {item.magnitude && (
+                    <div className="mt-2 grid grid-cols-3 gap-2 py-2 border-t border-white/5">
+                      <div>
+                        <div className="text-[7px] text-gray-600 uppercase font-black tracking-widest">MAGNITUDE</div>
+                        <div className="text-xs font-orbitron font-bold text-red-500/80">{item.magnitude} SR</div>
                       </div>
                       <div>
-                        <div className="text-[9px] text-gray-500 uppercase font-black tracking-tighter mb-1">Tsunami</div>
-                        <div className={`text-[12px] font-black tracking-widest ${item.status?.toLowerCase().includes('tidak') ? 'text-emerald-500' : 'text-red-500 animate-pulse'}`}>
-                          {item.status?.toLowerCase().includes('tidak') ? 'NEGATIVE' : 'ALERT!'}
+                        <div className="text-[7px] text-gray-600 uppercase font-black tracking-widest">DEPTH</div>
+                        <div className="text-xs font-orbitron font-bold text-gray-300">{item.depth} KM</div>
+                      </div>
+                      <div>
+                        <div className="text-[7px] text-gray-600 uppercase font-black tracking-widest">TSUNAMI</div>
+                        <div className={`text-[7px] font-black tracking-widest mt-0.5 ${item.status?.toLowerCase().includes('tidak') ? 'text-emerald-500/60' : 'text-red-500/80 animate-pulse'}`}>
+                          {item.status?.toLowerCase().includes('tidak') ? 'NEGATIVE' : 'ALERT'}
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {item.epicenter && (
-                  <div className="mb-4 p-3 bg-white/[0.02] border border-white/5 rounded-lg border-l-2 border-l-red-500/50 group/map">
-                    <div className="flex justify-between items-center mb-2">
-                      <div className="flex items-center gap-2">
-                        <i className="fa-solid fa-crosshairs text-[10px] text-gray-600"></i>
-                        <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Target Coordinates</div>
-                      </div>
+                  {item.epicenter && (
+                    <div className="mt-1 pt-1 border-t border-white/5 flex flex-col gap-0.5">
+                       <div className="font-mono text-[9px] text-cyan-600/60 truncate">{item.coordinates}</div>
+                       <div className="text-[9px] text-gray-500 font-medium italic lowercase truncate">
+                         "{item.epicenter}"
+                       </div>
                     </div>
-                    <div className="font-mono text-[11px] text-cyan-400/80 mb-2">{item.coordinates}</div>
-                    <div className="text-[10px] text-gray-400 font-medium leading-relaxed bg-white/5 p-2 rounded border border-white/5">{item.epicenter}</div>
-                  </div>
-                )}
+                  )}
 
-                {item.impact && (
-                  <div className="mb-4 flex items-center gap-3 py-2 px-3 bg-amber-500/5 border border-amber-500/10 rounded-lg">
-                    <i className="fa-solid fa-triangle-exclamation text-amber-500 text-[10px] animate-pulse"></i>
-                    <div className="text-[11px] text-amber-500/80 italic font-medium">"{item.impact}"</div>
-                  </div>
-                )}
+                  {item.subRegions && item.subRegions.length > 0 && filter !== 'issue' && (
+                    <div className="mt-1 flex flex-wrap gap-1 opacity-60">
+                      {item.subRegions.slice(0, 4).map((loc: string, i: number) => (
+                        <span key={i} className="text-[8px] bg-white/5 px-1.5 py-0.5 rounded border border-white/5 text-gray-500 uppercase">
+                          {loc}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })
         ) : (
-          <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center p-8 bg-white/[0.02] rounded-xl border border-dashed border-white/5 mx-2">
+          <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center p-8 bg-white/[0.02] rounded-xl border border-dashed border-white/10 mx-2">
+            <div className="w-16 h-16 rounded-full bg-cyan-500/5 border border-cyan-500/10 flex items-center justify-center mb-6">
+               <i className="fa-solid fa-shield-check text-cyan-500/20 text-2xl" />
+            </div>
             <h3 className="font-orbitron font-black text-[13px] text-cyan-500 tracking-[0.3em] uppercase mb-3">
               SITUASI TERPANTAU KONDUSIF
             </h3>
             <p className="text-[11px] text-gray-500 font-medium leading-relaxed max-w-[280px] uppercase tracking-wider">
-               Belum terdeteksi adanya peringatan dini atau kejadian menonjol.
+               Belum terdeteksi adanya peringatan dini atau kejadian menonjol dalam basis data.
             </p>
           </div>
         )}

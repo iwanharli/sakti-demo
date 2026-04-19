@@ -446,14 +446,386 @@ app.get('/api/analytics/kamtibmas-regions', authenticateToken, async (req, res) 
 app.get('/api/analytics/risk-scores', authenticateToken, async (req, res) => {
   try {
     const results = await dbSecondary.execute(sql`
-      SELECT region_name, value, additional_data, report_date
+      SELECT region_code, region_name, value, additional_data, report_date
       FROM calculation_index_risiko 
-      WHERE category = 'skor-kamtibmas'
-      AND report_date = (SELECT MAX(report_date) FROM calculation_index_risiko WHERE category = 'skor-kamtibmas')
+      WHERE category = 'index-risiko-provinsi'
+      AND report_date = (SELECT MAX(report_date) FROM calculation_index_risiko WHERE category = 'index-risiko-provinsi')
+      AND region_code != '100'
       ORDER BY value DESC
     `);
     res.json(results.rows);
   } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/analytics/risiko-detail:
+ *   get:
+ *     summary: Get granular risk details for a region (Inflation, Pangan, Kamtibmas, Sentiment)
+ *     parameters:
+ *       - in: query
+ *         name: region
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Detailed risk metrics object.
+ */
+app.get('/api/analytics/risiko-detail', authenticateToken, async (req, res) => {
+  const { region } = req.query;
+  try {
+    let q = '';
+    let results: any;
+
+    if (region) {
+      results = await dbSecondary.execute(sql`
+        WITH latest_date AS (
+            SELECT MAX(report_date) as mdate 
+            FROM calculation_index_risiko
+            WHERE region_code = ${region}
+              AND category IN ('index-risiko-provinsi', 'index-risiko-nasional')
+        )
+        SELECT category, additional_data, value
+        FROM calculation_index_risiko, latest_date
+        WHERE region_code = ${region}
+          AND report_date = mdate
+          AND category IN ('index-risiko-provinsi', 'index-risiko-nasional', 'skor-sentimen', 'skor-pangan-agregasi', 'skor-kamtibmas', 'skor-inflasi')
+      `);
+
+      if (results.rows.length === 0) {
+        return res.status(404).json({ success: false, error: 'No data' });
+      }
+
+      let details: any = {};
+      const levels: any = {};
+
+      for (const row of results.rows) {
+        if (row.category === 'index-risiko-provinsi' || row.category === 'index-risiko-nasional') {
+          details = row.additional_data || {};
+        } else if (row.category === 'skor-inflasi') {
+          const ad = row.additional_data || {};
+          if (ad.mom_input !== undefined) details['Inflasi MoM (%)'] = ad.mom_input;
+          if (ad.yoy_input !== undefined) details['Inflasi YoY (%)'] = ad.yoy_input;
+          if (ad.level?.mom) levels['level_Inflasi MoM (%)'] = ad.level.mom;
+          if (ad.level?.yoy) levels['level_Inflasi YoY (%)'] = ad.level.yoy;
+        } else {
+          const ad = row.additional_data || {};
+          let levelStr = '';
+          if (typeof ad.level === 'string') {
+            levelStr = ad.level;
+          } else if (ad.level && typeof ad.level.akhir === 'string') {
+            levelStr = ad.level.akhir;
+          }
+          if (levelStr) {
+            levels['level_' + row.category] = levelStr;
+          }
+        }
+      }
+
+      details = { ...details, ...levels };
+      delete details['skor-inflasi'];
+
+      return res.json({ success: true, details });
+    } else {
+      results = await dbSecondary.execute(sql`
+        WITH latest_date AS (
+            SELECT MAX(report_date) as mdate FROM calculation_index_risiko
+            WHERE category IN ('index-risiko-provinsi', 'index-risiko-nasional')
+        )
+        SELECT 
+            region_code, 
+            region_name, 
+            value,
+            category
+        FROM calculation_index_risiko, latest_date
+        WHERE report_date = mdate
+            AND category IN ('index-risiko-provinsi', 'index-risiko-nasional')
+        ORDER BY (category = 'index-risiko-nasional') DESC, value DESC
+      `);
+      
+      const list = results.rows.map((x: any) => {
+        const score = Number(x.value) || 0;
+        let status = 'Aman';
+        if (score > 60) status = 'Bahaya';
+        else if (score >= 35) status = 'Waspada';
+
+        return {
+          code: x.region_code,
+          name: x.region_name,
+          score,
+          status
+        };
+      });
+      return res.json({ success: true, list });
+    }
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/analytics/commodity-v3:
+ *   get:
+ *     summary: Get detailed commodity analysis (Top 12, Deviations, National Score)
+ *     parameters:
+ *       - in: query
+ *         name: region
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Commodity metrics and table data.
+ */
+app.get('/api/analytics/commodity-v3', authenticateToken, async (req, res) => {
+  const { region: regionCode } = req.query;
+  try {
+    const targetFoods = [
+      'beras-medium', 'beras-premium', 'bawang-merah', 'bawang-putih-honan',
+      'cabai-merah-keriting', 'cabai-rawit-merah', 'daging-ayam-ras',
+      'telur-ayam-ras', 'minyak-goreng-sawit-kemasan-premium', 'minyakita', 
+      'minyak-goreng-sawit-curah', 'gula-pasir-curah'
+    ];
+
+    // 1. Fetch National Score
+    const qNational = await dbSecondary.execute(sql`
+      SELECT value FROM calculation_index_risiko
+      WHERE category = 'skor-pangan-agregasi'
+      AND ${regionCode ? sql`region_code = ${regionCode}` : sql`(LOWER(region_name) = 'nasional' OR region_code = '100')`}
+      AND value > 0
+      ORDER BY report_date DESC
+      LIMIT 1
+    `);
+    const nationalScore = qNational.rows.length > 0 ? Number(qNational.rows[0].value) : null;
+
+    // 2. Fetch ALL Commodities with Risks and Prices
+    // We'll join with items from secondary db if they exist
+    const qAllFoods = await dbSecondary.execute(sql`
+      WITH latest_prices AS (
+          ${regionCode ? sql`
+              SELECT 
+                  commodity_code, 
+                  price as today_price, 
+                  0 as gap_percentage,
+                  report_date as today_date
+              FROM nasional_commodity_sp2kp
+              WHERE region_code = ${regionCode}
+              AND report_date = (SELECT MAX(report_date) FROM nasional_commodity_sp2kp WHERE region_code = ${regionCode})
+          ` : sql`
+              SELECT 
+                  commodity_code, 
+                  AVG(price::numeric) as today_price, 
+                  0 as gap_percentage,
+                  MAX(report_date) as today_date
+              FROM nasional_commodity_sp2kp
+              WHERE report_date = (SELECT MAX(report_date) FROM nasional_commodity_sp2kp)
+              GROUP BY commodity_code
+          `}
+      ),
+      latest_risks AS (
+          SELECT DISTINCT ON (category) 
+              REPLACE(category, 'skor-pangan-', '') as commodity_code,
+              value as risk_score
+          FROM calculation_index_risiko
+          WHERE category LIKE 'skor-pangan-%'
+          AND category NOT IN ('skor-pangan-agregasi', 'skor-pangan-agregasi-nasional')
+          AND ${regionCode ? sql`region_code = ${regionCode}` : sql`(LOWER(region_name) = 'nasional' OR region_code = '100')`}
+          AND value > 0
+          ORDER BY category, report_date DESC
+      )
+      SELECT 
+          i.commodity_code as code,
+          i.commodity_name as name,
+          i.commodity_unit as unit,
+          p.today_price as price,
+          p.gap_percentage as change_pct,
+          r.risk_score,
+          (SELECT additional_data FROM calculation_index_risiko 
+           WHERE category = 'skor-pangan-agregasi' 
+           AND ${regionCode ? sql`region_code = ${regionCode}` : sql`(LOWER(region_name) = 'nasional' OR region_code = '100')`}
+           ORDER BY report_date DESC LIMIT 1) as additional_data
+      FROM nasional_commodity_items i
+      LEFT JOIN latest_prices p ON i.commodity_code = p.commodity_code
+      LEFT JOIN latest_risks r ON i.commodity_code = r.commodity_code
+      WHERE i.source = 'sp2kp'
+      ORDER BY r.risk_score DESC NULLS LAST
+    `);
+
+    const aggregationData = qAllFoods.rows.length > 0 && qAllFoods.rows[0].additional_data 
+        ? qAllFoods.rows[0].additional_data 
+        : null;
+
+    const allItems = qAllFoods.rows.map((x: any) => {
+        let price = Number(x.price) || 0;
+        const riskCode = `skor-pangan-${x.code}`;
+        if (x.additional_data && x.additional_data.commodities && x.additional_data.commodities[riskCode]) {
+            const snapshottedPrice = x.additional_data.commodities[riskCode].today_price;
+            if (snapshottedPrice > 0) price = Number(snapshottedPrice);
+        }
+        
+        let baseline = 0;
+        if (x.additional_data && x.additional_data.commodities && x.additional_data.commodities[riskCode]) {
+            baseline = x.additional_data.commodities[riskCode].baseline_price || 0;
+        }
+
+        return {
+            code: x.code,
+            name: x.name,
+            unit: x.unit,
+            price: price,
+            baseline: baseline,
+            dev: baseline > 0 ? ((price - baseline) / baseline) * 100 : 0,
+            riskScore: Number(x.risk_score) || 0
+        };
+    });
+
+    const foodItems = allItems.filter((x: any) => targetFoods.includes(x.code));
+
+    res.json({
+        success: true,
+        nationalScore: nationalScore,
+        foodItems: foodItems,
+        aggregationData: aggregationData
+    });
+
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/analytics/ai-summary:
+ *   get:
+ *     summary: Get AI strategic analysis summaries for a region
+ *     parameters:
+ *       - in: query
+ *         name: region
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of AI analysis cards.
+ */
+app.get('/api/analytics/ai-summary', authenticateToken, async (req, res) => {
+  const { region } = req.query;
+  try {
+    const defaultDateSubquery = sql`(SELECT MAX(report_date) FROM analysis_result_summaries)`;
+    
+    const results = await dbSecondary.execute(sql`
+      SELECT 
+          ars.issue_title,
+          ars.issue_summary,
+          ars.recommendation_analysis as recommendation,
+          ars.impact_analysis as impact,
+          ars.report_date as date,
+          ars.region_code,
+          ars.significance_score,
+          ars.significance_scale
+      FROM analysis_result_summaries ars
+      WHERE ars.report_date = ${defaultDateSubquery}
+      ${region ? sql`AND ars.region_code = ${region}` : sql``}
+      ORDER BY ars.significance_score DESC, ars.issue_title ASC
+    `);
+
+    res.json(results.rows);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/analytics/issues-all:
+ *   get:
+ *     summary: Get all trending issues across regions
+ *     responses:
+ *       200:
+ *         description: List of trending issues with percentage and regional name.
+ */
+app.get('/api/analytics/issues-all', authenticateToken, async (req, res) => {
+  const { date } = req.query;
+  try {
+    const results = await dbSecondary.execute(sql`
+      WITH latest_date AS (
+          SELECT MAX(report_date) as mdate FROM analysis_issue_lists
+      )
+      SELECT 
+          p.region_name as province,
+          l.issue_name as title,
+          l.report_date as date,
+          l.percentage,
+          l.region_code
+      FROM analysis_issue_lists l
+      JOIN region_indonesia_provinces p ON l.region_code = p.region_code, latest_date
+      WHERE l.report_date = ${date ? date : sql`latest_date.mdate`}
+      ORDER BY l.percentage DESC
+    `);
+    
+    const mapped = results.rows.map((x: any) => {
+      const pct = Number(x.percentage) || 0;
+      let status = 'Sedang';
+      if (pct >= 89) status = 'Tinggi';
+      else if (pct <= 50) status = 'Rendah';
+      
+      return { ...x, status };
+    });
+
+    res.json(mapped);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/analytics/kamtibmas-detail:
+ *   get:
+ *     summary: Get detailed Kamtibmas category breakdown (Kejahatan, Gangguan, etc.)
+ *     parameters:
+ *       - in: query
+ *         name: region
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Breakdown of security categories.
+ */
+app.get('/api/analytics/kamtibmas-detail', authenticateToken, async (req, res) => {
+  const { region: regionIdentifier } = req.query;
+  try {
+    // 1. Get latest date/year available in the table
+    const latestDateRes = await dbSecondary.execute(sql`SELECT MAX(report_date) as max_date, MAX(report_year) as m_year FROM nasional_kamtibmas_case_data`);
+    const year = latestDateRes.rows[0].m_year || 2026;
+    const targetDate = latestDateRes.rows[0].max_date;
+
+    // 2. Query for categories with broad region matching
+    // Note: We avoid direct numeric comparison with region_code to prevent 500 errors on string names
+    const results = await dbSecondary.execute(sql`
+      SELECT 
+          LOWER(category) as cat,
+          SUM(value) as total
+      FROM nasional_kamtibmas_case_data
+      WHERE report_year = ${year}
+        AND LOWER(sub_category) = LOWER(category) || '_total'
+        ${regionIdentifier ? sql`AND (
+          LOWER(polda_name) = LOWER(${regionIdentifier}) 
+          OR LOWER(polda_name) LIKE LOWER(${'%' + regionIdentifier + '%'})
+          OR (CAST(region_code AS TEXT) = ${regionIdentifier})
+        )` : sql``}
+      GROUP BY LOWER(category)
+    `);
+
+    const categories: any = {};
+    results.rows.forEach((row: any) => {
+      categories[row.cat] = Number(row.total) || 0;
+    });
+
+    res.json({ categories, year, date: targetDate });
+  } catch (error: any) {
+    console.error('Kamtibmas Detail Error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -468,11 +840,78 @@ app.get('/api/analytics/risk-scores', authenticateToken, async (req, res) => {
  *         description: Sentiment counts and percentages.
  */
 app.get('/api/analytics/sosmed-sentiment', authenticateToken, async (req, res) => {
-  const { date } = req.query;
+  const { date, region: regionCode } = req.query;
+  
+  // REGIONAL MODE: Fetch from news_items in dbSecondary
+  if (regionCode) {
+    try {
+      const qStats = await dbSecondary.execute(sql`
+        WITH target_date AS (
+            SELECT MAX(report_date) as mdate FROM analysis_issue_lists
+            WHERE region_code = ${regionCode}
+        )
+        SELECT 
+            ni.news_sentiment as sentiment,
+            COUNT(*) as count
+        FROM news_items ni
+        WHERE ni.news_id::text IN (
+            SELECT DISTINCT jsonb_array_elements_text(news_idx)
+            FROM analysis_issue_lists
+            WHERE region_code = ${regionCode}
+            AND report_date = (SELECT mdate FROM target_date)
+        )
+        AND ni.news_sentiment IS NOT NULL
+        GROUP BY ni.news_sentiment
+      `);
+
+      const stats = { positive: 0, neutral: 0, negative: 0 };
+      qStats.rows.forEach((row: any) => {
+        const s = (row.sentiment || '').toLowerCase();
+        const count = Number(row.count);
+        if (s.includes('positi')) stats.positive += count;
+        else if (s.includes('negati')) stats.negative += count;
+        else if (s.includes('netral') || s.includes('neutral')) stats.neutral += count;
+      });
+
+      const qNews = await dbSecondary.execute(sql`
+        WITH target_date AS (
+            SELECT MAX(report_date) as mdate FROM analysis_issue_lists
+            WHERE region_code = ${regionCode}
+        )
+        SELECT 
+            ni.news_id::text as news_id,
+            ni.news_title as title,
+            ni.news_url as url,
+            ni.news_domain as source,
+            ni.news_sentiment as sentiment,
+            ni.published_at,
+            ni.news_snippet as snippet
+        FROM news_items ni
+        JOIN (
+            SELECT DISTINCT jsonb_array_elements_text(news_idx) as news_id
+            FROM analysis_issue_lists
+            WHERE region_code = ${regionCode}
+            AND report_date = (SELECT mdate FROM target_date)
+        ) ln ON ni.news_id::text = ln.news_id
+        ORDER BY ni.published_at DESC
+        LIMIT 5
+      `);
+
+      return res.json({
+        success: true,
+        data: {
+          news: qNews.rows,
+          stats: stats
+        }
+      });
+    } catch (e: any) {
+      console.error('[API] Region sentiment error:', e);
+      // Fallback to sample logic below if regional fails or return empty
+    }
+  }
+
   try {
     let targetDate: any = date;
-
-    // If no date provided, follow the logic: Today -> Yesterday -> Latest Available
     if (!targetDate) {
       const today = new Date().toISOString().split('T')[0];
       const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];

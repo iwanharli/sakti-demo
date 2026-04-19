@@ -79,7 +79,7 @@ const KeywordIntelligenceCard: React.FC<KeywordIntelligenceCardProps> = ({ keywo
               <th className="text-center pb-4 font-orbitron">Platform</th>
               <th className="text-left pb-4 font-orbitron">Volume (1J)</th>
               <th className="text-center pb-4 font-orbitron">Lonjakan</th>
-              <th className="text-center pb-4 pr-4 font-orbitron">Sentimen Tertinggi</th>
+              <th className="text-center pb-4 pr-4 font-orbitron">Sentimen Dominan</th>
             </tr>
           </thead>
           <tbody>

@@ -1,59 +1,13 @@
-import React, { useEffect } from 'react';
-import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import provinceBoundaries from '../../../assets/gadm41_IDN_1.json';
-import { normalizeName, getConditionIcon } from '../../../utils/dashboardUtils';
+import React, { useEffect, useRef, useState } from 'react';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
+import type { RiskScore } from '../../../types';
+import indonesiaGeoJSONUrl from '../../../assets/indonesia.geojson?url';
+import MapHUD from './MapHUD';
 
-// Internal component to handle zoom synchronization
-function MapZoomControls() {
-  const map = useMap();
-  useEffect(() => {
-    const handleIn = () => map.zoomIn();
-    const handleOut = () => map.zoomOut();
-    window.addEventListener('map-zoom-in', handleIn);
-    window.addEventListener('map-zoom-out', handleOut);
-    return () => {
-      window.removeEventListener('map-zoom-in', handleIn);
-      window.removeEventListener('map-zoom-out', handleOut);
-    };
-  }, [map]);
-  return null;
-}
-
-// Internal component to focus map on selected city
-function MapFocusHandler({ selectedCity, cityBoundaries }: { selectedCity: string, cityBoundaries: any }) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (!selectedCity) {
-      const handleNationalFirst = () => map.flyTo([-2.5489, 118.0149], 5, { duration: 1.5 });
-      window.addEventListener('map-national-view', handleNationalFirst);
-      return () => window.removeEventListener('map-national-view', handleNationalFirst);
-    }
-    
-    const handleNational = () => {
-      map.flyTo([-2.5489, 118.0149], 5, { duration: 1.5 });
-    };
-
-    window.addEventListener('map-national-view', handleNational);
-
-    const normalizedSelected = normalizeName(selectedCity);
-    const feature = cityBoundaries?.features.find((f: any) => 
-      normalizeName(f.properties.NAME_2) === normalizedSelected
-    );
-
-    if (feature) {
-      const geoJsonLayer = L.geoJSON(feature);
-      const bounds = geoJsonLayer.getBounds();
-      map.flyToBounds(bounds, { padding: [120, 120], duration: 1.5, maxZoom: 11 });
-    }
-    return () => {
-      window.removeEventListener('map-national-view', handleNational);
-    };
-  }, [selectedCity, map, cityBoundaries]);
-
-  return null;
-}
+// Mapbox Token from Environment
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
+mapboxgl.accessToken = MAPBOX_TOKEN;
 
 interface MapSectionProps {
   activeMapMode: 'situational' | 'weather' | 'test';
@@ -71,11 +25,23 @@ interface MapSectionProps {
   setIsSatelliteMode: (satellite: boolean) => void;
   isWeatherHeatmapVisible: boolean;
   setIsWeatherHeatmapVisible: (visible: boolean) => void;
-  mapCities: any[];
+  mapCities: any[]; // Used for markers in weather mode
   weatherData: any;
   addToast: (msg: string, type: any) => void;
   setActiveMapMode: (mode: 'situational' | 'weather' | 'test') => void;
+  riskScores: RiskScore[]; // New prop for tactical coloring
+  setKamtibmasRegion: (region: string) => void; // New prop for syncing dashboard
+  openSummaryModal: (code: string, name: string) => void; // Trigger for regional summary
 }
+
+const COLOR_SCALE: Record<number, string> = {
+  0: 'rgba(16, 185, 129, 0.85)',   // AMAN (Green)
+  1: 'rgba(16, 185, 129, 0.85)',   // AMAN
+  2: 'rgba(245, 158, 11, 0.85)',   // WASPADA (Orange)
+  3: 'rgba(245, 158, 11, 0.85)',   // WASPADA
+  4: 'rgba(239, 68, 68, 0.85)',    // BAHAYA (Red)
+  5: 'rgba(220, 38, 38, 0.95)'     // KRITIS (Crimson)
+};
 
 const MapSection: React.FC<MapSectionProps> = ({
   activeMapMode,
@@ -84,7 +50,6 @@ const MapSection: React.FC<MapSectionProps> = ({
   selectedCity,
   setSelectedCity,
   cities,
-  cityBoundaries,
   radarFrames,
   radarIndex,
   isRadarPlaying,
@@ -96,228 +61,480 @@ const MapSection: React.FC<MapSectionProps> = ({
   mapCities,
   weatherData,
   addToast,
-  setActiveMapMode
+  setActiveMapMode,
+  riskScores,
+  setKamtibmasRegion,
+  openSummaryModal
 }) => {
-  return (
-    <div className="flex-1 bg-black/40 rounded-3xl border border-white/5 relative overflow-hidden group/map-container">
-      {/* MAP HUD OVERLAY (TOP LEFT) */}
-      <div className="absolute top-6 left-6 z-[1000] flex flex-col gap-4 pointer-events-none">
-        <div className="flex items-center gap-2 bg-black/60 backdrop-blur-3xl border border-white/10 p-1.5 rounded-2xl pointer-events-auto">
-          {[
-            { id: 'situational', label: 'Situational', icon: 'fa-layer-group' },
-            { id: 'weather', label: 'Weather Radar', icon: 'fa-cloud-satellite-radar' }
-          ].map((mode) => (
-            <button
-              key={mode.id}
-              onClick={() => {
-                setActiveMapMode(mode.id as any);
-                addToast(`Map Mode: ${mode.label}`, 'info');
-              }}
-              className={`px-5 py-2.5 rounded-xl font-orbitron font-bold text-[10px] tracking-[0.2em] transition-all flex items-center gap-3 uppercase ${
-                activeMapMode === mode.id 
-                ? 'bg-cyan-500 text-black shadow-[0_0_20px_rgba(6,182,212,0.4)]' 
-                : 'text-gray-400 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <i className={`fa-solid ${mode.icon} text-xs`}></i>
-              {mode.label}
-            </button>
-          ))}
-        </div>
-      </div>
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const hoveredStateId = useRef<string | number | null>(null);
+  const activeStateId = useRef<string | number | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
-      <MapContainer 
-        center={[-2.5489, 118.0149]} 
-        zoom={5} 
-        scrollWheelZoom={false}
-        className="w-full h-full z-0"
-        zoomControl={false}
-        attributionControl={false}
-      >
-        <TileLayer
-          url={isSatelliteMode 
-            ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-            : "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+  // Initialize Map
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+
+    const map = new mapboxgl.Map({
+      container: mapContainerRef.current,
+      style: isSatelliteMode 
+        ? 'mapbox://styles/mapbox/satellite-v9' 
+        : 'mapbox://styles/mapbox/dark-v11', // High-Fidelity Tactical Base
+      center: [118.01, -2.55],
+      zoom: 3.8,
+      antialias: true,
+      attributionControl: false // Custom footer branding instead
+    });
+
+    mapRef.current = map;
+
+    map.on('load', () => {
+
+      // 1. Globe & Fog Configuration
+      try {
+        map.setProjection('globe');
+        (map as any).setFog({
+          range: [0.6, 8],
+          color: 'rgba(10, 20, 50, 0.25)', // Deep blue tint
+          'horizon-blend': 0.18,
+          'high-color': 'rgba(0, 242, 255, 0.12)', // Teal accent
+          'space-color': 'rgb(2, 6, 23)', // Tactical Deep Space
+          'star-intensity': 0.15
+        });
+      } catch (e) {
+        console.warn('Mapbox Globe/Fog not supported:', e);
+      }
+
+      // 2. Hide Global Labels (Only Indonesia)
+      const layers = map.getStyle()?.layers ?? [];
+      const onlyIndonesia = [
+        'any',
+        ['==', ['get', 'iso_3166_1'], 'ID'],
+        ['==', ['get', 'iso_3166_1_alpha_3'], 'IDN']
+      ] as any;
+
+      for (const layer of layers) {
+        if (layer.type === 'symbol' && layer.id.match(/(country|state|place|settlement|town|city)/)) {
+          try {
+            const existing = map.getFilter(layer.id) as any;
+            map.setFilter(
+              layer.id,
+              existing ? (['all', existing, onlyIndonesia] as any) : onlyIndonesia
+            );
+          } catch { }
+        }
+      }
+
+      // 3. Add Custom Background for deepest black
+      if (!map.getLayer('space_bg')) {
+        map.addLayer({
+          id: 'space_bg',
+          type: 'background',
+          paint: {
+            'background-color': 'rgb(2, 6, 23)',
+            'background-opacity': 1
           }
-        />
+        }, layers[0]?.id);
+      }
 
-        {/* RainViewer Animated Radar Layer */}
-        {activeMapMode === 'weather' && isRainViewerActive && radarFrames.length > 0 && (
-          <TileLayer
-            key={radarFrames[radarIndex]?.path}
-            url={`https://tilecache.rainviewer.com${radarFrames[radarIndex].path}/256/{z}/{x}/{y}/2/1_1.png`}
-            opacity={0.6}
-            zIndex={100}
-          />
-        )}
+      // 4. Add Indonesia Source
+      map.addSource('indonesia-provinces', {
+        type: 'geojson',
+        data: indonesiaGeoJSONUrl,
+        promoteId: 'KODE_PROV'
+      });
+
+      // 5. Tactical Fill Layer
+      map.addLayer({
+        id: 'provinces-fill',
+        type: 'fill',
+        source: 'indonesia-provinces',
+        paint: {
+          'fill-color': 'rgba(20, 35, 60, 0.85)',
+          'fill-opacity': 0.82
+        }
+      });
+
+      // 6. Neon Glow Outline Layer
+      map.addLayer({
+        id: 'provinces-outline',
+        type: 'line',
+        source: 'indonesia-provinces',
+        paint: {
+          'line-color': [
+            'case',
+            ['boolean', ['feature-state', 'active'], false],
+            '#00f2ff', // Active: Bright Cyan
+            'rgba(0, 242, 255, 0.25)' // Default
+          ],
+          'line-width': [
+            'case',
+            ['boolean', ['feature-state', 'active'], false],
+            3, // Active: Thicker
+            0.8 // Default
+          ],
+          'line-blur': [
+            'case',
+            ['boolean', ['feature-state', 'active'], false],
+            3, // Active: Glow effect
+            0
+          ],
+          'line-opacity': 0.8
+        }
+      });
+      
+      // Await style pipeline to finish processing completely
+      map.once('idle', () => {
+        setMapLoaded(true);
+      });
+    });
+
+    // Interaction Handlers
+    map.on('mousemove', 'provinces-fill', (e) => {
+      if (e.features && e.features.length > 0) {
+        map.getCanvas().style.cursor = 'pointer';
+        const id = e.features[0].id;
         
-        <MapZoomControls />
-        <MapFocusHandler selectedCity={selectedCity} cityBoundaries={cityBoundaries} />
+        if (id !== undefined && id !== hoveredStateId.current) {
+          if (hoveredStateId.current !== null) {
+            map.setFeatureState(
+              { source: 'indonesia-provinces', id: hoveredStateId.current },
+              { hover: false }
+            );
+          }
+          hoveredStateId.current = id;
+          map.setFeatureState(
+            { source: 'indonesia-provinces', id: hoveredStateId.current },
+            { hover: true }
+          );
+        }
+      }
+    });
 
-        {/* WEATHER CONTROLS HUD */}
-        {activeMapMode === 'weather' && (
-          <div className="absolute top-6 right-6 z-[1000] pointer-events-none">
-            <div className="bg-black/60 backdrop-blur-3xl border border-cyan-500/30 p-5 rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.6)] pointer-events-auto w-[260px]">
-              <div className="flex flex-col gap-3">
-                <div className="relative">
-                  <select 
-                    value={selectedCity} 
-                    onChange={(e) => setSelectedCity(e.target.value)} 
-                    className="bg-cyan-500/10 border border-cyan-500/20 text-white font-orbitron font-bold text-xs py-2.5 px-3 rounded appearance-none w-full"
-                  >
-                    <option disabled value="">Pilih Kota...</option>
-                    {cities.map(city => (<option key={city} value={city} className="bg-gray-900 text-white">{city}</option>))}
-                  </select>
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={() => setIsRainViewerActive(!isRainViewerActive)} className={`flex-1 border font-orbitron text-[9px] py-1.5 rounded flex items-center justify-center gap-2 ${isRainViewerActive ? 'bg-cyan-500 text-black border-cyan-400' : 'bg-white/5 border-white/10 text-gray-400'}`}>
-                    <i className="fa-solid fa-cloud-bolt"></i> RADAR
-                  </button>
-                  <button onClick={() => setIsSatelliteMode(!isSatelliteMode)} className={`flex-1 border font-orbitron text-[9px] py-1.5 rounded flex items-center justify-center gap-2 ${isSatelliteMode ? 'bg-emerald-500 text-black border-emerald-400' : 'bg-white/5 border-white/10 text-gray-400'}`}>
-                    <i className="fa-solid fa-earth-asia"></i> SATELIT
-                  </button>
-                  <button onClick={() => setIsWeatherHeatmapVisible(!isWeatherHeatmapVisible)} className={`w-10 border rounded flex items-center justify-center ${isWeatherHeatmapVisible ? 'bg-amber-500/20 text-amber-400 border-amber-500/40' : 'bg-white/5 border-white/10 text-gray-500'}`}>
-                    <i className="fa-solid fa-layer-group"></i>
-                  </button>
-                </div>
+    map.on('mouseleave', 'provinces-fill', () => {
+      map.getCanvas().style.cursor = '';
+      if (hoveredStateId.current !== null) {
+        map.setFeatureState(
+          { source: 'indonesia-provinces', id: hoveredStateId.current },
+          { hover: false }
+        );
+        hoveredStateId.current = null;
+      }
+    });
 
-                {/* ANIMATED RADAR CONTROLS */}
-                {isRainViewerActive && radarFrames.length > 0 && (
-                  <div className="mt-2 pt-3 border-t border-white/5 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <button 
-                        onClick={() => setIsRadarPlaying(!isRadarPlaying)}
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${isRadarPlaying ? 'bg-red-500/20 text-red-500 border border-red-500/30' : 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/30'}`}
-                      >
-                        <i className={`fa-solid ${isRadarPlaying ? 'fa-pause' : 'fa-play'} text-[10px]`}></i>
-                      </button>
-                      <span className="text-[10px] font-orbitron font-bold text-gray-400 uppercase tracking-tighter">
-                        FRAME {radarIndex + 1}/{radarFrames.length}
-                      </span>
-                    </div>
-                    
-                    <div className="flex gap-1">
-                      {radarFrames.map((_, idx) => (
-                        <div 
-                          key={idx} 
-                          className={`w-1.5 h-1.5 rounded-full transition-all ${idx === radarIndex ? 'bg-cyan-500 shadow-[0_0_8px_#06b6d4] scale-125' : 'bg-gray-800'}`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+    map.on('click', 'provinces-fill', (e) => {
+      if (e.features && e.features.length > 0) {
+        const feature = e.features[0];
+        const props = feature.properties;
+        const name = props?.PROVINSI;
+        const code = props?.KODE_PROV || '';
+        const id = feature.id;
+
+        if (name) {
+          // Clear previous active state
+          if (activeStateId.current !== null && activeStateId.current !== id) {
+             map.setFeatureState(
+               { source: 'indonesia-provinces', id: activeStateId.current },
+               { active: false }
+             );
+          }
+
+          setSelectedCity(name);
+          setKamtibmasRegion(name); 
+          addToast(`Fokus Wilayah: ${name}`, 'success');
+          openSummaryModal(String(code), name);
+
+          // Trigger Neon Glow via active feature state
+          if (id !== undefined) {
+             activeStateId.current = id;
+             map.setFeatureState(
+               { source: 'indonesia-provinces', id },
+               { active: true }
+             );
+          }
+        }
+      }
+    });
+
+    return () => {
+      map.remove();
+    };
+  }, []);
+
+  const handleLiveMonitorUpdate = React.useCallback((code: string) => {
+    if (!mapLoaded || !mapRef.current) return;
+    const map = mapRef.current;
+    
+    // We assume the feature ID matches the KODE_PROV for indonesia-provinces source
+    if (activeStateId.current !== null && activeStateId.current !== code) {
+       map.setFeatureState(
+         { source: 'indonesia-provinces', id: activeStateId.current },
+         { active: false }
+       );
+    }
+    
+    activeStateId.current = code;
+    try {
+      map.setFeatureState(
+         { source: 'indonesia-provinces', id: code },
+         { active: true }
+      );
+    } catch { /* ignore if feature not loaded */ }
+  }, [mapLoaded]);
+
+  // RainViewer Radar Layer Update (Simplified for Mapbox compatibility)
+  useEffect(() => {
+    if (!mapLoaded || !mapRef.current) return;
+    const map = mapRef.current;
+
+    const sourceId = 'rainviewer-source';
+    const layerId = 'rainviewer-layer';
+
+    if (activeMapMode === 'weather' && isRainViewerActive && radarFrames.length > 0) {
+      const currentFrame = radarFrames[radarIndex];
+      const url = `https://tilecache.rainviewer.com${currentFrame.path}/256/{z}/{x}/{y}/2/1_1.png`;
+
+      try {
+        if (map.getSource(sourceId)) {
+          if (map.getLayer(layerId)) map.removeLayer(layerId);
+          map.removeSource(sourceId);
+        }
+
+        map.addSource(sourceId, {
+          type: 'raster',
+          tiles: [url],
+          tileSize: 256
+        });
+
+        map.addLayer({
+          id: layerId,
+          type: 'raster',
+          source: sourceId,
+          paint: { 'raster-opacity': 0.6 }
+        }, 'provinces-outline');
+      } catch (e) {}
+    } else {
+      try {
+        if (map.getLayer(layerId)) map.removeLayer(layerId);
+        if (map.getSource(sourceId)) map.removeSource(sourceId);
+      } catch (e) {}
+    }
+  }, [mapLoaded, activeMapMode, isRainViewerActive, radarFrames, radarIndex]);
+
+  // Update Dynamic Colors based on Risk Scores
+  useEffect(() => {
+    if (!mapLoaded || !mapRef.current || !riskScores.length) return;
+
+    const map = mapRef.current;
+    
+    // Base Color Mapping Expression
+    const baseMatchExpression: any[] = [
+      'match',
+      ['to-string', ['get', 'KODE_PROV']]
+    ];
+
+    riskScores.forEach((risk: any) => {
+      const data = risk.additional_data || {};
+      const code = risk.region_code || data['REGION CODE'] || data['Region Code'] || data['region_code'] || data['KODE_PROV'];
+      
+      if (code) {
+        const score = Math.round(risk.value);
+        let color = 'rgba(16, 185, 129, 0.6)'; // Aman (Green per Mapeco MapBoxService)
+        if (score > 60) color = 'rgba(239, 68, 68, 0.85)'; // Bahaya (Red)
+        else if (score >= 35) color = 'rgba(245, 158, 11, 0.85)'; // Waspada (Orange)
+        
+        baseMatchExpression.push(String(code), color);
+      }
+    });
+
+    baseMatchExpression.push('rgba(20, 35, 60, 0.85)'); // Default Tactical Blue
+
+    // Apply Mapeco Tactial Hover Override
+    const expression: mapboxgl.ExpressionSpecification = [
+       'case',
+       ['boolean', ['feature-state', 'hover'], false],
+       'rgba(0, 242, 255, 0.85)', // Teal hover glow
+       ['boolean', ['feature-state', 'active'], false],
+       'rgba(0, 255, 255, 0.5)',  // Active: Bright glowing fill
+       baseMatchExpression
+    ];
+
+    if (map.getLayer('provinces-fill')) {
+      map.setPaintProperty('provinces-fill', 'fill-color', expression);
+    }
+
+    updateTacticalMarkers();
+  }, [mapLoaded, riskScores, activeMapMode]);
+
+  // Update Map Style on Mode Change
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const style = isSatelliteMode 
+      ? 'mapbox://styles/mapbox/satellite-v9' 
+      : 'mapbox://styles/mapbox/dark-v11'; // Maintain Tactical Base
+    mapRef.current.setStyle(style);
+  }, [isSatelliteMode]);
+
+  const updateTacticalMarkers = async () => {
+    if (!mapRef.current) return;
+    const map = mapRef.current;
+
+    // Clear existing markers
+    markersRef.current.forEach(m => m.remove());
+    markersRef.current = [];
+
+    if (activeMapMode !== 'situational') return;
+
+    // We need centroids for 38 provinces. 
+    // For now, we'll extract them from the source data once loaded
+    const source = map.getSource('indonesia-provinces') as mapboxgl.GeoJSONSource;
+    if (!source) return;
+
+    // Since we can't easily iterate GeoJSON source features synchronously, 
+    // we fetch the data if not already fetched.
+    try {
+      const response = await fetch(indonesiaGeoJSONUrl);
+      const data = await response.json();
+      
+      data.features.forEach((feature: any) => {
+        const props = feature.properties;
+        const name = props.PROVINSI;
+        const code = props.KODE_PROV;
+        
+        // Find matching risk score
+        const risk = riskScores.find(r => r.region_name === name);
+        if (!risk) return;
+
+        // Calculate centroid (approximate)
+        const center = getCentroid(feature.geometry);
+        if (!center) return;
+
+        // Create HTML Element
+        const el = document.createElement('div');
+        el.className = 'region-marker';
+        
+        const scoreIndex = Math.min(Math.floor(risk.value / 20), 5);
+        el.innerHTML = `
+          <div class="marker-container marker-level-${scoreIndex}">
+            <div class="marker-dot">
+              <span><i class="fa-solid fa-location-dot"></i></span>
             </div>
+            <div class="marker-decor"></div>
           </div>
-        )}
+        `;
 
-        {/* GEOJSON LAYERS */}
-        {activeMapMode !== 'test' && (
-          <GeoJSON 
-            data={activeMapMode === 'situational' ? (provinceBoundaries as any) : cityBoundaries}
-            key={`${activeMapMode}-${cityBoundaries?.features?.length || 0}`}
-            onEachFeature={(feature, layer) => {
-              layer.on({
-                click: (e) => {
-                  L.DomEvent.stopPropagation(e);
-                  const cityName = feature.properties.NAME_2 || feature.properties.NAME_1;
-                  if (cityName) {
-                    setSelectedCity(cityName);
-                    addToast(`Pusat Fokus: ${cityName}`, 'info');
-                  }
-                },
-                mouseover: (e) => {
-                  const layer = e.target;
-                  layer.setStyle({
-                    fillOpacity: 0.7,
-                    weight: 3
-                  });
-                },
-                mouseout: (e) => {
-                  const layer = e.target;
-                  layer.setStyle({
-                    fillOpacity: activeMapMode === 'situational' ? 0.4 : (selectedCity === (feature.properties.NAME_2 || feature.properties.NAME_1) ? 0.4 : 0.05),
-                    weight: selectedCity === (feature.properties.NAME_2 || feature.properties.NAME_1) ? 2 : 1
-                  });
-                }
-              });
-            }}
-            style={(feature: any) => {
-              const cityName = feature.properties.NAME_2 || feature.properties.NAME_1;
-              const normalized = normalizeName(cityName);
-              const cityData = activeMapMode === 'weather' ? mapCities.find(c => normalizeName(c.city) === normalized) : null;
-              const { hex } = cityData ? getConditionIcon(cityData.condition) : { hex: '#1f2937' };
-              const isSelected = cityData && selectedCity === cityData.city;
-              return {
-                fillColor: activeMapMode === 'situational' ? 'rgba(6, 182, 212, 0.1)' : hex,
-                weight: isSelected ? 2 : 1,
-                opacity: (activeMapMode === 'weather' && isRainViewerActive) ? 0 : 1,
-                color: isSelected ? '#06b6d4' : 'rgba(255,255,255,0.4)',
-                fillOpacity: (activeMapMode === 'weather' && isRainViewerActive) ? 0 : (activeMapMode === 'situational' ? 0.4 : (cityData ? (isWeatherHeatmapVisible ? 0.4 : 0) : 0.05))
-              };
-            }}
-          />
-        )}
-      </MapContainer>
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          setSelectedCity(name);
+          setKamtibmasRegion(name); // SYNC WITH DASHBOARD
+          addToast(`Fokus Wilayah: ${name}`, 'success');
+          openSummaryModal(String(code), name);
+        });
+
+        const marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
+          .setLngLat(center as [number, number])
+          .addTo(map);
+          
+        markersRef.current.push(marker);
+      });
+    } catch (err) {
+      console.error('Failed to update tactical markers:', err);
+    }
+  };
+
+  const getCentroid = (geometry: any): [number, number] | null => {
+    let coords: any[] = [];
+    if (geometry.type === 'Polygon') coords = geometry.coordinates[0];
+    else if (geometry.type === 'MultiPolygon') coords = geometry.coordinates[0][0];
+    else return null;
+
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    coords.forEach(([x, y]: [number, number]) => {
+      minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+      minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+    });
+    return [(minX + maxX) / 2, (minY + maxY) / 2];
+  };
+
+  // Derive overall status (Average of all valid provinces, or look for NASIONAL explicitly)
+  const getOverallStatus = () => {
+    if (!riskScores.length) return 'AMAN';
+
+    // 1. If backend explicitly provides 'NASIONAL' in the list
+    const nationalRisk = riskScores.find(r => 
+      r.region_name?.toUpperCase() === 'NASIONAL' || 
+      r.additional_data?.['KODE_PROV'] === '100'
+    );
+
+    if (nationalRisk) {
+      const score = Math.round(nationalRisk.value);
+      if (score > 80) return 'KRITIS';
+      if (score > 60) return 'BAHAYA';
+      if (score >= 35) return 'WASPADA';
+      return 'AMAN';
+    }
+
+    // 2. Fallback: Meaningful national average (not maximum outlier)
+    const validScores = riskScores.filter(r => r.value > 0);
+    if (!validScores.length) return 'AMAN';
+    
+    const sum = validScores.reduce((acc, r) => acc + r.value, 0);
+    const avg = sum / validScores.length;
+    const roundedAvg = Math.round(avg);
+
+    if (roundedAvg > 80) return 'KRITIS';
+    if (roundedAvg > 60) return 'BAHAYA';
+    if (roundedAvg >= 35) return 'WASPADA';
+    return 'AMAN';
+  };
+
+  return (
+    <div className="flex-1 bg-[#020617] rounded-3xl border border-white/10 relative overflow-hidden group/map-container">
+      {/* TACTICAL MAP HUD OVERLAY */}
+      <MapHUD 
+        riskScores={riskScores}
+        status={getOverallStatus() as any}
+        activeMapMode={activeMapMode}
+        setActiveMapMode={setActiveMapMode}
+        onProvinceClick={(code, name) => {
+            setSelectedCity(name);
+            setKamtibmasRegion(name);
+            openSummaryModal(code, name);
+        }}
+        onLiveMonitorUpdate={handleLiveMonitorUpdate}
+      />
+
+      {/* Actual Mapbox Container */}
+      <div ref={mapContainerRef} className="w-full h-full" />
 
       {/* ZOOM & VIEW CONTROLS */}
-      <div className="absolute bottom-8 right-8 z-[1000] flex flex-col gap-2">
+      <div className="absolute bottom-10 right-10 z-20 flex flex-col gap-2">
         <button 
           onClick={() => {
             setSelectedCity('');
-            window.dispatchEvent(new CustomEvent('map-national-view'));
+            mapRef.current?.flyTo({ center: [118.01, -2.55], zoom: 3.8 });
           }} 
-          className="w-10 h-10 bg-cyan-500/20 border border-cyan-500/40 rounded-lg text-cyan-400 hover:bg-cyan-500/30 transition-all flex items-center justify-center group/nav"
+          className="w-10 h-10 bg-cyan-500/10 border border-cyan-500/40 rounded-xl text-cyan-400 hover:bg-cyan-500/20 transition-all flex items-center justify-center group/nav"
           title="Back to National View"
         >
           <i className="fa-solid fa-flag text-sm group-hover/nav:scale-110"></i>
         </button>
-        <div className="w-10 h-px bg-white/10 my-1" />
-        <button onClick={() => window.dispatchEvent(new CustomEvent('map-zoom-in'))} className="w-10 h-10 bg-black/60 border border-white/10 rounded-lg text-gray-400 hover:text-cyan-400">
+        <div className="w-10 h-px bg-white/5 my-1" />
+        <button onClick={() => mapRef.current?.zoomIn()} className="w-10 h-10 bg-black/40 border border-white/5 rounded-xl text-slate-400 hover:text-cyan-400 transition-colors">
           <i className="fa-solid fa-plus text-sm"></i>
         </button>
-        <button onClick={() => window.dispatchEvent(new CustomEvent('map-zoom-out'))} className="w-10 h-10 bg-black/60 border border-white/10 rounded-lg text-gray-400 hover:text-cyan-400">
+        <button onClick={() => mapRef.current?.zoomOut()} className="w-10 h-10 bg-black/40 border border-white/5 rounded-xl text-slate-400 hover:text-cyan-400 transition-colors">
           <i className="fa-solid fa-minus text-sm"></i>
         </button>
       </div>
 
       {/* TACTICAL WEATHER REPORT HUD (BOTTOM LEFT) */}
       {activeMapMode === 'weather' && weatherData && (
-        <div className="absolute bottom-8 left-8 z-[1000] pointer-events-none">
+        <div className="absolute bottom-10 left-10 z-10 pointer-events-none">
           <div className="bg-black/60 backdrop-blur-3xl border border-cyan-500/30 p-5 rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.6)] pointer-events-auto w-[320px] ews-animate-slide-in">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
-                  <i className={`fa-solid ${getConditionIcon(weatherData.condition || 'Cerah').icon} text-xl`}></i>
-                </div>
-                <div>
-                  <div className="text-[12px] font-orbitron font-bold text-gray-100 uppercase tracking-widest leading-tight">{selectedCity}</div>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-[24px] font-orbitron font-bold text-cyan-400 leading-none">{weatherData.temperature || 28}°C</div>
-                <div className="text-[10px] text-gray-500 font-bold uppercase mt-1">{weatherData.condition || 'Cerah'}</div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <div className="bg-white/5 border border-white/5 p-2 rounded-xl">
-                <div className="text-[9px] text-gray-500 uppercase font-black tracking-widest mb-1">Humidity</div>
-                <div className="flex items-end gap-2">
-                  <div className="text-[15px] font-orbitron font-bold text-gray-200">{weatherData.humidity || 74}%</div>
-                  <div className="h-1 flex-1 bg-gray-800 rounded-full mb-1.5 overflow-hidden">
-                    <div className="h-full bg-cyan-500" style={{ width: `${weatherData.humidity || 74}%` }}></div>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white/5 border border-white/5 p-2 rounded-xl">
-                <div className="text-[9px] text-gray-500 uppercase font-black tracking-widest mb-1">Wind Speed</div>
-                <div className="flex items-center gap-2">
-                  <div className="text-[15px] font-orbitron font-bold text-gray-200">{weatherData.wind_speed || 12} <span className="text-[10px] text-gray-500">km/h</span></div>
-                  <i className="fa-solid fa-wind text-[10px] text-cyan-500 animate-pulse"></i>
-                </div>
-              </div>
-            </div>
+            {/* Weather HUD Content ... */}
           </div>
         </div>
       )}

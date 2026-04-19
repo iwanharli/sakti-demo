@@ -9,6 +9,7 @@ export const useCommandCenterData = () => {
   const [mounted, setMounted] = useState(false);
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
   const [timelineData, setTimelineData] = useState<TimelineItem[]>(timelineItems);
+  const [issueItems, setIssueItems] = useState<TimelineItem[]>([]);
   const [filter, setFilter] = useState<'all' | 'bmkg' | 'issue'>('all');
   const [riskScores, setRiskScores] = useState<RiskScore[]>([]);
   
@@ -46,6 +47,18 @@ export const useCommandCenterData = () => {
   const [isRainViewerActive, setIsRainViewerActive] = useState(false);
   const [isWeatherHeatmapVisible, setIsWeatherHeatmapVisible] = useState(true);
   
+  // Regional Summary Modal
+  const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
+  const [summaryRegion, setSummaryRegion] = useState({ code: '', name: '' });
+  const [summaryData, setSummaryData] = useState<any>({
+    commodity: { loading: false, data: null },
+    sentiment: { loading: false, data: null },
+    issues: { loading: false, data: null },
+    kamtibmas: { loading: false, data: null },
+    aiAnalysis: { loading: false, data: null },
+    generalRisk: { loading: false, data: null }
+  });
+
   // Live Clock for Topbar
   const [currentTime, setCurrentTime] = useState(new Date());
   useEffect(() => {
@@ -66,15 +79,20 @@ export const useCommandCenterData = () => {
   };
 
   const filteredTimeline = useMemo(() => {
-    if (filter === 'all') return timelineData;
-    return timelineData.filter(item => {
-      const isBMKG = item.tags.some(t => t.toUpperCase().includes('BMKG_ALERT') || t.toUpperCase().includes('GEMPA') || t.toUpperCase().includes('CUACA'));
-      
-      if (filter === 'bmkg') return isBMKG;
-      if (filter === 'issue') return !isBMKG;
-      return true;
-    });
-  }, [timelineData, filter]);
+    let combined = [...timelineData, ...issueItems];
+    
+    // Sort logic: First by date (time), but for issues we rank by percentage if in ISSUE tab
+    if (filter === 'issue') {
+      combined = issueItems.sort((a, b) => (b.percentage || 0) - (a.percentage || 0));
+    } else if (filter === 'bmkg') {
+      combined = timelineData;
+    } else {
+      // For 'all', we sort by time desc (assuming time is formatted consistently or just most recent first)
+      combined = combined.sort((a, b) => b.time.localeCompare(a.time));
+    }
+
+    return combined;
+  }, [timelineData, issueItems, filter]);
 
   const fetchMapBoundaries = async () => {
     try {
@@ -185,6 +203,56 @@ export const useCommandCenterData = () => {
       console.error('Kamtibmas Index Fetch Error:', err);
     } finally {
       setIsKamtibmasLoading(false);
+    }
+  };
+
+  const fetchTodayIssues = async () => {
+    try {
+      const apiBase = getApiBase();
+      const now = new Date();
+      
+      // Force Asia/Jakarta (GMT+7) for date calculations
+      const gmt7Formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Jakarta',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+      
+      const yesterday = new Date(now.getTime() - 86400000);
+      const yesterdayStr = gmt7Formatter.format(yesterday);
+      
+      // Request exactly for now - 1 (GMT+7)
+      const response = await authFetch(`${apiBase}/analytics/issues-all?date=${yesterdayStr}`);
+      let data = await response.json();
+      
+      // Fallback: If yesterday is empty, the user might still want to see the latest available
+      if (!Array.isArray(data) || data.length === 0) {
+        console.warn(`No issues found for ${yesterdayStr}, falling back to latest.`);
+        const fallbackRes = await authFetch(`${apiBase}/analytics/issues-all`);
+        data = await fallbackRes.json();
+      }
+      
+      if (Array.isArray(data)) {
+        const mappedIssues: TimelineItem[] = data
+          .map(item => ({
+            time: item.date ? new Date(item.date).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB' : 
+                  item.created_at ? new Date(item.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB' : 'NOW',
+            content: item.issue_name || item.title || item.name || 'Unknown Issue',
+            percentage: Number(item.percentage) || 0,
+            tags: ['ISSUE', item.province?.toUpperCase() || 'NASIONAL', item.category?.toUpperCase()].filter(Boolean) as string[],
+            color: (Number(item.percentage) || 0) > 60 ? 'red' : (Number(item.percentage) || 0) > 30 ? 'amber' : 'cyan',
+            region: item.province,
+            status: item.status
+          } as TimelineItem));
+
+        // Sorting by percentage descending
+        mappedIssues.sort((a, b) => (b.percentage || 0) - (a.percentage || 0));
+
+        setIssueItems(mappedIssues);
+      }
+    } catch (err) {
+      console.error('Fetch Today Issues Error:', err);
     }
   };
 
@@ -364,9 +432,92 @@ export const useCommandCenterData = () => {
     }
   };
 
+  const fetchRegionalSummary = async (code: string, name: string) => {
+    setSummaryData((prev: any) => ({
+      ...prev,
+      commodity: { ...prev.commodity, loading: true },
+      sentiment: { ...prev.sentiment, loading: true },
+      issues: { ...prev.issues, loading: true },
+      kamtibmas: { ...prev.kamtibmas, loading: true },
+      aiAnalysis: { ...prev.aiAnalysis, loading: true },
+      generalRisk: { ...prev.generalRisk, loading: true }
+    }));
+
+    try {
+      const apiBase = getApiBase();
+      
+      // Simultaneous fetching for real database modules
+      const [kamtibmasRes, commodityRes, sentimentRes, issuesRes, aiRes, risikoRes] = await Promise.all([
+        authFetch(`${apiBase}/analytics/kamtibmas-detail?region=${encodeURIComponent(name)}`)
+          .then(r => r.ok ? r.json() : null),
+        
+        authFetch(`${apiBase}/analytics/commodity-v3?region=${code}`)
+          .then(r => r.ok ? r.json() : null),
+        
+        authFetch(`${apiBase}/analytics/sosmed-sentiment?region=${code}`)
+          .then(r => r.ok ? r.json() : null),
+        
+        authFetch(`${apiBase}/analytics/issues-all`)
+          .then(r => r.ok ? r.json() : null),
+        
+        authFetch(`${apiBase}/analytics/ai-summary?region=${code}`)
+          .then(r => r.ok ? r.json() : null),
+
+        authFetch(`${apiBase}/analytics/risiko-detail?region=${code}`)
+          .then(r => r.ok ? r.json() : null),
+      ]);
+
+      const realGeneralRisk = risikoRes?.details || { 
+        mom: '-', yoy: '-', level_mom: 'AMAN', level_yoy: 'AMAN', 
+        pangan_score: 0, pangan_level: 'AMAN', 
+        kamtibmas_score: 0, kamtibmas_level: 'AMAN', 
+        sentimen_score: 0, sentimen_level: 'AMAN' 
+      };
+
+      // Processing Issues with Rank (Mirroring Mapeco logic)
+      let processedIssues = [];
+      if (issuesRes && Array.isArray(issuesRes)) {
+        const globalAll = [...issuesRes].sort((a, b) => (b.percentage || 0) - (a.percentage || 0));
+        processedIssues = globalAll
+          .map((item, index) => ({ ...item, globalRank: index + 1 }))
+          .filter((i: any) => i.region_code === code || i.province?.toLowerCase() === name.toLowerCase());
+      }
+      
+      setSummaryData({
+        generalRisk: { loading: false, data: realGeneralRisk },
+        kamtibmas: { loading: false, data: kamtibmasRes },
+        commodity: { loading: false, data: commodityRes },
+        sentiment: { loading: false, data: sentimentRes },
+        issues: { loading: false, data: processedIssues },
+        aiAnalysis: { 
+          loading: false, 
+          data: Array.isArray(aiRes) ? aiRes : (aiRes?.data || [
+            { 
+              issue_title: `Analisis Strategis - ${name}`, 
+              issue_summary: `Berdasarkan pantauan real-time, wilayah ${name} menunjukkan ${kamtibmasRes?.status || 'stabilitas'} dalam gangguan keamanan. Sektor pangan mencatat indeks risiko sebesar ${realGeneralRisk.pangan_score.toFixed(1)}%.`, 
+              significance_scale: realGeneralRisk.pangan_score > 60 ? 'HIGH' : 'MEDIUM',
+              date: new Date().toISOString(),
+              impact: 'Dinamika harga komoditas lokal dan tren kamtibmas memerlukan pengawasan intensif di titik-titik rawan.',
+              recommendation: ['Peningkatan patroli skala sedang di area publik', 'Monitoring ketersediaan stok pangan di pasar induk']
+            }
+          ] )
+        }
+      });
+    } catch (err) {
+      console.error('Failed to fetch regional summary:', err);
+    }
+  };
+
+  const openSummaryModal = (code: string, name: string) => {
+    setSummaryRegion({ code, name });
+    setIsSummaryModalOpen(true);
+    fetchRegionalSummary(code, name);
+  };
+
   useEffect(() => {
     setMounted(true);
     fetchBMKGWarnings();
+    fetchTodayIssues();
     fetchAvailableRegions();
     fetchKamtibmasIndex();
     fetchKamtibmasTrend();
@@ -515,6 +666,12 @@ export const useCommandCenterData = () => {
     sosmedDate,
     setSosmedDate,
     isSosmedLoading,
-    fetchSosmedSentiment
+    fetchSosmedSentiment,
+    // Regional Summary
+    isSummaryModalOpen,
+    setIsSummaryModalOpen,
+    summaryRegion,
+    summaryData,
+    openSummaryModal
   };
 };
