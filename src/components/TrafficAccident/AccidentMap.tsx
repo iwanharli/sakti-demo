@@ -31,6 +31,9 @@ const createCustomIcon = (status: string, count: number = 1) => {
   const color = status === 'MD' ? '#ef4444' : status === 'LB' ? '#f59e0b' : (status === 'LL' || status === 'LR') ? '#06b6d4' : '#9ca3af';
   const html = `
     <div class="relative flex items-center justify-center">
+      <!-- Tactical Pulse -->
+      <div class="absolute w-full h-full rounded-full tactical-pulse" style="background-color: ${color}"></div>
+      
       <div class="absolute w-4 h-4 rounded-full border border-${color}/40 bg-${color}/10" style="border-color: ${color}66; background-color: ${color}1a"></div>
       <div class="relative w-2 h-2 rounded-full border border-white/80" style="background-color: ${color}"></div>
       ${count > 1 ? `

@@ -683,12 +683,14 @@
   animation: ews-spin-slow 12s linear infinite;
 }
 
-@keyframes ews-pulse-glow {
-  0%, 100% { filter: drop-shadow(0 0 5px rgba(239, 68, 68, 0.4)); opacity: 1; }
-  50% { filter: drop-shadow(0 0 15px rgba(239, 68, 68, 0.8)); opacity: 0.8; }
+@keyframes tactical-pulse {
+  0% { transform: scale(0.8); opacity: 0.8; }
+  50% { transform: scale(1.5); opacity: 0.2; }
+  100% { transform: scale(2); opacity: 0; }
 }
-.ews-animate-pulse-glow {
-  animation: ews-pulse-glow 2s ease-in-out infinite;
+
+.tactical-pulse {
+  animation: tactical-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 /* Tactical Pulse for Map Markers */
