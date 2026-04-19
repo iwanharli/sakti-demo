@@ -281,7 +281,7 @@ export default function DisasterHistory() {
                    <div className="flex flex-col gap-3 min-w-[360px] px-6 py-2 border-l border-white/5">
                      {/* Row 1: Human Impact */}
                      <div className="grid grid-cols-3 gap-4">
-                       <div className={`flex items-center gap-2 w-full ${event.total_meninggal > 0 ? 'opacity-100' : 'opacity-30'}`} title="Meninggal Dunia">
+                       <div className={`flex items-center gap-2 w-full cursor-help transition-opacity ${event.total_meninggal > 0 ? 'opacity-100' : 'opacity-30'}`} title="Meninggal Dunia (Jiwa)">
                          <i className="fa-solid fa-skull text-[10px] text-red-500 w-4 text-center"></i>
                          <span className={`text-2xl font-orbitron font-black min-w-[30px] text-center ${event.total_meninggal > 0 ? 'text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.4)]' : 'text-gray-400'}`}>
                            {event.total_meninggal || 0}
@@ -289,7 +289,7 @@ export default function DisasterHistory() {
                          <span className="text-[8px] text-gray-500 font-bold uppercase tracking-widest w-8">MD</span>
                        </div>
  
-                       <div className={`flex items-center gap-2 w-full ${event.total_hilang > 0 ? 'opacity-100' : 'opacity-30'}`} title="Orang Hilang">
+                       <div className={`flex items-center gap-2 w-full cursor-help transition-opacity ${event.total_hilang > 0 ? 'opacity-100' : 'opacity-30'}`} title="Orang Hilang / Dalam Pencarian">
                          <i className="fa-solid fa-person-circle-question text-[10px] text-amber-500 w-4 text-center"></i>
                          <span className={`text-2xl font-orbitron font-black min-w-[30px] text-center ${event.total_hilang > 0 ? 'text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.3)]' : 'text-gray-400'}`}>
                            {event.total_hilang || 0}
@@ -297,7 +297,7 @@ export default function DisasterHistory() {
                          <span className="text-[8px] text-gray-500 font-bold uppercase tracking-widest w-8">HLG</span>
                        </div>
  
-                       <div className={`flex items-center gap-2 w-full ${event.total_terluka > 0 ? 'opacity-100' : 'opacity-30'}`} title="Korban Terluka">
+                       <div className={`flex items-center gap-2 w-full cursor-help transition-opacity ${event.total_terluka > 0 ? 'opacity-100' : 'opacity-30'}`} title="Korban Terluka / Cedera">
                          <i className="fa-solid fa-user-injured text-[10px] text-blue-400 w-4 text-center"></i>
                          <span className={`text-2xl font-orbitron font-black min-w-[30px] text-center ${event.total_terluka > 0 ? 'text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.3)]' : 'text-gray-400'}`}>
                            {event.total_terluka || 0}
@@ -311,7 +311,7 @@ export default function DisasterHistory() {
  
                      {/* Row 2: Infrastructure Impact */}
                      <div className="grid grid-cols-3 gap-4">
-                       <div className={`flex items-center gap-2 w-full ${event.total_rumah_rusak > 0 ? 'opacity-100' : 'opacity-30'}`} title="Rumah Rusak">
+                       <div className={`flex items-center gap-2 w-full cursor-help transition-opacity ${event.total_rumah_rusak > 0 ? 'opacity-100' : 'opacity-30'}`} title="Jumlah Rumah Rusak / Hancur">
                          <i className="fa-solid fa-house-crack text-[10px] text-orange-400 w-4 text-center"></i>
                          <span className={`text-2xl font-orbitron font-black min-w-[30px] text-center ${event.total_rumah_rusak > 0 ? 'text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.3)]' : 'text-gray-400'}`}>
                            {event.total_rumah_rusak || 0}
@@ -319,7 +319,7 @@ export default function DisasterHistory() {
                          <span className="text-[8px] text-gray-500 font-bold uppercase tracking-widest w-8">RSK</span>
                        </div>
  
-                       <div className={`flex items-center gap-2 w-full ${event.total_rumah_terendam > 0 ? 'opacity-100' : 'opacity-30'}`} title="Rumah Terendam">
+                       <div className={`flex items-center gap-2 w-full cursor-help transition-opacity ${event.total_rumah_terendam > 0 ? 'opacity-100' : 'opacity-30'}`} title="Jumlah Rumah Terendam Banjir">
                          <i className="fa-solid fa-house-flood-water text-[10px] text-cyan-400 w-4 text-center"></i>
                          <span className={`text-2xl font-orbitron font-black min-w-[30px] text-center ${event.total_rumah_terendam > 0 ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]' : 'text-gray-400'}`}>
                            {event.total_rumah_terendam || 0}
@@ -327,7 +327,7 @@ export default function DisasterHistory() {
                          <span className="text-[8px] text-gray-500 font-bold uppercase tracking-widest w-8">TRD</span>
                        </div>
  
-                       <div className={`flex items-center gap-2 w-full ${event.total_fasum_rusak > 0 ? 'opacity-100' : 'opacity-30'}`} title="Fasilitas Umum Rusak">
+                       <div className={`flex items-center gap-2 w-full cursor-help transition-opacity ${event.total_fasum_rusak > 0 ? 'opacity-100' : 'opacity-30'}`} title="Fasilitas Umum / Sosial Rusak">
                          <i className="fa-solid fa-building-circle-exclamation text-[10px] text-emerald-400 w-4 text-center"></i>
                          <span className={`text-2xl font-orbitron font-black min-w-[30px] text-center ${event.total_fasum_rusak > 0 ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.3)]' : 'text-gray-400'}`}>
                            {event.total_fasum_rusak || 0}
