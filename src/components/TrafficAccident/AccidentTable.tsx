@@ -251,15 +251,19 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
                        <span className="text-[10px] bg-white/10 text-gray-300 px-2 py-0.5 rounded border border-white/10 font-black uppercase tracking-tighter">{acc.victim_status}</span>
                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border transition-all duration-300 ${
                          acc.injury_status === 'MD' ? 'bg-red-500/10 text-red-500 border-red-500/30' : 
-                         acc.injury_status === 'LL' ? 'bg-cyan-500/10 text-cyan-500 border-cyan-500/30' : 
+                         acc.injury_status === 'LB' ? 'bg-amber-500/10 text-amber-500 border-amber-500/30' : 
+                         (acc.injury_status === 'LR' || acc.injury_status === 'LL') ? 'bg-cyan-500/10 text-cyan-500 border-cyan-500/30' : 
                          'bg-gray-500/10 text-gray-400 border-white/10'
                        }`}>
                          <div className={`w-1 h-1 rounded-full mr-1.5 ${
                            acc.injury_status === 'MD' ? 'bg-red-500 shadow-[0_0_5px_#ef4444]' :
-                           acc.injury_status === 'LL' ? 'bg-cyan-500 shadow-[0_0_5px_#06b6d4]' :
+                           acc.injury_status === 'LB' ? 'bg-amber-500 shadow-[0_0_5px_#f59e0b]' :
+                           (acc.injury_status === 'LR' || acc.injury_status === 'LL') ? 'bg-cyan-500 shadow-[0_0_5px_#06b6d4]' :
                            'bg-gray-500'
                          }`} />
-                         {acc.injury_status === 'MD' ? 'Meninggal Dunia' : acc.injury_status === 'LL' ? 'Luka Luka' : 'Tanpa Kondisi'}
+                         {acc.injury_status === 'MD' ? 'Meninggal Dunia' : 
+                          acc.injury_status === 'LB' ? 'Luka Berat' : 
+                          (acc.injury_status === 'LR' || acc.injury_status === 'LL') ? 'Luka Luka' : 'Tanpa Kondisi'}
                        </span>
                     </div>
                   </div>

@@ -28,7 +28,7 @@ const MapController: React.FC<{ coords?: string }> = ({ coords }) => {
 };
 
 const createCustomIcon = (status: string) => {
-  const color = status === 'MD' ? '#ef4444' : status === 'LL' ? '#06b6d4' : '#9ca3af';
+  const color = status === 'MD' ? '#ef4444' : status === 'LB' ? '#f59e0b' : (status === 'LL' || status === 'LR') ? '#06b6d4' : '#9ca3af';
   const html = `
     <div class="relative flex items-center justify-center">
       <div class="absolute w-4 h-4 rounded-full border border-${color}/40 bg-${color}/10" style="border-color: ${color}66; background-color: ${color}1a"></div>
@@ -77,9 +77,13 @@ export const AccidentMap: React.FC<AccidentMapProps> = ({ accidents, focusCoord 
                   <div className="flex items-center gap-2 mb-2">
                     <span className={`px-2 py-0.5 rounded text-xs font-black ${
                       acc.injury_status === 'MD' ? 'bg-red-500/20 text-red-400' : 
-                      acc.injury_status === 'LB' ? 'bg-amber-500/20 text-amber-400' : 'bg-cyan-500/20 text-cyan-400'
+                      acc.injury_status === 'LB' ? 'bg-amber-500/20 text-amber-400' : 
+                      (acc.injury_status === 'LR' || acc.injury_status === 'LL') ? 'bg-cyan-500/20 text-cyan-400' : 
+                      'bg-gray-500/20 text-gray-400'
                     }`}>
-                      {acc.injury_status === 'MD' ? 'MENINGGAL DUNIA (MD)' : acc.injury_status === 'LB' ? 'LUKA BERAT' : 'LUKA RINGAN'}
+                      {acc.injury_status === 'MD' ? 'MENINGGAL DUNIA (MD)' : 
+                       acc.injury_status === 'LB' ? 'LUKA BERAT' : 
+                       (acc.injury_status === 'LR' || acc.injury_status === 'LL') ? 'LUKA RINGAN' : 'TANPA KONDISI'}
                     </span>
                     <span className="text-xs text-gray-500">{new Date(acc.accident_date).toLocaleDateString('id-ID')}</span>
                   </div>

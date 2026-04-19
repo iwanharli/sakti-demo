@@ -11,7 +11,7 @@ export interface TrafficAccident {
   polres: string;
   accident_date: string;
   victim_name: string;
-  injury_status: 'MD' | 'LL' | '';
+  injury_status: 'MD' | 'LB' | 'LR' | 'LL' | '';
   victim_status: string;
   location_description: string;
   location_latlong: string;
