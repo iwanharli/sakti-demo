@@ -96,7 +96,7 @@ export const useTrafficAccidentData = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [province, injuryStatus, startDate, endDate, search, limit, page, addToast]);
+  }, [province, injuryStatus, victimStatus, startDate, endDate, search, limit, page, addToast]);
 
   // Reset page when filters change
   useEffect(() => {
