@@ -37,8 +37,8 @@ npm run build
 # 5. Production Process Management
 echo "🔄 Me-restart Backend dengan PM2 (Production Mode)..."
 # We use 'delete/start' cycle to ensure all ENV changes are loaded fresh
-npx pm2 delete sakti-backend-8440 || true
-PORT=8440 npx pm2 start "npm start" --name "sakti-backend-8440"
+npx pm2 delete demo-sakti-backend-8440 || true
+PORT=8440 npx pm2 start "npm start" --name "demo-sakti-backend-8440"
 
 cd ..
 
