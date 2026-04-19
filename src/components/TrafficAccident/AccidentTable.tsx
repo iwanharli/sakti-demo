@@ -198,9 +198,8 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
           <thead className="sticky top-0 bg-[#0d121f] z-10">
             <tr className="border-b border-white/10">
               <th className="p-4 text-xs font-black text-cyan-500/60 uppercase tracking-widest min-w-[150px]">Waktu & Lokasi</th>
-              <th className="p-4 text-xs font-black text-cyan-500/60 uppercase tracking-widest min-w-[180px]">Detail Korban</th>
-              <th className="p-4 text-xs font-black text-cyan-500/60 uppercase tracking-widest min-w-[300px]">Deskripsi Kejadian</th>
-              <th className="p-4 text-xs font-black text-cyan-500/60 uppercase tracking-widest min-w-[120px]">Status</th>
+              <th className="p-4 text-xs font-black text-cyan-500/60 uppercase tracking-widest min-w-[300px]">Detail Korban & Kondisi</th>
+              <th className="p-4 text-xs font-black text-cyan-500/60 uppercase tracking-widest min-w-[350px]">Deskripsi Kejadian</th>
               <th className="p-4 text-xs font-black text-cyan-500/60 uppercase tracking-widest min-w-[250px] text-right">Administrasi</th>
             </tr>
           </thead>
@@ -208,7 +207,7 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
             {isLoading ? (
               Array.from({ length: 8 }).map((_, i) => (
                 <tr key={i} className="animate-pulse">
-                  <td colSpan={5} className="p-8"><div className="h-4 bg-white/5 rounded w-full" /></td>
+                  <td colSpan={4} className="p-8"><div className="h-4 bg-white/5 rounded w-full" /></td>
                 </tr>
               ))
             ) : accidents.map((acc) => (
@@ -220,11 +219,23 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
                     <span className="text-[11px] text-cyan-500/50 font-mono">{acc.polres}</span>
                   </div>
                 </td>
-                <td className="p-4">
-                  <div className="flex flex-col gap-1">
+                <td className="p-4 min-w-[250px]">
+                  <div className="flex flex-col gap-2">
                     <span className="text-sm font-black text-amber-400 group-hover:text-amber-300 transition-colors uppercase leading-tight tracking-wide">{acc.victim_name}</span>
-                    <div className="flex items-center gap-2">
-                       <span className="text-[10px] bg-white/5 text-gray-500 px-1.5 py-0.5 rounded border border-white/5 font-black uppercase tracking-tighter">{acc.victim_status}</span>
+                    <div className="flex flex-wrap items-center gap-2">
+                       <span className="text-[10px] bg-white/10 text-gray-300 px-2 py-0.5 rounded border border-white/10 font-black uppercase tracking-tighter">{acc.victim_status}</span>
+                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border transition-all duration-300 ${
+                         acc.injury_status === 'MD' ? 'bg-red-500/10 text-red-500 border-red-500/30' : 
+                         acc.injury_status === 'LL' ? 'bg-cyan-500/10 text-cyan-500 border-cyan-500/30' : 
+                         'bg-gray-500/10 text-gray-400 border-white/10'
+                       }`}>
+                         <div className={`w-1 h-1 rounded-full mr-1.5 ${
+                           acc.injury_status === 'MD' ? 'bg-red-500 shadow-[0_0_5px_#ef4444]' :
+                           acc.injury_status === 'LL' ? 'bg-cyan-500 shadow-[0_0_5px_#06b6d4]' :
+                           'bg-gray-500'
+                         }`} />
+                         {acc.injury_status === 'MD' ? 'MD' : acc.injury_status === 'LL' ? 'LL' : 'T/K'}
+                       </span>
                     </div>
                   </div>
                 </td>
@@ -234,20 +245,6 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
                       "{acc.location_description}"
                     </p>
                   </div>
-                </td>
-                <td className="p-4">
-                  <span className={`inline-flex items-center px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all duration-300 ${
-                    acc.injury_status === 'MD' ? 'bg-red-500/10 text-red-500 border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.1)]' : 
-                    acc.injury_status === 'LL' ? 'bg-cyan-500/10 text-cyan-500 border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.1)]' : 
-                    'bg-gray-500/10 text-gray-400 border-white/10'
-                  }`}>
-                    <div className={`w-1.5 h-1.5 rounded-full mr-2 ${
-                      acc.injury_status === 'MD' ? 'bg-red-500 shadow-[0_0_8px_#ef4444]' :
-                      acc.injury_status === 'LL' ? 'bg-cyan-500 shadow-[0_0_8px_#06b6d4]' :
-                      'bg-gray-500'
-                    }`} />
-                    {acc.injury_status === 'MD' ? 'Meninggal Dunia' : acc.injury_status === 'LL' ? 'Luka Luka' : 'Tanpa Kondisi'}
-                  </span>
                 </td>
                 <td className="p-4 text-right">
                   <div className="flex flex-col items-end gap-1.5">
