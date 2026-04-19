@@ -65,6 +65,8 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
   const conditionOptions = [
     { label: 'Semua Kondisi', value: 'Semua' },
     { label: 'Meninggal Dunia', value: 'MD' },
+    { label: 'Luka Berat', value: 'LB' },
+    { label: 'Luka Ringan', value: 'LR' },
     { label: 'Luka Luka', value: 'LL' },
     { label: 'Tanpa Kondisi', value: '' }
   ];

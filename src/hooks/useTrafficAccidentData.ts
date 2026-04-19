@@ -48,7 +48,7 @@ export const useTrafficAccidentData = () => {
   const [endDate, setEndDate] = useState('2026-04-19');
   const [search, setSearch] = useState('');
   
-  const [limit, setLimit] = useState(50);
+  const [limit, setLimit] = useState(500);
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState<{ total: number, totalPages: number } | null>(null);
 
