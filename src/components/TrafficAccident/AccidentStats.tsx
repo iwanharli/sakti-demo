@@ -1,4 +1,3 @@
-import React from 'react';
 import type { TrafficAccidentStats } from '../../hooks/useTrafficAccidentData';
 
 interface AccidentStatsProps {
@@ -13,7 +12,8 @@ export const AccidentStats: React.FC<AccidentStatsProps> = ({ stats, isLoading }
       value: stats?.total || 0, 
       icon: 'fa-truck-medical', 
       color: 'cyan',
-      subtext: 'Insiden Terdeteksi' 
+      subtext: 'Insiden Terdeteksi',
+      date: stats?.latest_date
     },
     { 
       label: 'Meninggal Dunia', 
@@ -70,6 +70,11 @@ export const AccidentStats: React.FC<AccidentStatsProps> = ({ stats, isLoading }
               'bg-emerald-500'
             }`} />
             {card.subtext}
+            {card.date && (
+              <span className="text-gray-600 lowercase tracking-tighter text-[9px] border-l border-white/10 pl-2 ml-1">
+                s.d. {new Date(card.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+              </span>
+            )}
           </div>
 
           <div className={`absolute right-4 top-1/2 -translate-y-1/2 text-5xl opacity-10 group-hover:opacity-20 transition-opacity ${

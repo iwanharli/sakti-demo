@@ -22,6 +22,9 @@ export default function CommandCenter() {
         <TopSummary 
           nationalKamtibmasStats={data.nationalKamtibmasStats}
           commodityHetStats={data.commodityHetStats}
+          sosmedSentiment={data.sosmedSentiment}
+          accidentStats={data.accidentStats}
+          tickerItems={data.dynamicTickerItems}
         />
 
         {/* Top Map Section */}

@@ -4,6 +4,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import type { RiskScore } from '../../../types';
 import indonesiaGeoJSONUrl from '../../../assets/indonesia.geojson?url';
 import MapHUD from './MapHUD';
+import WeatherRadarMap from './WeatherRadarMap';
 
 // Mapbox Token from Environment
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
@@ -64,6 +65,7 @@ const MapSection: React.FC<MapSectionProps> = ({
   setActiveMapMode,
   riskScores,
   setKamtibmasRegion,
+  cityBoundaries,
   openSummaryModal
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -507,10 +509,27 @@ const MapSection: React.FC<MapSectionProps> = ({
       />
 
       {/* Actual Mapbox Container */}
-      <div ref={mapContainerRef} className="w-full h-full" />
+      <div 
+        ref={mapContainerRef} 
+        className={`w-full h-full ${activeMapMode === 'weather' ? 'hidden' : 'block'}`} 
+      />
+
+      {/* National Weather Map (Leaflet) */}
+      {activeMapMode === 'weather' && (
+        <WeatherRadarMap 
+          selectedCity={selectedCity}
+          setSelectedCity={setSelectedCity}
+          mapCities={mapCities}
+          cityBoundaries={cityBoundaries}
+          weatherData={weatherData}
+          loading={false} // Loading handled by useCommandCenterData
+          addToast={addToast}
+        />
+      )}
 
       {/* ZOOM & VIEW CONTROLS */}
-      <div className="absolute bottom-10 right-10 z-20 flex flex-col gap-2">
+      {activeMapMode !== 'weather' && (
+        <div className="absolute bottom-10 right-10 z-20 flex flex-col gap-2">
         <button 
           onClick={() => {
             setSelectedCity('');
@@ -529,14 +548,6 @@ const MapSection: React.FC<MapSectionProps> = ({
           <i className="fa-solid fa-minus text-sm"></i>
         </button>
       </div>
-
-      {/* TACTICAL WEATHER REPORT HUD (BOTTOM LEFT) */}
-      {activeMapMode === 'weather' && weatherData && (
-        <div className="absolute bottom-10 left-10 z-10 pointer-events-none">
-          <div className="bg-black/60 backdrop-blur-3xl border border-cyan-500/30 p-5 rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.6)] pointer-events-auto w-[320px] ews-animate-slide-in">
-            {/* Weather HUD Content ... */}
-          </div>
-        </div>
       )}
     </div>
   );

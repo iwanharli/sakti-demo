@@ -60,17 +60,19 @@ const MapHUD: React.FC<MapHUDProps> = ({
   return (
     <>
       {/* STATUS BADGE (TOP CENTER) */}
-      <div className="absolute top-10 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
-        <div className={`status-badge-v3 ${status.toLowerCase()}`}>
-          <span className="tracking-[0.3em] font-black">{status}</span>
-          <div className="status-icon-v3">
-            <i className={`fa-solid ${status === 'AMAN' ? 'fa-shield-halved' : 'fa-triangle-exclamation'}`}></i>
+      {activeMapMode !== 'weather' && (
+        <div className="absolute top-10 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+          <div className={`status-badge-v3 ${status.toLowerCase()}`}>
+            <span className="tracking-[0.3em] font-black">{status}</span>
+            <div className="status-icon-v3">
+              <i className={`fa-solid ${status === 'AMAN' ? 'fa-shield-halved' : 'fa-triangle-exclamation'}`}></i>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* LIVE MONITOR (TOP LEFT) */}
-      {currentProv && (
+      {currentProv && activeMapMode !== 'weather' && (
         <div className="absolute top-8 left-8 z-30 pointer-events-auto">
           <div 
             className="province-monitor-v3 group cursor-pointer"
@@ -110,31 +112,33 @@ const MapHUD: React.FC<MapHUDProps> = ({
         <div className="flex items-center gap-2 bg-black/40 backdrop-blur-3xl border border-white/5 p-1.5 rounded-2xl pointer-events-auto shadow-2xl">
           {[
             { id: 'situational', label: 'Situational', icon: 'fa-layer-group' },
-            { id: 'weather', label: 'Weather Radar', icon: 'fa-cloud-satellite-radar' }
+            { id: 'weather', label: 'Weather Radar', icon: 'fa-satellite-dish' }
           ].map((mode) => (
             <button
               key={mode.id}
               onClick={() => setActiveMapMode(mode.id as any)}
-              className={`px-4 py-2 rounded-xl font-orbitron font-bold text-[9px] tracking-[0.2em] transition-all flex items-center gap-2 uppercase ${
+              title={mode.label}
+              className={`w-10 h-10 rounded-xl transition-all flex items-center justify-center transition-all ${
                 activeMapMode === mode.id 
                 ? 'bg-cyan-500 text-black shadow-[0_0_20px_rgba(6,182,212,0.4)]' 
                 : 'text-gray-400 hover:text-white hover:bg-white/5'
               }`}
             >
-              <i className={`fa-solid ${mode.icon} text-[10px]`}></i>
-              {mode.label}
+              <i className={`fa-solid ${mode.icon} text-sm`}></i>
             </button>
           ))}
         </div>
       </div>
 
       {/* TACTICAL FOOTER (BOTTOM LEFT) */}
-      <div className="absolute bottom-10 left-10 z-20 pointer-events-none flex items-center gap-3">
+      {activeMapMode !== 'weather' && (
+        <div className="absolute bottom-10 left-10 z-20 pointer-events-none flex items-center gap-3">
         <div className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_10px_#22d3ee] animate-pulse"></div>
         <span className="text-[10px] font-black tracking-[0.3em] text-cyan-400/60 uppercase">
           SAKTI GEOSPATIAL INTELLIGENCE
         </span>
       </div>
+      )}
 
       {/* MAP AURA OVERLAY (BEETWEEN LAYERS) */}
       <div className={`map-aura-aura ${status.toLowerCase()}`}></div>

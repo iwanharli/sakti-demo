@@ -1,21 +1,34 @@
 import React from 'react';
 import { useAppStore } from '../../../store/useAppStore';
-import { tickerItems } from '../../../data/mockDashboard';
-
 interface TopSummaryProps {
   nationalKamtibmasStats: { today: number; yesterday: number; trend_pct: number } | null;
   commodityHetStats: { sp2kp: number; pihps: number } | null;
+  sosmedSentiment: any | null;
+  accidentStats: { total: number; trend_pct: number; latest_date?: string } | null;
+  tickerItems: { text: string; icon: string; color: string }[];
 }
 
 const TopSummary: React.FC<TopSummaryProps> = ({ 
   nationalKamtibmasStats, 
-  commodityHetStats 
+  commodityHetStats,
+  sosmedSentiment,
+  accidentStats,
+  tickerItems 
 }) => {
   const { addToast } = useAppStore();
 
-  const handleAlertClick = () => {
-    addToast("Membuka detail analitik sektoral...", "info");
+  const handleNavigate = (hash: string) => {
+    window.location.hash = hash;
   };
+
+  // Calculate negative percentage from sosmed sentiment
+  const negativePct = React.useMemo(() => {
+    if (!sosmedSentiment || !sosmedSentiment.stats) return 24.5; // fallback during loading
+    const negativeStat = sosmedSentiment.stats.find((s: any) => 
+      s.sentiment === 'Negatif' || s.sentiment?.toLowerCase().includes('negati')
+    );
+    return negativeStat ? negativeStat.percentage : 24.5;
+  }, [sosmedSentiment]);
 
   return (
     <div className="space-y-4 mb-6">
@@ -52,7 +65,10 @@ const TopSummary: React.FC<TopSummaryProps> = ({
       {/* Analytical Summary Cards */}
       <div className="grid grid-cols-4 gap-5">
         {/* Kamtibmas Total */}
-        <div className="ews-stat-card red cursor-pointer group" onClick={() => handleAlertClick()}>
+        <div 
+          className="ews-stat-card red cursor-pointer group hover:scale-[1.02] transition-all" 
+          onClick={() => handleNavigate('#/kamtibmas-management')}
+        >
           <div className="text-[11px] text-gray-500 uppercase font-orbitron tracking-widest mb-3">Total Kejadian Kamtibmas</div>
           <div className="font-orbitron text-4xl font-bold text-red-500 mb-1">
             {nationalKamtibmasStats?.today.toLocaleString('id-ID') || '1.227'}
@@ -70,10 +86,13 @@ const TopSummary: React.FC<TopSummaryProps> = ({
         </div>
 
         {/* Commodity HET */}
-        <div className="ews-stat-card amber cursor-pointer group">
+        <div 
+          className="ews-stat-card amber cursor-pointer group hover:scale-[1.02] transition-all"
+          onClick={() => handleNavigate('#/commodities-price')}
+        >
           <div className="text-[11px] text-gray-500 uppercase font-orbitron tracking-widest mb-3">Komoditas Diatas HET</div>
           <div className="font-orbitron text-4xl font-bold text-amber-500 mb-1">
-            {(commodityHetStats?.sp2kp || 0) + (commodityHetStats?.pihps || 0) || '13'}
+            {commodityHetStats ? (commodityHetStats.sp2kp + commodityHetStats.pihps) : '13'}
           </div>
           <div className="flex items-center gap-2 text-[11px] font-rajdhani font-bold">
             <span className="text-amber-500">SP2KP: {commodityHetStats?.sp2kp || 9}</span>
@@ -86,12 +105,21 @@ const TopSummary: React.FC<TopSummaryProps> = ({
         </div>
 
         {/* Sentiment Analysis */}
-        <div className="ews-stat-card red cursor-pointer group">
+        <div 
+          className="ews-stat-card red cursor-pointer group hover:scale-[1.02] transition-all"
+          onClick={() => handleNavigate('#/osint')}
+        >
           <div className="text-[11px] text-gray-500 uppercase font-orbitron tracking-widest mb-3">Sentimen Negatif</div>
-          <div className="font-orbitron text-4xl font-bold text-red-500 mb-1">24.5%</div>
-          <div className="flex items-center gap-1.5 text-[11px] font-rajdhani font-bold text-red-500 italic">
-            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-            High Awareness Alert
+          <div className="font-orbitron text-4xl font-bold text-red-500 mb-1">
+            {negativePct}%
+          </div>
+          <div className="flex flex-col gap-1.5 font-rajdhani font-bold text-[11px]">
+            {sosmedSentiment?.filtered_date && (
+              <div className="text-gray-500 uppercase tracking-tighter text-[10px]">
+                <i className="fa-solid fa-calendar-day mr-1 text-gray-700"></i>
+                Data: {new Date(sosmedSentiment.filtered_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+              </div>
+            )}
           </div>
           <div className="absolute right-4 top-1/2 -translate-y-1/2 text-5xl opacity-10 text-red-500 group-hover:opacity-20 transition-opacity">
             <i className="fa-solid fa-face-frown"></i>
@@ -99,11 +127,22 @@ const TopSummary: React.FC<TopSummaryProps> = ({
         </div>
 
         {/* Accident Data */}
-        <div className="ews-stat-card cyan cursor-pointer group">
+        <div 
+          className="ews-stat-card cyan cursor-pointer group hover:scale-[1.02] transition-all"
+          onClick={() => handleNavigate('#/traffic-accident-mitigation')}
+        >
           <div className="text-[11px] text-gray-500 uppercase font-orbitron tracking-widest mb-3">Data Kecelakaan</div>
-          <div className="font-orbitron text-4xl font-bold text-cyan-400 mb-1">42</div>
-          <div className="text-[11px] text-cyan-500/80 font-rajdhani font-bold uppercase tracking-widest">
-            <i className="fa-solid fa-calendar-day mr-1"></i> Terdata Hari Ini
+          <div className="font-orbitron text-4xl font-bold text-cyan-400 mb-1">
+            {accidentStats?.total.toLocaleString('id-ID') || '42'}
+          </div>
+          <div className="flex flex-col gap-1 text-[11px] font-rajdhani font-bold uppercase tracking-widest">
+            <div className="flex items-center gap-2">
+              <span className={accidentStats?.trend_pct && accidentStats.trend_pct > 0 ? 'text-red-400' : 'text-emerald-400'}>
+                <i className={`fa-solid ${accidentStats?.trend_pct && accidentStats.trend_pct > 0 ? 'fa-caret-up' : 'fa-caret-down'}`}></i>
+                {Math.abs(accidentStats?.trend_pct || 0).toFixed(1)}%
+              </span>
+              <span className="text-gray-500 italic">7 hari terakhir</span>
+            </div>
           </div>
           <div className="absolute right-4 top-1/2 -translate-y-1/2 text-5xl opacity-10 text-cyan-400 group-hover:opacity-20 transition-opacity">
             <i className="fa-solid fa-truck-medical"></i>

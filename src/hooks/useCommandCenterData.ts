@@ -8,7 +8,7 @@ export const useCommandCenterData = () => {
   const addToast = useAppStore((s) => s.addToast);
   const [mounted, setMounted] = useState(false);
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
-  const [timelineData, setTimelineData] = useState<TimelineItem[]>(timelineItems);
+  const [timelineData, setTimelineData] = useState<TimelineItem[]>([]);
   const [issueItems, setIssueItems] = useState<TimelineItem[]>([]);
   const [filter, setFilter] = useState<'all' | 'bmkg' | 'issue'>('all');
   const [riskScores, setRiskScores] = useState<RiskScore[]>([]);
@@ -21,6 +21,7 @@ export const useCommandCenterData = () => {
   const [isKamtibmasLoading, setIsKamtibmasLoading] = useState(false);
   const [nationalKamtibmasStats, setNationalKamtibmasStats] = useState<{today: number, yesterday: number, trend_pct: number} | null>(null);
   const [commodityHetStats, setCommodityHetStats] = useState<{sp2kp: number, pihps: number} | null>(null);
+  const [accidentStats, setAccidentStats] = useState<{ total: number; trend_pct: number; latest_date?: string } | null>(null);
   const [commodityMatrix, setCommodityMatrix] = useState<any[]>([]);
   const [isCommodityLoading, setIsCommodityLoading] = useState(false);
   const [foodRiskData, setFoodRiskData] = useState<any[]>([]);
@@ -77,6 +78,43 @@ export const useCommandCenterData = () => {
     const timelineEl = document.querySelector('.ews-timeline');
     if (timelineEl) timelineEl.scrollTop = 0;
   };
+
+  // Generate dynamic ticker items from live feeds
+  const dynamicTickerItems = useMemo(() => {
+    const items: any[] = [];
+    
+    // 1. Add Tactical Issues
+    issueItems.slice(0, 5).forEach(issue => {
+      items.push({
+        text: `${issue.content} (${issue.percentage}%)`,
+        icon: 'fa-triangle-exclamation',
+        color: issue.color === 'red' ? 'text-red-500' : 'text-amber-500'
+      });
+    });
+
+    // 2. Add BMKG Warnings
+    timelineData
+      .filter(item => item.tags.includes('BMKG_ALERT'))
+      .slice(0, 5)
+      .forEach(warning => {
+        items.push({
+          text: `${warning.event}: ${warning.content}`,
+          icon: 'fa-tower-broadcast',
+          color: 'text-cyan-400'
+        });
+      });
+
+    // 3. Fallback if everything is empty
+    if (items.length === 0) {
+      items.push({
+        text: 'SITUASI TERPANTAU KONDUSIF - MONITORING AKTIF',
+        icon: 'fa-shield-check',
+        color: 'text-emerald-500'
+      });
+    }
+
+    return items;
+  }, [issueItems, timelineData]);
 
   const filteredTimeline = useMemo(() => {
     let combined = [...timelineData, ...issueItems];
@@ -176,6 +214,25 @@ export const useCommandCenterData = () => {
       }
     } catch (err) {
       console.error('Commodity HET Stats Fetch Error:', err);
+    }
+  };
+
+  const fetchTrafficAccidentStats = async () => {
+    try {
+      const response = await authFetch(`${getApiBase()}/analytics/traffic-accident-stats`);
+      if (response.ok) {
+        const data = await response.json();
+        // Backend returns a single object with totals
+        if (data && typeof data.total === 'number') {
+          setAccidentStats({ 
+            total: data.total, 
+            trend_pct: data.trend_pct || 0,
+            latest_date: data.latest_date
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Traffic Accident Stats Fetch Error:', err);
     }
   };
 
@@ -522,6 +579,7 @@ export const useCommandCenterData = () => {
     fetchKamtibmasIndex();
     fetchKamtibmasTrend();
     fetchNationalKamtibmasStats();
+    fetchTrafficAccidentStats();
     fetchCommodityHetStats();
     fetchCommodityMatrix();
     fetchRiskScores();
@@ -634,6 +692,7 @@ export const useCommandCenterData = () => {
     isKamtibmasLoading,
     nationalKamtibmasStats,
     commodityHetStats,
+    accidentStats,
     commodityMatrix,
     isCommodityLoading,
     foodRiskData,
@@ -672,6 +731,7 @@ export const useCommandCenterData = () => {
     setIsSummaryModalOpen,
     summaryRegion,
     summaryData,
+    dynamicTickerItems,
     openSummaryModal
   };
 };

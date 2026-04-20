@@ -1563,6 +1563,7 @@ app.get('/api/analytics/traffic-accident-stats', authenticateToken, async (req, 
     let query = sql`
       WITH latest AS (SELECT MAX(accident_date) as max_d FROM sample_polisi_kecelakaan_data)
       SELECT 
+        l.max_d as latest_date,
         COUNT(*)::int as total,
         COUNT(CASE WHEN injury_status = 'MD' THEN 1 END)::int as fatal,
         COUNT(CASE WHEN injury_status IN ('LL', 'LB', 'LR') THEN 1 END)::int as light,
@@ -1578,7 +1579,8 @@ app.get('/api/analytics/traffic-accident-stats', authenticateToken, async (req, 
       query = sql`${query} AND p.region_name = ${province as string}`;
     }
 
-    const results = await dbPrimary.execute(query);
+    const finalQuery = sql`${query} GROUP BY l.max_d`;
+    const results = await dbPrimary.execute(finalQuery);
     res.json(results.rows[0]);
   } catch (error: any) {
     console.error('Traffic stats error:', error);
