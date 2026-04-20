@@ -11,11 +11,23 @@ interface AppStore {
   setSelectedRegion: (region: string) => void;
   setSelectedDate: (date: string) => void;
   setSelectedSource: (source: string) => void;
+  // Sidebar Badges
+  sidebarCounts: {
+    osint: number;
+    commodities: number;
+    disaster: number;
+    security: number;
+    traffic: number;
+  };
+  setSidebarCounts: (counts: Partial<AppStore['sidebarCounts']>) => void;
   // Network Tracking
   activeRequests: string[];
   addRequest: (label: string) => void;
   removeRequest: (label: string) => void;
   updateRequest: (oldLabel: string, newLabel: string) => void;
+  // Layout
+  isSidebarCollapsed: boolean;
+  toggleSidebar: () => void;
 }
 
 export const getApiBase = () => {
@@ -97,10 +109,21 @@ export const useAppStore = create<AppStore>()((set) => ({
   selectedRegion: 'Nasional',
   selectedDate: '',
   selectedSource: 'SP2KP',
+  sidebarCounts: {
+    osint: 0,
+    commodities: 0,
+    disaster: 0,
+    security: 0,
+    traffic: 0,
+  },
   activeRequests: [],
+  isSidebarCollapsed: false,
   setSelectedRegion: (region) => set({ selectedRegion: region }),
   setSelectedDate: (date) => set({ selectedDate: date }),
   setSelectedSource: (source) => set({ selectedSource: source }),
+  setSidebarCounts: (counts) => set((state) => ({ 
+    sidebarCounts: { ...state.sidebarCounts, ...counts } 
+  })),
   addRequest: (label) => set((state) => ({ 
     activeRequests: [...state.activeRequests, label] 
   })),
@@ -110,6 +133,7 @@ export const useAppStore = create<AppStore>()((set) => ({
   updateRequest: (oldLabel, newLabel) => set((state) => ({
     activeRequests: state.activeRequests.map(r => r === oldLabel ? newLabel : r)
   })),
+  toggleSidebar: () => set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
   addToast: (message: string, type: Toast['type'] = 'info') => {
     const iconMap = {
       success: '<i class="fa-solid fa-circle-check text-emerald-400"></i>',

@@ -26,18 +26,13 @@ export default function Topbar({ title, subtitle, currentTime, alertCount, onAle
 
   useEffect(() => {
     loadUser();
-
-    // Listen for profile updates
     window.addEventListener('sakti_user_updated', loadUser);
     return () => window.removeEventListener('sakti_user_updated', loadUser);
   }, []);
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('id-ID', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
     });
   };
 
@@ -53,7 +48,6 @@ export default function Topbar({ title, subtitle, currentTime, alertCount, onAle
     setIsMenuOpen(false);
   };
 
-  // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -67,84 +61,115 @@ export default function Topbar({ title, subtitle, currentTime, alertCount, onAle
   const avatarUrl = user?.picture ? `${SERVER_URL}${user.picture}` : null;
 
   return (
-    <header className="sticky top-0 z-[1100] bg-[#0a0f1a]/95 backdrop-blur-xl border-b border-gray-800 px-6 py-3">
-      <div className="flex items-center justify-between">
-        {/* Left: Title & Breadcrumb */}
-        <div>
-          <h2 className="font-orbitron font-bold text-base text-white tracking-wider">{title}</h2>
-          <p className="text-xs text-cyan-500/60 mt-1 font-mono uppercase tracking-widest">{subtitle}</p>
+    <header className="sticky top-0 z-[1100] bg-[#0a0f1a]/80 backdrop-blur-2xl border-b border-white/[0.05] px-6 py-3 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+      {/* Precision Glow Border */}
+      <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-500/20 to-transparent shadow-[0_0_10px_#06b6d4]" />
+      
+      <div className="flex items-center justify-between relative z-10">
+        {/* Left: Tactical Breadcrumbs */}
+        <div className="flex items-center gap-4">
+          <div className="w-1 h-8 bg-gradient-to-b from-cyan-500/40 to-indigo-500/40 rounded-full" />
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-[10px] text-cyan-500/60 font-black tracking-[0.3em] uppercase">SAKTI</span>
+              <span className="text-gray-700 text-xs">/</span>
+              <h2 className="font-orbitron font-black text-[14px] text-white tracking-[0.2em] uppercase">{title}</h2>
+            </div>
+            <p className="text-[9px] text-gray-500 mt-0.5 font-bold uppercase tracking-[0.15em] opacity-80">{subtitle}</p>
+          </div>
         </div>
 
-        {/* Right: Time, Alert, User */}
-        <div className="flex items-center gap-5">
-          {/* Live Clock */}
-          <div className="font-mono text-cyan-400 text-sm tracking-wider">
-            {formatTime(currentTime)} WIB
+
+        {/* Right: Widgets & Profile */}
+        <div className="flex items-center gap-6">
+          {/* Weather Widget */}
+          <div className="hidden md:flex items-center gap-3 border-r border-white/10 pr-6">
+            <i className="fa-solid fa-cloud-sun text-amber-400 text-sm"></i>
+            <div className="flex flex-col items-end">
+              <span className="text-[12px] font-orbitron font-bold text-white leading-none">28°C</span>
+              <span className="text-[8px] text-gray-500 font-black uppercase tracking-widest mt-1">Jakarta, ID</span>
+            </div>
           </div>
 
-          {/* Alert Button */}
+          {/* Clock Widget */}
+          <div className="flex flex-col items-end border-r border-white/10 pr-6 min-w-[100px]">
+             <span className="font-mono text-[15px] font-black text-cyan-400 tracking-wider leading-none">
+              {formatTime(currentTime)}
+            </span>
+            <span className="text-[8px] text-gray-600 font-black uppercase tracking-[0.3em] mt-1">WIB // TIMEZONE</span>
+          </div>
+
+          {/* Tactical Alert Button */}
           <button
             onClick={onAlertClick}
-            className="flex items-center gap-2 px-3 py-1.5 bg-red-500/15 border border-red-500/40 rounded-lg text-red-400 text-sm font-semibold hover:bg-red-500/25 transition-colors ews-animate-pulse-red"
+            className="relative group p-2 rounded-lg bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 transition-all overflow-hidden"
           >
-            <span><i className="fa-solid fa-bell"></i></span>
-            <span>{alertCount}  </span>
+            <div className="absolute inset-0 bg-red-500/5 animate-pulse" />
+            <div className="relative flex items-center gap-3">
+               <i className="fa-solid fa-bell text-red-500 text-sm animate-bounce duration-slow"></i>
+               <span className="font-orbitron font-black text-xs text-red-400">{alertCount}</span>
+            </div>
+            {/* Glow sweep */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
           </button>
 
-          {/* User Profile Dropdown */}
+          {/* User Profile */}
           <div className="relative" ref={menuRef}>
-            <div 
+            <button 
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className={`flex items-center gap-3 cursor-pointer transition-all duration-300 p-1 rounded-xl ${isMenuOpen ? 'bg-white/5 shadow-[0_0_15px_rgba(255,255,255,0.05)]' : 'hover:bg-white/5'}`}
+              className={`flex items-center gap-3 p-1 rounded-xl transition-all duration-300 ${isMenuOpen ? 'bg-white/5 ring-1 ring-cyan-500/20 shadow-[0_0_20px_rgba(34,211,238,0.1)]' : 'hover:bg-white/5'}`}
             >
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-800 to-blue-600 border-2 border-cyan-500 flex items-center justify-center overflow-hidden">
+              <div className="relative w-9 h-9 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 border border-white/20 flex items-center justify-center overflow-hidden shadow-lg">
+                <div className="absolute inset-0 bg-cyan-500/10" />
                 {avatarUrl ? (
                   <img src={avatarUrl} alt={user?.name} className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-xs font-bold text-cyan-400">{user?.name ? user.name.charAt(0) : 'U'}</span>
+                  <span className="relative z-10 text-xs font-black font-orbitron text-cyan-400">{user?.name ? user.name.charAt(0) : 'U'}</span>
                 )}
+                {/* Active corners */}
+                <div className="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-cyan-500" />
+                <div className="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-cyan-500" />
               </div>
-              <div className="hidden sm:block mr-2 text-left">
-                <div className="text-sm font-semibold text-white flex items-center gap-2">
+              <div className="hidden sm:block text-left mr-1">
+                <div className="text-[12px] font-black text-white flex items-center gap-2 uppercase tracking-wide">
                   {user?.name || 'User SAKTI'}
-                  <i className={`fa-solid fa-chevron-down text-[10px] transition-transform duration-300 ${isMenuOpen ? 'rotate-180' : ''}`}></i>
+                  <i className={`fa-solid fa-chevron-down text-[8px] text-gray-500 transition-transform duration-500 ${isMenuOpen ? 'rotate-180 text-cyan-500' : ''}`}></i>
                 </div>
-                <div className="text-[10px] text-gray-500 uppercase tracking-wider">{user?.role || 'PERSONEL'}</div>
+                <div className="text-[8px] text-gray-600 font-bold uppercase tracking-[0.2em] mt-0.5">{user?.role || 'PERSONEL'} // OPS</div>
               </div>
-            </div>
+            </button>
 
-            {/* Dropdown Menu */}
+            {/* Cyber-Card Dropdown Menu */}
             {isMenuOpen && (
-              <div className="absolute right-0 mt-3 w-56 bg-[#0d1425] border border-gray-800 rounded-xl shadow-2xl overflow-hidden py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="absolute right-0 mt-4 w-60 bg-[#0d1425]/95 backdrop-blur-2xl border border-white/10 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
+                {/* Tactical Highlight */}
+                <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-cyan-500 to-transparent" />
+                
+                <div className="p-4 border-b border-white/5 bg-white/[0.02]">
+                  <div className="text-[10px] text-cyan-500/60 font-black uppercase tracking-widest mb-1">Authenticated Personnel</div>
+                  <div className="text-sm font-black text-white truncate">{user?.name}</div>
+                  <div className="text-[9px] text-gray-500 uppercase tracking-wider mt-1">{user?.role === 'admin' ? 'SYSTEM_ADMIN_ROOT' : 'STANDARD_OPERATOR'}</div>
+                </div>
 
-                <button 
-                  onClick={navigateToProfile}
-                  className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-all text-left group"
-                >
-                  <i className="fa-solid fa-user-gear text-gray-500 group-hover:text-cyan-400"></i>
-                  <span>Profil Akun</span>
-                </button>
-                <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-all text-left group">
-                  <i className="fa-solid fa-briefcase text-gray-500 group-hover:text-cyan-400"></i>
-                  <span>Akses Sistem</span>
-                </button>
-                {user?.role === 'admin' && (
-                  <button 
-                    onClick={() => { window.location.hash = '#/security-integrity'; setIsMenuOpen(false); }}
-                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-all text-left group"
-                  >
-                    <i className="fa-solid fa-shield-halved text-gray-500 group-hover:text-cyan-400"></i>
-                    <span>Integritas & Keamanan</span>
+                <div className="py-2">
+                  <button onClick={navigateToProfile} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-gray-400 hover:bg-cyan-500/10 hover:text-white transition-all text-left group">
+                    <i className="fa-solid fa-user-gear text-cyan-500/40 group-hover:text-cyan-400 transition-colors"></i>
+                    <span className="font-bold tracking-wide uppercase">Profil Akses & Keamanan</span>
                   </button>
-                )}
-                <div className="my-2 border-t border-gray-800"></div>
-                <button 
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-all text-left group"
-                >
-                  <i className="fa-solid fa-right-from-bracket group-hover:translate-x-1 transition-transform"></i>
-                  <span className="font-bold">Logout Sistem</span>
-                </button>
+                  {user?.role === 'admin' && (
+                    <button onClick={() => { window.location.hash = '#/security-integrity'; setIsMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-gray-400 hover:bg-cyan-500/10 hover:text-white transition-all text-left group">
+                      <i className="fa-solid fa-shield-halved text-cyan-500/40 group-hover:text-cyan-400 transition-colors"></i>
+                      <span className="font-bold tracking-wide uppercase">Integritas Sistem Root</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="p-2 border-t border-white/5 bg-black/40">
+                  <button onClick={handleLogout} className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-red-500/5 hover:bg-red-500/10 border border-red-500/20 transition-all group">
+                    <span className="text-[10px] font-black text-red-400 uppercase tracking-widest">Logout Sistem</span>
+                    <i className="fa-solid fa-right-from-bracket text-red-500 text-xs group-hover:translate-x-1 transition-transform"></i>
+                  </button>
+                </div>
               </div>
             )}
           </div>

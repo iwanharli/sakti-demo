@@ -8,7 +8,7 @@ interface PageTransitionLoaderProps {
 
 export default function PageTransitionLoader({ isVisible, isStandalone = false }: PageTransitionLoaderProps) {
   const [show, setShow] = useState(false);
-  const activeRequests = useAppStore((state) => state.activeRequests);
+  const { activeRequests, isSidebarCollapsed } = useAppStore();
   const [loadText, setLoadText] = useState('ACCESSING INTELLIGENCE MATRIX');
   
   const statusTexts = [
@@ -38,7 +38,11 @@ export default function PageTransitionLoader({ isVisible, isStandalone = false }
   if (!show) return null;
 
   return (
-    <div className={`fixed ${isStandalone ? 'inset-0' : 'left-72 top-[64px] right-0 bottom-0'} z-[1050] flex flex-col items-center justify-center transition-opacity duration-500 overflow-hidden ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+    <div className={`
+      fixed z-[1050] flex flex-col items-center justify-center transition-all duration-500 overflow-hidden 
+      ${isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}
+      ${isStandalone ? 'inset-0' : `${isSidebarCollapsed ? 'left-20' : 'left-72'} top-[64px] right-0 bottom-0`}
+    `}>
       {/* Backdrop */}
       <div className="absolute inset-0 bg-[#070a12]/90 backdrop-blur-3xl ews-scanline" />
       <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/5 via-transparent to-red-500/5 opacity-40" />

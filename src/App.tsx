@@ -19,6 +19,7 @@ import AccountProfile from './pages/AccountProfile';
 import Login from './pages/Login';
 import AlertModal from './components/AlertModal';
 import { useAppStore } from './store/useAppStore';
+import { useSidebarData } from './hooks/useSidebarData';
 import type { AlertItem } from './types';
 
 export type PageType = 
@@ -114,7 +115,10 @@ function App() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [minTimeElapsed, setMinTimeElapsed] = useState(true);
   const [commodityParam, setCommodityParam] = useState('');
-  const { addToast, setSelectedSource } = useAppStore();
+  const { addToast, setSelectedSource, isSidebarCollapsed } = useAppStore();
+
+  // Initialize Global Sidebar Data Polling
+  useSidebarData();
 
   // --- NATIVE HASH ROUTING LOGIC ---
   useEffect(() => {
@@ -265,7 +269,7 @@ function App() {
         <Sidebar currentPage={currentPage} />
       )}
 
-      <div className={`${isStandalonePage ? '' : 'ml-72'} h-full flex flex-col`}>
+      <div className={`${isStandalonePage ? '' : (isSidebarCollapsed ? 'ml-20' : 'ml-72')} h-full flex flex-col transition-all duration-300 ease-in-out`}>
         {!isStandalonePage && (
           <Topbar 
             title={pageTitles[currentPage]}

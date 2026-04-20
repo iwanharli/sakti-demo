@@ -418,8 +418,60 @@ const MapSection: React.FC<MapSectionProps> = ({
     return 'AMAN';
   };
 
+  // Derived Loading State for Tactical UI
+  const isLoading = !mapLoaded || riskScores.length === 0;
+
   return (
     <div className="flex-1 bg-[#020617] rounded-3xl border border-white/10 relative overflow-hidden group/map-container">
+      {/* 
+        TACTICAL LOADING OVERLAY 
+        Shown while Mapbox is initializing or risk data is being synced
+      */}
+      {isLoading && (
+        <div className="absolute inset-0 z-[1500] bg-[#020617]/80 backdrop-blur-md flex flex-col items-center justify-center transition-all duration-1000">
+          <div className="relative mb-10">
+            {/* Pulsing Radar Core */}
+            <div className="w-32 h-32 rounded-full border border-cyan-500/20 flex items-center justify-center">
+              <div className="w-24 h-24 rounded-full border border-cyan-500/40 animate-ping opacity-20" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                 <div className="w-16 h-16 rounded-full border-t-2 border-cyan-500 animate-spin transition-all" />
+              </div>
+              <i className="fa-solid fa-satellite-dish text-cyan-500 text-3xl animate-pulse"></i>
+            </div>
+            
+            {/* Spinning Technical Outer Ring */}
+            <div className="absolute -inset-4 border border-dashed border-cyan-500/10 rounded-full animate-[spin_10s_linear_infinite]" />
+          </div>
+
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex items-center gap-3">
+              <div className="h-px w-12 bg-gradient-to-r from-transparent to-cyan-500"></div>
+              <span className="font-orbitron font-black text-white text-xs uppercase tracking-[0.5em] animate-pulse">
+                Initializing Tactical Grid
+              </span>
+              <div className="h-px w-12 bg-gradient-to-l from-transparent to-cyan-500"></div>
+            </div>
+            
+            <div className="flex flex-col items-center gap-1.5 opacity-50">
+               <div className="text-[9px] font-mono text-cyan-500/60 uppercase tracking-widest flex items-center gap-2">
+                  <span className="w-1 h-1 bg-cyan-500 rounded-full animate-pulse"></span>
+                  Synchronizing Sector Matrices...
+               </div>
+               <div className="text-[9px] font-mono text-cyan-500/60 uppercase tracking-widest flex items-center gap-2">
+                  <span className="w-1 h-1 bg-cyan-500 rounded-full animate-pulse delay-75"></span>
+                  Fetching Regional Risk Scores...
+               </div>
+            </div>
+          </div>
+
+          {/* Decorative Corner Brackets for Loading UI */}
+          <div className="absolute top-10 left-10 w-20 h-20 border-t border-l border-white/5" />
+          <div className="absolute top-10 right-10 w-20 h-20 border-t border-r border-white/5" />
+          <div className="absolute bottom-10 left-10 w-20 h-20 border-b border-l border-white/5" />
+          <div className="absolute bottom-10 right-10 w-20 h-20 border-b border-r border-white/5" />
+        </div>
+      )}
+
       {/* TACTICAL MAP HUD OVERLAY */}
       <MapHUD 
         riskScores={riskScores}

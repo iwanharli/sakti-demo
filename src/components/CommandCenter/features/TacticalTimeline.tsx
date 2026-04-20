@@ -32,7 +32,7 @@ const TacticalTimeline: React.FC<TacticalTimelineProps> = ({
               key={btn.id}
               onClick={() => setFilter(btn.id as any)}
               className={`
-                flex-1 flex items-center justify-center gap-2.5 py-2.5 px-5 rounded-md text-[10px] font-bold tracking-[0.2em] transition-all duration-300 uppercase font-rajdhani relative
+                flex-1 flex items-center justify-center gap-2.5 py-2.5 px-5 rounded-md text-[11px] font-bold tracking-[0.2em] transition-all duration-300 uppercase font-rajdhani relative
                 ${filter === btn.id 
                   ? 'text-cyan-400 bg-white/5 shadow-[0_0_20px_rgba(34,211,238,0.1)]' 
                   : 'text-gray-500 hover:text-gray-300 hover:bg-white/[0.02]'}
@@ -41,7 +41,7 @@ const TacticalTimeline: React.FC<TacticalTimelineProps> = ({
               {filter === btn.id && (
                 <span className="absolute inset-x-0 -bottom-1 h-[2px] bg-gradient-to-r from-transparent via-cyan-500 to-transparent pointer-events-none" />
               )}
-              <i className={`fa-solid ${btn.icon} text-[10px] ${filter === btn.id ? 'text-cyan-400' : 'text-gray-600'}`}></i>
+              <i className={`fa-solid ${btn.icon} text-[11px] ${filter === btn.id ? 'text-cyan-400' : 'text-gray-600'}`}></i>
               {btn.label}
             </button>
           ))}
@@ -86,11 +86,11 @@ const TacticalTimeline: React.FC<TacticalTimelineProps> = ({
                   {/* Top Row: Meta Information */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                       <i className={`${icon} text-[10px] opacity-60`} style={{ color: pColor }}></i>
-                       <span className="text-[9px] font-orbitron font-bold text-gray-500 uppercase tracking-[0.2em]">
+                       <i className={`${icon} text-[11px] opacity-60`} style={{ color: pColor }}></i>
+                       <span className="text-[11px] font-orbitron font-bold text-gray-500 uppercase tracking-[0.2em]">
                          {item.tags?.[0] || 'GENERAL'}
                        </span>
-                       <span className="text-[9px] font-mono text-gray-600 tracking-tighter">{item.time}</span>
+                       <span className="text-[10px] font-mono text-gray-600 tracking-tighter">{item.time}</span>
                     </div>
                     
                     {item.percentage !== undefined && (
@@ -98,19 +98,19 @@ const TacticalTimeline: React.FC<TacticalTimelineProps> = ({
                         <div className="w-12 h-[1px] bg-white/5 rounded-full overflow-hidden">
                            <div className="h-full bg-cyan-500/60" style={{ width: `${item.percentage}%` }} />
                         </div>
-                        <span className="text-[9px] font-orbitron text-cyan-500/80 tracking-widest">{item.percentage}%</span>
+                        <span className="text-[11px] font-orbitron text-cyan-500/80 tracking-widest">{item.percentage}%</span>
                       </div>
                     )}
                   </div>
 
                   {/* Middle Row: Content (Capitalized) */}
-                  <div className="text-[12px] font-bold text-gray-100 leading-tight uppercase tracking-wide group-hover:text-cyan-400 transition-colors">
+                  <div className="text-[14px] font-black text-gray-100 leading-tight uppercase tracking-wide group-hover:text-cyan-400 transition-colors">
                     {item.content}
                   </div>
 
                   {/* Event Tag */}
                   {item.event && (
-                    <div className="text-[8px] font-black text-white/40 uppercase tracking-[0.2em] flex items-center gap-1.5">
+                    <div className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] flex items-center gap-1.5">
                        <span className="w-1 h-1 rounded-full" style={{ backgroundColor: pColor }} />
                        {item.event}
                     </div>
@@ -119,17 +119,17 @@ const TacticalTimeline: React.FC<TacticalTimelineProps> = ({
                   {/* Components (Seismic, Maps, etc.) - Minimalist Versions */}
                   {item.magnitude && (
                     <div className="mt-2 grid grid-cols-3 gap-2 py-2 border-t border-white/5">
-                      <div>
-                        <div className="text-[7px] text-gray-600 uppercase font-black tracking-widest">MAGNITUDE</div>
-                        <div className="text-xs font-orbitron font-bold text-red-500/80">{item.magnitude} SR</div>
+                       <div>
+                        <div className="text-[9px] text-gray-600 uppercase font-black tracking-widest">MAGNITUDE</div>
+                        <div className="text-[13px] font-orbitron font-bold text-red-500/80">{item.magnitude} SR</div>
                       </div>
                       <div>
-                        <div className="text-[7px] text-gray-600 uppercase font-black tracking-widest">DEPTH</div>
-                        <div className="text-xs font-orbitron font-bold text-gray-300">{item.depth} KM</div>
+                        <div className="text-[9px] text-gray-600 uppercase font-black tracking-widest">DEPTH</div>
+                        <div className="text-[13px] font-orbitron font-bold text-gray-300">{item.depth} KM</div>
                       </div>
                       <div>
-                        <div className="text-[7px] text-gray-600 uppercase font-black tracking-widest">TSUNAMI</div>
-                        <div className={`text-[7px] font-black tracking-widest mt-0.5 ${item.status?.toLowerCase().includes('tidak') ? 'text-emerald-500/60' : 'text-red-500/80 animate-pulse'}`}>
+                        <div className="text-[9px] text-gray-600 uppercase font-black tracking-widest">TSUNAMI</div>
+                        <div className={`text-[9px] font-black tracking-widest mt-0.5 ${item.status?.toLowerCase().includes('tidak') ? 'text-emerald-500/60' : 'text-red-500/80 animate-pulse'}`}>
                           {item.status?.toLowerCase().includes('tidak') ? 'NEGATIVE' : 'ALERT'}
                         </div>
                       </div>
@@ -138,8 +138,8 @@ const TacticalTimeline: React.FC<TacticalTimelineProps> = ({
 
                   {item.epicenter && (
                     <div className="mt-1 pt-1 border-t border-white/5 flex flex-col gap-0.5">
-                       <div className="font-mono text-[9px] text-cyan-600/60 truncate">{item.coordinates}</div>
-                       <div className="text-[9px] text-gray-500 font-medium italic lowercase truncate">
+                       <div className="font-mono text-[11px] text-cyan-600/60 truncate">{item.coordinates}</div>
+                       <div className="text-[11px] text-gray-500 font-medium italic lowercase truncate">
                          "{item.epicenter}"
                        </div>
                     </div>
@@ -148,7 +148,7 @@ const TacticalTimeline: React.FC<TacticalTimelineProps> = ({
                   {item.subRegions && item.subRegions.length > 0 && filter !== 'issue' && (
                     <div className="mt-1 flex flex-wrap gap-1 opacity-60">
                       {item.subRegions.slice(0, 4).map((loc: string, i: number) => (
-                        <span key={i} className="text-[8px] bg-white/5 px-1.5 py-0.5 rounded border border-white/5 text-gray-500 uppercase">
+                        <span key={i} className="text-[10px] bg-white/5 px-1.5 py-0.5 rounded border border-white/5 text-gray-500 uppercase">
                           {loc}
                         </span>
                       ))}
@@ -163,10 +163,10 @@ const TacticalTimeline: React.FC<TacticalTimelineProps> = ({
             <div className="w-16 h-16 rounded-full bg-cyan-500/5 border border-cyan-500/10 flex items-center justify-center mb-6">
                <i className="fa-solid fa-shield-check text-cyan-500/20 text-2xl" />
             </div>
-            <h3 className="font-orbitron font-black text-[13px] text-cyan-500 tracking-[0.3em] uppercase mb-3">
+            <h3 className="font-orbitron font-black text-[15px] text-cyan-500 tracking-[0.3em] uppercase mb-3">
               SITUASI TERPANTAU KONDUSIF
             </h3>
-            <p className="text-[11px] text-gray-500 font-medium leading-relaxed max-w-[280px] uppercase tracking-wider">
+            <p className="text-[13px] text-gray-500 font-medium leading-relaxed max-w-[280px] uppercase tracking-wider">
                Belum terdeteksi adanya peringatan dini atau kejadian menonjol dalam basis data.
             </p>
           </div>

@@ -6,7 +6,7 @@ import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-import { correlations } from '../data/mockWeatherForecast';
+// import { correlations } from '../data/mockWeatherForecast';
 
 // Weather icon mapping for BMKG conditions
 const getConditionIcon = (condition: string) => {
@@ -92,7 +92,7 @@ export default function WeatherForecast() {
   const [selectedCity, setSelectedCity] = useState('');
   const [weatherData, setWeatherData] = useState<any>(null);
   const [mapCities, setMapCities] = useState<any[]>([]);
-  const [hoveredRainIndex, setHoveredRainIndex] = useState<number | null>(null);
+  // const [hoveredRainIndex, setHoveredRainIndex] = useState<number | null>(null);
   
   const [cityBoundaries, setCityBoundaries] = useState<any>(null);
   
@@ -185,21 +185,25 @@ export default function WeatherForecast() {
 
   // Derive stats from current or first forecast record
   const current = weatherData?.forecast?.[0];
+  /*
   const rainfallHistory = weatherData?.forecast?.map((d: any, i: number) => ({
     day: i + 1,
     date: d.report_date,
     value: Math.floor(Math.random() * 50), // Fallback if specific rain mm not in top-level
     status: d.condition.toLowerCase().includes('hujan') ? 'WASPADA' : 'NORMAL'
   })) || [];
+  */
 
-  const getX = (index: number) => (index / (rainfallHistory.length - 1 || 1)) * 360;
-  const getY = (value: number) => 100 - (value / 120) * 100;
+  // const getX = (index: number) => (index / (rainfallHistory.length - 1 || 1)) * 360;
+  // const getY = (value: number) => 100 - (value / 120) * 100;
 
+  /*
   const pathD = rainfallHistory.length > 0 
     ? rainfallHistory.map((pt: any, i: number) => `${i === 0 ? 'M' : 'L'}${getX(i)},${getY(pt.value)}`).join(' ')
     : "";
+  */
 
-  const areaD = pathD ? `${pathD} L360,100 L0,100 Z` : "";
+  // const areaD = pathD ? `${pathD} L360,100 L0,100 Z` : "";
 
   return (
     <div className="space-y-6 ews-animate-fade-in relative min-h-[600px]">
@@ -594,150 +598,19 @@ export default function WeatherForecast() {
         `}</style>
       </div>
 
-      {/* RAINFALL TREND SECTION (Using forecast as proxy for visualization) */}
+      {/* RAINFALL TREND SECTION (TEMPORARILY HIDDEN) */}
+      {/* 
       <div className="ews-card p-6 relative overflow-hidden group z-10">
-        <div className="flex items-center justify-between mb-8 relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
-              <i className="fa-solid fa-chart-line text-lg"></i>
-            </div>
-            <div>
-              <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">TREN CURAH HUJAN (30 HARI)</span>
-              <span className="text-[10px] text-cyan-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse" />
-                Visualisasi Data • Prediksi Presipitasi
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="h-80 relative z-10 mb-6 bg-black/20 rounded-lg border border-white/5 p-4 group/chart">
-          {hoveredRainIndex !== null && (
-            <div 
-              className="absolute z-50 pointer-events-none bg-[#0a0f1d]/90 border border-cyan-500/50 backdrop-blur-md p-3 rounded shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all duration-200"
-              style={{
-                left: `${getX(hoveredRainIndex)}px`,
-                top: `${getY(rainfallHistory[hoveredRainIndex].value) - 60}px`,
-                transform: 'translateX(-50%)'
-              }}
-            >
-              <div className="text-[9px] text-cyan-500 font-mono uppercase tracking-widest mb-1">
-                Day {rainfallHistory[hoveredRainIndex].day < 10 ? '0' : ''}{rainfallHistory[hoveredRainIndex].day} • PRECIPITATION
-              </div>
-              <div className="flex items-baseline gap-2">
-                <span className="font-orbitron text-xl font-bold text-white">{rainfallHistory[hoveredRainIndex].value}</span>
-                <span className="text-xs text-gray-500 font-mono">mm</span>
-              </div>
-              <div className={`text-[8px] mt-1 font-black px-1.5 py-0.5 rounded inline-block ${
-                rainfallHistory[hoveredRainIndex].status === 'WASPADA' ? 'bg-red-500/20 text-red-500' : 'bg-emerald-500/20 text-emerald-500'
-              }`}>
-                {rainfallHistory[hoveredRainIndex].status}
-              </div>
-              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-[#0a0f1d] border-r border-b border-cyan-500/50 rotate-45"></div>
-            </div>
-          )}
-
-          <svg viewBox="0 0 360 100" className="w-full h-full" preserveAspectRatio="none">
-            <g stroke="rgba(255,255,255,0.03)" strokeWidth="0.5">
-              {[0, 20, 40, 60, 80, 100].map(y => (
-                <line key={y} x1="0" y1={y} x2="360" y2={y} />
-              ))}
-              {[0, 60, 120, 180, 240, 300, 360].map(x => (
-                <line key={x} x1={x} y1="0" x2={x} y2="100" />
-              ))}
-            </g>
-            
-            <defs>
-              <linearGradient id="rainGradPro" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.2"/>
-                <stop offset="100%" stopColor="#06b6d4" stopOpacity="0"/>
-              </linearGradient>
-            </defs>
-
-            <line x1="0" y1="40" x2="360" y2="40" stroke="#ef4444" strokeWidth="1" strokeDasharray="4,4" opacity="0.4"/>
-            
-            <path d={areaD} fill="url(#rainGradPro)" className="transition-all duration-500" />
-            <path d={pathD} fill="none" stroke="#06b6d4" strokeWidth="1.5" strokeLinecap="round" className="opacity-80 transition-all duration-500" />
-            
-            {!weatherData && (
-              <text x="180" y="55" textAnchor="middle" className="fill-gray-600 font-orbitron text-[12px] uppercase font-bold tracking-[0.2em] opacity-50 animate-pulse">
-                Menunggu Input Lokasi...
-              </text>
-            )}
-            
-            {rainfallHistory.map((pt: any, idx: number) => (
-              <g key={idx}>
-                <circle cx={getX(idx)} cy={getY(pt.value)} r={hoveredRainIndex === idx ? "3" : "1.5"} fill={hoveredRainIndex === idx ? "#fff" : "#06b6d4"} />
-                <rect x={getX(idx) - 6} y="0" width="12" height="100" fill="transparent" className="cursor-pointer" onMouseEnter={() => setHoveredRainIndex(idx)} onMouseLeave={() => setHoveredRainIndex(null)} />
-              </g>
-            ))}
-          </svg>
-          
-          <div className="flex justify-between mt-2 px-1 text-[11px] font-mono text-gray-600 uppercase font-bold tracking-tighter">
-            <span>Day 01</span><span>Day 05</span><span>Day 10</span><span>Day 15</span><span>Day 20</span><span>Day 25</span><span>Day 30</span>
-          </div>
-        </div>
+        ...
       </div>
+      */}
 
+      {/* AQI AND CORRELATION SECTION (TEMPORARILY HIDDEN) */}
+      {/* 
       <div className="grid grid-cols-2 gap-5 relative z-10">
-        <div className="ews-card p-6 relative overflow-hidden group">
-          <div className="flex items-center gap-3 mb-6 relative z-10">
-            <div className="w-10 h-10 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
-              <i className="fa-solid fa-leaf text-lg"></i>
-            </div>
-            <div>
-              <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">KUALITAS UDARA (AQI)</span>
-              <span className="text-[10px] text-emerald-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Komposisi Atmosfer • Indeks Pencemaran
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-8 relative z-10">
-            <div className="relative w-28 h-28">
-              <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="10"/>
-                <circle cx="50" cy="50" r="42" fill="none" stroke="#10b981" strokeWidth="10" strokeDasharray={`${(65 / 100) * 2 * Math.PI * 42} ${2 * Math.PI * 42}`} />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="font-orbitron text-4xl font-black text-emerald-400 leading-none">65</span>
-                <span className="text-[11px] text-gray-100 font-bold uppercase tracking-widest mt-1">AQI</span>
-              </div>
-            </div>
-            <div className="flex-1 space-y-4">
-              <div>
-                <div className="text-[18px] font-black text-emerald-400 mb-1 tracking-wide uppercase">SEDANG — Kondisi Baik</div>
-                <div className="text-[14px] text-gray-400 font-medium leading-relaxed">Konsentrasi PM2.5 sebesar 18µg/m³, secara umum kualitas udara sehat.</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="ews-card p-6 relative overflow-hidden group">
-          <div className="flex items-center gap-3 mb-6 relative z-10">
-            <div className="w-10 h-10 rounded bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.1)]">
-              <i className="fa-solid fa-diagram-project text-lg"></i>
-            </div>
-            <div>
-              <span className="font-orbitron font-bold text-[15px] text-gray-100 uppercase tracking-wider block">KORELASI GANGGUAN KAMTIBMAS</span>
-              <span className="text-[10px] text-amber-500/60 font-mono uppercase tracking-[0.2em] flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                Matriks Risiko • Analisis Korelasi
-              </span>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3 relative z-10">
-            {correlations.map((item, idx) => (
-              <div key={idx} className={`p-3 rounded-xl border flex items-center justify-between transition-all duration-300 hover:bg-white/[0.02] ${item.color === 'red' ? 'bg-red-500/5 border-red-500/20' : item.color === 'amber' ? 'bg-amber-500/5 border-amber-500/20' : item.color === 'cyan' ? 'bg-cyan-500/5 border-cyan-500/20' : 'bg-emerald-500/5 border-emerald-500/20'}`} onClick={() => addToast(`Detail korelasi: ${item.label}`, 'info')}>
-                <div>
-                  <div className="text-[11px] text-gray-400 uppercase font-black tracking-widest mb-1">{item.label}</div>
-                  <div className={`font-orbitron font-bold text-[16px] ${item.color === 'red' ? 'text-red-500' : item.color === 'amber' ? 'text-amber-500' : item.color === 'cyan' ? 'text-cyan-500' : 'text-emerald-400'}`}>{item.value}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        ...
       </div>
+      */}
     </div>
   );
 }
