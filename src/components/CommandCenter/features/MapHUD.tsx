@@ -53,17 +53,6 @@ const MapHUD: React.FC<MapHUDProps> = ({
 
   return (
     <>
-      {/* STATUS BADGE (TOP CENTER) */}
-      {activeMapMode !== 'weather' && (
-        <div className="absolute top-10 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
-          <div className={`status-badge-v3 ${status.toLowerCase()}`}>
-            <span className="tracking-[0.3em] font-black">{status}</span>
-            <div className="status-icon-v3">
-              <i className={`fa-solid ${status === 'AMAN' ? 'fa-shield-halved' : 'fa-triangle-exclamation'}`}></i>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* LIVE MONITOR (TOP LEFT) */}
       {currentProv && activeMapMode !== 'weather' && (
