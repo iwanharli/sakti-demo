@@ -8,7 +8,6 @@ import WeatherRadarMap from './WeatherRadarMap';
 
 // Mapbox Token from Environment
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
-mapboxgl.accessToken = MAPBOX_TOKEN;
 
 interface MapSectionProps {
   activeMapMode: 'situational' | 'weather' | 'test';
@@ -22,8 +21,6 @@ interface MapSectionProps {
   setKamtibmasRegion: (region: string) => void; // New prop for syncing dashboard
   openSummaryModal: (code: string, name: string) => void; // Trigger for regional summary
 }
-
-// Unused scale removed
 
 const MapSection: React.FC<MapSectionProps> = ({
   activeMapMode,
@@ -47,6 +44,14 @@ const MapSection: React.FC<MapSectionProps> = ({
   // Initialize Map
   useEffect(() => {
     if (!mapContainerRef.current) return;
+
+    // Validate Mapbox Token
+    if (!MAPBOX_TOKEN) {
+      console.error("CRITICAL: Mapbox Token is missing. Please check your .env file.");
+      addToast("Konfigurasi Peta Gagal: Token tidak ditemukan.", "error");
+      return;
+    }
+    mapboxgl.accessToken = MAPBOX_TOKEN;
 
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
