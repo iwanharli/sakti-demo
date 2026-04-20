@@ -12,22 +12,10 @@ mapboxgl.accessToken = MAPBOX_TOKEN;
 
 interface MapSectionProps {
   activeMapMode: 'situational' | 'weather' | 'test';
-  isRainViewerActive: boolean;
-  isSatelliteMode: boolean;
   selectedCity: string;
   setSelectedCity: (city: string) => void;
-  cities: string[];
   cityBoundaries: any;
-  radarFrames: any[];
-  radarIndex: number;
-  isRadarPlaying: boolean;
-  setIsRadarPlaying: (playing: boolean) => void;
-  setIsRainViewerActive: (active: boolean) => void;
-  setIsSatelliteMode: (satellite: boolean) => void;
-  isWeatherHeatmapVisible: boolean;
-  setIsWeatherHeatmapVisible: (visible: boolean) => void;
   mapCities: any[]; // Used for markers in weather mode
-  weatherData: any;
   addToast: (msg: string, type: any) => void;
   setActiveMapMode: (mode: 'situational' | 'weather' | 'test') => void;
   riskScores: RiskScore[]; // New prop for tactical coloring
@@ -35,32 +23,13 @@ interface MapSectionProps {
   openSummaryModal: (code: string, name: string) => void; // Trigger for regional summary
 }
 
-const COLOR_SCALE: Record<number, string> = {
-  0: 'rgba(16, 185, 129, 0.85)',   // AMAN (Green)
-  1: 'rgba(16, 185, 129, 0.85)',   // AMAN
-  2: 'rgba(245, 158, 11, 0.85)',   // WASPADA (Orange)
-  3: 'rgba(245, 158, 11, 0.85)',   // WASPADA
-  4: 'rgba(239, 68, 68, 0.85)',    // BAHAYA (Red)
-  5: 'rgba(220, 38, 38, 0.95)'     // KRITIS (Crimson)
-};
+// Unused scale removed
 
 const MapSection: React.FC<MapSectionProps> = ({
   activeMapMode,
-  isRainViewerActive,
-  isSatelliteMode,
   selectedCity,
   setSelectedCity,
-  cities,
-  radarFrames,
-  radarIndex,
-  isRadarPlaying,
-  setIsRadarPlaying,
-  setIsRainViewerActive,
-  setIsSatelliteMode,
-  isWeatherHeatmapVisible,
-  setIsWeatherHeatmapVisible,
   mapCities,
-  weatherData,
   addToast,
   setActiveMapMode,
   riskScores,
@@ -81,9 +50,7 @@ const MapSection: React.FC<MapSectionProps> = ({
 
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
-      style: isSatelliteMode 
-        ? 'mapbox://styles/mapbox/satellite-v9' 
-        : 'mapbox://styles/mapbox/dark-v11', // High-Fidelity Tactical Base
+      style: 'mapbox://styles/mapbox/dark-v11', // High-Fidelity Tactical Base
       center: [118.01, -2.55],
       zoom: 3.8,
       antialias: true,
@@ -286,44 +253,7 @@ const MapSection: React.FC<MapSectionProps> = ({
     } catch { /* ignore if feature not loaded */ }
   }, [mapLoaded]);
 
-  // RainViewer Radar Layer Update (Simplified for Mapbox compatibility)
-  useEffect(() => {
-    if (!mapLoaded || !mapRef.current) return;
-    const map = mapRef.current;
-
-    const sourceId = 'rainviewer-source';
-    const layerId = 'rainviewer-layer';
-
-    if (activeMapMode === 'weather' && isRainViewerActive && radarFrames.length > 0) {
-      const currentFrame = radarFrames[radarIndex];
-      const url = `https://tilecache.rainviewer.com${currentFrame.path}/256/{z}/{x}/{y}/2/1_1.png`;
-
-      try {
-        if (map.getSource(sourceId)) {
-          if (map.getLayer(layerId)) map.removeLayer(layerId);
-          map.removeSource(sourceId);
-        }
-
-        map.addSource(sourceId, {
-          type: 'raster',
-          tiles: [url],
-          tileSize: 256
-        });
-
-        map.addLayer({
-          id: layerId,
-          type: 'raster',
-          source: sourceId,
-          paint: { 'raster-opacity': 0.6 }
-        }, 'provinces-outline');
-      } catch (e) {}
-    } else {
-      try {
-        if (map.getLayer(layerId)) map.removeLayer(layerId);
-        if (map.getSource(sourceId)) map.removeSource(sourceId);
-      } catch (e) {}
-    }
-  }, [mapLoaded, activeMapMode, isRainViewerActive, radarFrames, radarIndex]);
+  // Legacy RainViewer logic removed
 
   // Update Dynamic Colors based on Risk Scores
   useEffect(() => {
@@ -369,15 +299,6 @@ const MapSection: React.FC<MapSectionProps> = ({
 
     updateTacticalMarkers();
   }, [mapLoaded, riskScores, activeMapMode]);
-
-  // Update Map Style on Mode Change
-  useEffect(() => {
-    if (!mapRef.current) return;
-    const style = isSatelliteMode 
-      ? 'mapbox://styles/mapbox/satellite-v9' 
-      : 'mapbox://styles/mapbox/dark-v11'; // Maintain Tactical Base
-    mapRef.current.setStyle(style);
-  }, [isSatelliteMode]);
 
   const updateTacticalMarkers = async () => {
     if (!mapRef.current) return;
@@ -521,7 +442,6 @@ const MapSection: React.FC<MapSectionProps> = ({
           setSelectedCity={setSelectedCity}
           mapCities={mapCities}
           cityBoundaries={cityBoundaries}
-          weatherData={weatherData}
           loading={false} // Loading handled by useCommandCenterData
           addToast={addToast}
         />

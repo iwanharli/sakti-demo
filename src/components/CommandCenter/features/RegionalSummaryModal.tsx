@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import { clsx } from 'clsx';
 import './RegionalSummaryModal.css';
 
 interface RegionalSummaryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  regionCode: string;
   regionName: string;
   data: any;
 }
@@ -13,7 +11,6 @@ interface RegionalSummaryModalProps {
 const RegionalSummaryModal: React.FC<RegionalSummaryModalProps> = ({
   isOpen,
   onClose,
-  regionCode,
   regionName,
   data
 }) => {
@@ -22,11 +19,6 @@ const RegionalSummaryModal: React.FC<RegionalSummaryModalProps> = ({
   if (!isOpen) return null;
 
   // Utilities mirroring Svelte component
-  const getStatusLabel = (score: number): string => {
-    if (score > 60) return 'Darurat';
-    if (score > 35) return 'Siaga';
-    return 'Normal';
-  };
 
   const getFoodRiskLabel = (score: number): string => {
     if (score > 60) return 'Sangat Tinggi';
@@ -41,11 +33,6 @@ const RegionalSummaryModal: React.FC<RegionalSummaryModalProps> = ({
     return 'safe';
   };
 
-  const getStatusClass = (score: number): string => {
-    if (score > 60) return 'danger';
-    if (score > 35) return 'warning';
-    return 'safe';
-  };
 
   const getStatusClassKamtibmas = (status: string): string => {
     const s = status?.trim().toLowerCase() || '';

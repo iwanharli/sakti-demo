@@ -43,12 +43,6 @@ const MapHUD: React.FC<MapHUDProps> = ({
 
   const currentProv = riskScores[currentProvIdx];
 
-  const getStatusColor = (score: number) => {
-    if (score > 60) return 'text-rose-400 bg-rose-500/10 border-rose-500/20';
-    if (score >= 35) return 'text-amber-400 bg-amber-500/10 border-amber-500/20';
-    return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
-  };
-
   const getStatusText = (score: number) => {
     if (score > 60) return 'BAHAYA';
     if (score >= 35) return 'WASPADA';

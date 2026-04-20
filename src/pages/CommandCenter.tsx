@@ -31,22 +31,10 @@ export default function CommandCenter() {
         <div className="h-[600px] w-full flex gap-5">
           <MapSection 
             activeMapMode={data.activeMapMode}
-            isRainViewerActive={data.isRainViewerActive}
-            isSatelliteMode={data.isSatelliteMode}
             selectedCity={data.selectedCity}
             setSelectedCity={data.setSelectedCity}
-            cities={data.cities}
             cityBoundaries={data.cityBoundaries}
-            radarFrames={data.radarFrames}
-            radarIndex={data.radarIndex}
-            isRadarPlaying={data.isRadarPlaying}
-            setIsRadarPlaying={data.setIsRadarPlaying}
-            setIsRainViewerActive={data.setIsRainViewerActive}
-            setIsSatelliteMode={data.setIsSatelliteMode}
-            isWeatherHeatmapVisible={data.isWeatherHeatmapVisible}
-            setIsWeatherHeatmapVisible={data.setIsWeatherHeatmapVisible}
             mapCities={data.mapCities}
-            weatherData={data.weatherData}
             addToast={data.addToast}
             setActiveMapMode={data.setActiveMapMode}
             riskScores={data.riskScores}
@@ -96,7 +84,6 @@ export default function CommandCenter() {
       <RegionalSummaryModal 
         isOpen={data.isSummaryModalOpen}
         onClose={() => data.setIsSummaryModalOpen(false)}
-        regionCode={data.summaryRegion.code}
         regionName={data.summaryRegion.name}
         data={data.summaryData}
       />

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { useAppStore, getApiBase, authFetch } from '../store/useAppStore';
+import { getApiBase, authFetch } from '../store/useAppStore';
 import ForceGraph2D from 'react-force-graph-2d';
 import KeywordsModal from '../components/KeywordsModal';
 import NegativeSentimentModal from '../components/NegativeSentimentModal';
@@ -207,10 +207,8 @@ const FloatingNetworkHUD = ({ nodes, links, limit, setLimit }: any) => {
 import CardDateRangePicker from '../components/CommandCenter/shared/CardDateRangePicker';
 
 export default function Osint() {
-  const addToast = useAppStore((s) => s.addToast);
   const [mounted, setMounted] = useState(false);
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
-  const [timeRange, setTimeRange] = useState<'24h' | '7d'>('24h');
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const fgRef = useRef<any>(null);
@@ -272,7 +270,7 @@ export default function Osint() {
   const [isEmotionModalOpen, setIsEmotionModalOpen] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
 
-  const handleToggle = (kw: string, current: string[], setter: Function) => {
+  const handleToggle = (kw: string, setter: Function) => {
     setter((prev: string[]) => {
       if (kw === 'All') return ['All'];
       let next = prev.filter(k => k !== 'All');
@@ -654,7 +652,7 @@ export default function Osint() {
 
                 <CardFilterDropdown
                   selectedKeywords={trendKeywords}
-                  onToggle={(kw: string) => handleToggle(kw, trendKeywords, setTrendKeywords)}
+                  onToggle={(kw: string) => handleToggle(kw, setTrendKeywords)}
                   options={summary?.keywords}
                   isOpen={isTrendFilterOpen}
                   setIsOpen={setIsTrendFilterOpen}
@@ -833,7 +831,7 @@ export default function Osint() {
 
               <CardFilterDropdown
                 selectedKeywords={networkKeywords}
-                onToggle={(kw: string) => handleToggle(kw, networkKeywords, setNetworkKeywords)}
+                onToggle={(kw: string) => handleToggle(kw, setNetworkKeywords)}
                 options={summary?.keywords}
                 isOpen={isNetworkFilterOpen}
                 setIsOpen={setIsNetworkFilterOpen}
@@ -1020,7 +1018,7 @@ export default function Osint() {
             />
             <CardFilterDropdown
               selectedKeywords={postKeywords}
-              onToggle={(kw: string) => handleToggle(kw, postKeywords, setPostKeywords)}
+              onToggle={(kw: string) => handleToggle(kw, setPostKeywords)}
               options={summary?.keywords}
               isOpen={isPostFilterOpen}
               setIsOpen={setIsPostFilterOpen}

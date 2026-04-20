@@ -84,7 +84,6 @@ interface WeatherRadarMapProps {
   setSelectedCity: (city: string) => void;
   mapCities: any[];
   cityBoundaries: any;
-  weatherData: any;
   loading: boolean;
   addToast: (msg: string, type: any) => void;
 }
@@ -94,7 +93,6 @@ export default function WeatherRadarMap({
   setSelectedCity,
   mapCities,
   cityBoundaries,
-  weatherData,
   loading,
   addToast
 }: WeatherRadarMapProps) {

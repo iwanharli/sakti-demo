@@ -1,5 +1,4 @@
 import React from 'react';
-import { useAppStore } from '../../../store/useAppStore';
 interface TopSummaryProps {
   nationalKamtibmasStats: { today: number; yesterday: number; trend_pct: number } | null;
   commodityHetStats: { sp2kp: number; pihps: number } | null;
@@ -15,8 +14,6 @@ const TopSummary: React.FC<TopSummaryProps> = ({
   accidentStats,
   tickerItems 
 }) => {
-  const { addToast } = useAppStore();
-
   const handleNavigate = (hash: string) => {
     window.location.hash = hash;
   };

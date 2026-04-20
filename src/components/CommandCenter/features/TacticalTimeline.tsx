@@ -62,10 +62,6 @@ const TacticalTimeline: React.FC<TacticalTimelineProps> = ({
             const pColor = item.color === 'red' ? '#ef4444' : 
                            item.color === 'amber' ? '#f59e0b' : 
                            item.color === 'emerald' || item.color === 'green' ? '#10b981' : '#06b6d4';
-
-            const glowClass = item.color === 'red' ? 'shadow-[0_0_15px_rgba(239,68,68,0.2)]' : 
-                              item.color === 'amber' ? 'shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 
-                              'shadow-[0_0_15px_rgba(6,182,212,0.15)]';
             
             return (
               <div 

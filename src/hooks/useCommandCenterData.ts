@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAppStore, getApiBase, authFetch } from '../store/useAppStore';
 import type { TimelineItem, RiskScore } from '../types';
 import type { BMKGWarning } from '../bmkg_types';
-import { timelineItems } from '../data/mockDashboard';
 
 export const useCommandCenterData = () => {
   const addToast = useAppStore((s) => s.addToast);

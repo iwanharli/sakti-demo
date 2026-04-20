@@ -24,6 +24,7 @@ export interface TrafficAccidentStats {
   fatal: number;
   heavy: number;
   light: number;
+  latest_date?: string;
 }
 
 export const useTrafficAccidentData = () => {
