@@ -32,6 +32,8 @@ export const useTrafficAccidentData = () => {
   const [stats, setStats] = useState<TrafficAccidentStats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isStatsLoading, setIsStatsLoading] = useState(false);
+  const [availableProvinces, setAvailableProvinces] = useState<string[]>([]);
+  const [availablePolres, setAvailablePolres] = useState<string[]>([]);
   const addToast = useAppStore(s => s.addToast);
 
   // Filters
@@ -52,6 +54,30 @@ export const useTrafficAccidentData = () => {
   const [limit, setLimit] = useState(500);
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState<{ total: number, totalPages: number } | null>(null);
+
+  const fetchMetadata = useCallback(async () => {
+    try {
+      const res = await authFetch(`${getApiBase()}/analytics/accident-metadata`);
+      if (res.ok) {
+        const data = await res.json();
+        
+        const provinces: string[] = [
+          'Nasional', 
+          ...Array.from(new Set((data.regions || []).map((r: any) => String(r).toUpperCase().trim()))).sort() as string[]
+        ];
+
+        const polres: string[] = [
+          'Semua', 
+          ...Array.from(new Set((data.polres || []).map((p: any) => String(p).toUpperCase().trim()))).sort() as string[]
+        ];
+
+        setAvailableProvinces(provinces);
+        setAvailablePolres(polres);
+      }
+    } catch (err) {
+      console.error('Failed to fetch accident metadata:', err);
+    }
+  }, []);
 
   const fetchStats = useCallback(async () => {
     setIsStatsLoading(true);
@@ -113,6 +139,10 @@ export const useTrafficAccidentData = () => {
   }, [province, injuryStatus, victimStatus, polres, startDate, endDate, search]);
 
   useEffect(() => {
+    fetchMetadata();
+  }, [fetchMetadata]);
+
+  useEffect(() => {
     fetchStats();
   }, [fetchStats]);
 
@@ -125,6 +155,8 @@ export const useTrafficAccidentData = () => {
     stats,
     isLoading,
     isStatsLoading,
+    availableProvinces,
+    availablePolres,
     province,
     setProvince,
     injuryStatus,

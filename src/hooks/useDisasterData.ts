@@ -32,6 +32,8 @@ export const useDisasterData = () => {
   const [history, setHistory] = useState<DisasterEvent[]>([]);
   const [stats, setStats] = useState<DisasterStats | null>(null);
   const [loading, setLoading] = useState(false);
+  const [availableRegions, setAvailableRegions] = useState<string[]>([]);
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [selectedRegion, setSelectedRegion] = useState('Nasional');
   const [selectedCategory, setSelectedCategory] = useState('Semua');
   const [startDate, setStartDate] = useState(() => {
@@ -40,7 +42,34 @@ export const useDisasterData = () => {
     return d.toISOString().split('T')[0];
   });
   const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 5;
   
+  const fetchMetadata = async () => {
+    try {
+      const response = await authFetch(`${API_BASE}/analytics/disaster-metadata`);
+      if (response && response.ok) {
+        const data = await response.json();
+        
+        // Use Set to ensure uniqueness after normalization
+        const regions: string[] = [
+          'Nasional', 
+          ...Array.from(new Set((data.regions || []).map((r: any) => String(r).toUpperCase().trim()))).sort() as string[]
+        ];
+
+        const categories: string[] = [
+          'Semua', 
+          ...Array.from(new Set((data.categories || []).map((c: any) => String(c).toUpperCase().trim()))).sort() as string[]
+        ];
+
+        setAvailableRegions(regions);
+        setAvailableCategories(categories);
+      }
+    } catch (err) {
+      console.error('Fetch Disaster Metadata Error:', err);
+    }
+  };
 
   const fetchHistory = async () => {
     setLoading(true);
@@ -50,6 +79,7 @@ export const useDisasterData = () => {
         category: selectedCategory,
         start_date: startDate,
         end_date: endDate,
+        search,
         limit: '50'
       });
       
@@ -57,7 +87,9 @@ export const useDisasterData = () => {
       
       if (response && response.ok) {
         const data = await response.json();
-        setHistory(data);
+        // ID-based deduplication as a fail-safe
+        const uniqueHistory = Array.from(new Map(data.map((item: any) => [item.id, item])).values());
+        setHistory(uniqueHistory as DisasterEvent[]);
       }
     } catch (err) {
       console.error('Fetch Disaster History Error:', err);
@@ -72,7 +104,8 @@ export const useDisasterData = () => {
         province: selectedRegion,
         category: selectedCategory,
         start_date: startDate,
-        end_date: endDate
+        end_date: endDate,
+        search
       });
       const response = await authFetch(`${API_BASE}/analytics/disaster-stats?${params.toString()}`);
       
@@ -86,14 +119,21 @@ export const useDisasterData = () => {
   };
 
   useEffect(() => {
+    fetchMetadata();
+  }, []);
+
+  useEffect(() => {
     fetchHistory();
     fetchStats();
-  }, [selectedRegion, selectedCategory, startDate, endDate]);
+    setPage(1); // Reset to first page when any filter changes
+  }, [selectedRegion, selectedCategory, startDate, endDate, search]);
 
   return {
     history,
     stats,
     loading,
+    availableRegions,
+    availableCategories,
     selectedRegion,
     setSelectedRegion,
     selectedCategory,
@@ -102,6 +142,21 @@ export const useDisasterData = () => {
     setStartDate,
     endDate,
     setEndDate,
-    refresh: fetchHistory
+    refresh: fetchHistory,
+    resetFilters: () => {
+      setSelectedRegion('Nasional');
+      setSelectedCategory('Semua');
+      setSearch('');
+      const d = new Date();
+      d.setDate(d.getDate() - 30);
+      setStartDate(d.toISOString().split('T')[0]);
+      setEndDate(new Date().toISOString().split('T')[0]);
+    },
+    search,
+    setSearch,
+    page,
+    setPage,
+    pageSize,
+    totalPages: Math.ceil(history.length / pageSize)
   };
 };

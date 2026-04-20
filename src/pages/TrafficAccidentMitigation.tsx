@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useTrafficAccidentData } from '../hooks/useTrafficAccidentData';
+import type { TrafficAccident } from '../hooks/useTrafficAccidentData';
 import { AccidentStats } from '../components/TrafficAccident/AccidentStats';
 import { AccidentMap } from '../components/TrafficAccident/AccidentMap';
 import { AccidentTable } from '../components/TrafficAccident/AccidentTable';
+import { AccidentMapModal } from '../components/TrafficAccident/AccidentMapModal';
 
 const TrafficAccidentMitigation: React.FC = () => {
   const { 
@@ -28,11 +30,25 @@ const TrafficAccidentMitigation: React.FC = () => {
     setPage,
     pagination,
     refresh,
-    resetFilters
+    resetFilters,
+    availableProvinces,
+    availablePolres
   } = useTrafficAccidentData();
   
   const [focusCoord, setFocusCoord] = useState<string | undefined>(undefined);
+  const [selectedAccident, setSelectedAccident] = useState<TrafficAccident | null>(null);
+  const [isMapModalOpen, setIsMapModalOpen] = useState(false);
 
+  const handleOpenMapModal = (latlong: string) => {
+    // Find the accident object by coordinates to show details in modal
+    const acc = accidents.find(a => a.location_latlong === latlong);
+    if (acc) {
+      setSelectedAccident(acc);
+      setIsMapModalOpen(true);
+    }
+    // Also update focus coord for the embedded map as fallback
+    setFocusCoord(latlong);
+  };
 
   return (
     <div className="flex flex-col gap-6 h-full animate-in fade-in duration-700">
@@ -66,11 +82,20 @@ const TrafficAccidentMitigation: React.FC = () => {
           setStartDate={setStartDate}
           endDate={endDate}
           setEndDate={setEndDate}
-          onViewOnMap={setFocusCoord}
+          onViewOnMap={handleOpenMapModal}
           refresh={refresh}
           resetFilters={resetFilters}
+          availableProvinces={availableProvinces}
+          availablePolres={availablePolres}
         />
       </div>
+
+      {/* Accident Details Map Modal */}
+      <AccidentMapModal 
+        isOpen={isMapModalOpen}
+        onClose={() => setIsMapModalOpen(false)}
+        accident={selectedAccident}
+      />
 
       {/* Deployment Footer Metadata */}
       <div className="flex items-center justify-between px-2">
@@ -85,7 +110,7 @@ const TrafficAccidentMitigation: React.FC = () => {
           </div>
         </div>
         <div className="text-[10px] text-gray-700 font-mono tracking-tighter">
-          SAKTI_MITIGATION_LANTAS_V1.0.4_REL
+          SAKTI_MITIGATION_LANTAS_V1.1.0_REL
         </div>
       </div>
     </div>

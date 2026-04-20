@@ -23,16 +23,37 @@ const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_for_dev_only';
 // Initialize Database Tables
 async function initDb() {
   try {
+    // 1. Create table with flexible VARCHAR user_id
     await dbPrimary.execute(sql`
       CREATE TABLE IF NOT EXISTS user_login_logs (
         id SERIAL PRIMARY KEY,
-        user_id UUID NOT NULL,
+        user_id VARCHAR(255) NOT NULL,
         ip_address VARCHAR(45),
         user_agent TEXT,
         location VARCHAR(255) DEFAULT 'Unknown Location',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    // 2. Migration: Convert UUID to VARCHAR if needed (for existing installations)
+    try {
+      await dbPrimary.execute(sql`
+        DO $$ 
+        BEGIN 
+          IF EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'user_login_logs' 
+            AND column_name = 'user_id' 
+            AND data_type = 'uuid'
+          ) THEN
+            ALTER TABLE user_login_logs ALTER COLUMN user_id TYPE VARCHAR(255);
+          END IF;
+        END $$;
+      `);
+    } catch (migErr) {
+      console.warn('Auto-migration warning (user_login_logs):', migErr instanceof Error ? migErr.message : migErr);
+    }
+
     console.log('Database initialized: user_login_logs table ready.');
   } catch (err) {
     console.error('Database initialization error:', err);
@@ -1386,7 +1407,7 @@ app.get('/api/analytics/food-risk', authenticateToken, async (req, res) => {
  *     summary: Get latest disaster history logs from BNPB data
  */
 app.get('/api/analytics/disaster-history', authenticateToken, async (req, res) => {
-  const { province, category, start_date, end_date, limit = 50 } = req.query;
+  const { province, category, start_date, end_date, search, limit = 50 } = req.query;
   try {
     let query = sql`
       SELECT id, report_date, region_name as province_name, city_name, event as category, 
@@ -1398,20 +1419,29 @@ app.get('/api/analytics/disaster-history', authenticateToken, async (req, res) =
     `;
 
     if (start_date) {
-      query = sql`${query} AND report_date >= ${start_date as string}`;
+      query = sql`${query} AND report_date >= ${String(start_date).trim()}::date`;
     } else {
       query = sql`${query} AND report_date >= CURRENT_DATE - INTERVAL '1 month'`;
     }
 
     if (end_date) {
-      query = sql`${query} AND report_date <= ${end_date as string}`;
+      query = sql`${query} AND report_date <= ${String(end_date).trim()}::date`;
     }
 
     if (province && province !== 'Nasional') {
-      query = sql`${query} AND region_name = ${province as string}`;
+      query = sql`${query} AND region_name ILIKE ${String(province).trim()}`;
     }
     if (category && category !== 'Semua') {
-      query = sql`${query} AND event = ${category as string}`;
+      query = sql`${query} AND event ILIKE ${String(category).trim()}`;
+    }
+
+    if (search) {
+      const searchPattern = `%${String(search).trim()}%`;
+      query = sql`${query} AND (
+        city_name ILIKE ${searchPattern} OR 
+        location ILIKE ${searchPattern} OR 
+        cause ILIKE ${searchPattern}
+      )`;
     }
 
     query = sql`${query} ORDER BY report_date DESC LIMIT ${Number(limit)}`;
@@ -1430,39 +1460,110 @@ app.get('/api/analytics/disaster-history', authenticateToken, async (req, res) =
  *     summary: Get aggregated disaster statistics
  */
 app.get('/api/analytics/disaster-stats', authenticateToken, async (req, res) => {
-  const { province, category, start_date, end_date } = req.query;
+  const { province, category, start_date, end_date, search } = req.query;
   try {
     let query = sql`
       SELECT 
         COALESCE(SUM(total_meninggal), 0) as deaths,
         COALESCE(SUM(total_hilang), 0) as missing,
         COALESCE(SUM(total_terluka), 0) as injured,
-        COALESCE(SUM(total_rumah_rusak + total_rumah_terendam), 0) as damage,
+        COALESCE(SUM(COALESCE(total_rumah_rusak, 0) + COALESCE(total_rumah_terendam, 0)), 0) as damage,
         COUNT(*) as total_events
       FROM sample_bnpb_bencana_data
       WHERE 1=1
     `;
 
     if (start_date) {
-      query = sql`${query} AND report_date >= ${start_date as string}`;
+      query = sql`${query} AND report_date >= ${String(start_date).trim()}::date`;
     } else {
       query = sql`${query} AND report_date >= CURRENT_DATE - INTERVAL '1 month'`;
     }
 
     if (end_date) {
-      query = sql`${query} AND report_date <= ${end_date as string}`;
+      query = sql`${query} AND report_date <= ${String(end_date).trim()}::date`;
     }
 
     if (province && province !== 'Nasional') {
-      query = sql`${query} AND region_name = ${province as string}`;
+      query = sql`${query} AND region_name ILIKE ${String(province).trim()}`;
     }
 
     if (category && category !== 'Semua') {
-      query = sql`${query} AND event = ${category as string}`;
+      query = sql`${query} AND event ILIKE ${String(category).trim()}`;
+    }
+
+    if (search) {
+      const searchPattern = `%${String(search).trim()}%`;
+      query = sql`${query} AND (
+        city_name ILIKE ${searchPattern} OR 
+        location ILIKE ${searchPattern} OR 
+        cause ILIKE ${searchPattern}
+      )`;
     }
 
     const results = await dbPrimary.execute(query);
     res.json(results.rows[0]);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/analytics/disaster-metadata:
+ *   get:
+ *     summary: Get unique metadata for disaster filters (Regions & Categories)
+ */
+app.get('/api/analytics/disaster-metadata', authenticateToken, async (req, res) => {
+  try {
+    const regions = await dbPrimary.execute(sql`
+      SELECT DISTINCT region_name 
+      FROM sample_bnpb_bencana_data 
+      WHERE region_name IS NOT NULL AND region_name != ''
+      ORDER BY region_name ASC
+    `);
+    
+    const categories = await dbPrimary.execute(sql`
+      SELECT DISTINCT event as category 
+      FROM sample_bnpb_bencana_data 
+      WHERE event IS NOT NULL AND event != ''
+      ORDER BY event ASC
+    `);
+
+    res.json({
+      regions: regions.rows.map(r => r.region_name),
+      categories: categories.rows.map(c => c.category)
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/analytics/accident-metadata:
+ *   get:
+ *     summary: Get unique metadata for accident filters (Regions & Polres)
+ */
+app.get('/api/analytics/accident-metadata', authenticateToken, async (req, res) => {
+  try {
+    const regions = await dbPrimary.execute(sql`
+      SELECT DISTINCT region_name 
+      FROM sample_polisi_kecelakaan_data 
+      WHERE region_name IS NOT NULL AND region_name != ''
+      ORDER BY region_name ASC
+    `);
+    
+    const polres = await dbPrimary.execute(sql`
+      SELECT DISTINCT polres 
+      FROM sample_polisi_kecelakaan_data 
+      WHERE polres IS NOT NULL AND polres != ''
+      ORDER BY polres ASC
+    `);
+
+    res.json({
+      regions: regions.rows.map(r => r.region_name),
+      polres: polres.rows.map(p => p.polres)
+    });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -1697,22 +1798,36 @@ app.get('/api/kamtibmas/classifications', authenticateToken, async (req, res) =>
  */
 app.get('/api/kamtibmas/stats', authenticateToken, async (req, res) => {
   const polda = req.query.polda;
-  const dateStr = req.query.date;
+  const classification = req.query.classification;
+  const risk = req.query.risk;
+  const startDate = req.query.startDate;
+  const endDate = req.query.endDate;
   
   try {
     const whereClause = polda ? sql`AND polda_name = ${polda}` : sql``;
+    const classClause = classification && classification !== 'Semua' ? sql`AND sub_category = ${classification}` : sql``;
     
-    // Determine the target date
-    let targetDateValue;
-    if (dateStr) {
-      targetDateValue = dateStr;
-    } else {
-      const latestDateRes = await dbSecondary.execute(sql`SELECT MAX(report_date) as d FROM nasional_kamtibmas_case_data`);
-      targetDateValue = latestDateRes.rows[0].d;
-    }
+    // Risk filtering on stats requires a subquery or a view, but we can approximate it 
+    // by filtering the base records if 'risk' is specified.
+    let riskClause = sql``;
+    if (risk === 'Tinggi') riskClause = sql`AND value > 30`;
+    else if (risk === 'Waspada') riskClause = sql`AND value >= 11 AND value <= 30`;
+    else if (risk === 'Normal') riskClause = sql`AND value <= 10`;
 
-    if (!targetDateValue) {
-      return res.json({ total_kamtibmas: 0, total_kejahatan: 0, total_demo: 0, total_massa: 0, date: 'N/A' });
+    // Determine the date filter
+    let dateFilter = sql`report_date = CURRENT_DATE`;
+    if (startDate && endDate) {
+      dateFilter = sql`report_date BETWEEN ${startDate} AND ${endDate}`;
+    } else if (startDate) {
+      dateFilter = sql`report_date >= ${startDate}`;
+    } else {
+      // Default: 3-day window from latest date
+      const latestDateRes = await dbSecondary.execute(sql`SELECT MAX(report_date) as d FROM nasional_kamtibmas_case_data`);
+      const targetDateValue = latestDateRes.rows[0].d;
+      if (!targetDateValue) {
+        return res.json({ total_kamtibmas: 0, total_kejahatan: 0, total_demo: 0, total_massa: 0, date: 'N/A' });
+      }
+      dateFilter = sql`report_date >= (${targetDateValue}::date - INTERVAL '2 days') AND report_date <= ${targetDateValue}::date`;
     }
 
     const results = await dbSecondary.execute(sql`
@@ -1720,78 +1835,63 @@ app.get('/api/kamtibmas/stats', authenticateToken, async (req, res) => {
         (
           SELECT SUM(CASE WHEN sub_category IN ('kejahatan_total', 'gangguan_total', 'pelanggaran_total', 'bencana_total') THEN value ELSE 0 END)
           FROM nasional_kamtibmas_case_data
-          WHERE report_date >= (${targetDateValue}::date - INTERVAL '2 days') 
-            AND report_date <= ${targetDateValue}::date ${whereClause}
+          WHERE ${dateFilter} ${whereClause}
         ) as total_kamtibmas,
         (
           SELECT SUM(CASE WHEN sub_category = 'kejahatan_total' THEN value ELSE 0 END)
           FROM nasional_kamtibmas_case_data
-          WHERE report_date >= (${targetDateValue}::date - INTERVAL '2 days') 
-            AND report_date <= ${targetDateValue}::date ${whereClause}
+          WHERE ${dateFilter} ${whereClause}
         ) as total_kejahatan,
         (
-          SELECT SUM(CASE WHEN sub_category = 'kejahatan_konvensional' THEN value ELSE 0 END)
+          SELECT SUM(value)
           FROM nasional_kamtibmas_case_data
-          WHERE report_date >= (${targetDateValue}::date - INTERVAL '2 days') 
-            AND report_date <= ${targetDateValue}::date ${whereClause}
+          WHERE ${dateFilter} ${whereClause} AND sub_category = 'kejahatan_konvensional'
         ) as konvensional,
         (
-          SELECT SUM(CASE WHEN sub_category = 'kejahatan_transnasional' THEN value ELSE 0 END)
+          SELECT SUM(value)
           FROM nasional_kamtibmas_case_data
-          WHERE report_date >= (${targetDateValue}::date - INTERVAL '2 days') 
-            AND report_date <= ${targetDateValue}::date ${whereClause}
+          WHERE ${dateFilter} ${whereClause} AND sub_category = 'kejahatan_transnasional'
         ) as transnasional,
         (
-          SELECT SUM(CASE WHEN sub_category = 'kejahatan_kekayaan_negara' THEN value ELSE 0 END)
+          SELECT SUM(value)
           FROM nasional_kamtibmas_case_data
-          WHERE report_date >= (${targetDateValue}::date - INTERVAL '2 days') 
-            AND report_date <= ${targetDateValue}::date ${whereClause}
+          WHERE ${dateFilter} ${whereClause} AND sub_category = 'kejahatan_kekayaan_negara'
         ) as kekayaan_negara,
         (
           SELECT SUM(CASE WHEN sub_category = 'pelanggaran_total' THEN value ELSE 0 END)
           FROM nasional_kamtibmas_case_data
-          WHERE report_date >= (${targetDateValue}::date - INTERVAL '2 days') 
-            AND report_date <= ${targetDateValue}::date ${whereClause}
+          WHERE ${dateFilter} ${whereClause}
         ) as pelanggaran,
         (
           SELECT SUM(CASE WHEN category = 'total_unjuk_rasa' THEN value ELSE 0 END)
           FROM nasional_kamtibmas_unjuk_rasa_data
-          WHERE report_date >= (${targetDateValue}::date - INTERVAL '2 days') 
-            AND report_date <= ${targetDateValue}::date
-          ${polda ? sql`AND polda_name = ${polda}` : sql``}
+          WHERE ${dateFilter} ${polda ? sql`AND polda_name = ${polda}` : sql``}
         ) as total_demo,
         (
           SELECT SUM(CASE WHEN category = 'total_massa' THEN value ELSE 0 END)
           FROM nasional_kamtibmas_unjuk_rasa_data
-          WHERE report_date >= (${targetDateValue}::date - INTERVAL '2 days') 
-            AND report_date <= ${targetDateValue}::date
-          ${polda ? sql`AND polda_name = ${polda}` : sql``}
+          WHERE ${dateFilter} ${polda ? sql`AND polda_name = ${polda}` : sql``}
         ) as total_massa,
         (
           SELECT SUM(CASE WHEN category = 'total_pam_polri' THEN value ELSE 0 END)
           FROM nasional_kamtibmas_unjuk_rasa_data
-          WHERE report_date >= (${targetDateValue}::date - INTERVAL '2 days') 
-            AND report_date <= ${targetDateValue}::date
-          ${polda ? sql`AND polda_name = ${polda}` : sql``}
+          WHERE ${dateFilter} ${polda ? sql`AND polda_name = ${polda}` : sql``}
         ) as pam_polri,
         (
           SELECT SUM(CASE WHEN category = 'total_pam_tni' THEN value ELSE 0 END)
           FROM nasional_kamtibmas_unjuk_rasa_data
-          WHERE report_date >= (${targetDateValue}::date - INTERVAL '2 days') 
-            AND report_date <= ${targetDateValue}::date
-          ${polda ? sql`AND polda_name = ${polda}` : sql``}
+          WHERE ${dateFilter} ${polda ? sql`AND polda_name = ${polda}` : sql``}
         ) as pam_tni,
         (
           SELECT SUM(CASE WHEN category = 'total_pam_lainnya' THEN value ELSE 0 END)
           FROM nasional_kamtibmas_unjuk_rasa_data
-          WHERE report_date >= (${targetDateValue}::date - INTERVAL '2 days') 
-            AND report_date <= ${targetDateValue}::date
-          ${polda ? sql`AND polda_name = ${polda}` : sql``}
+          WHERE ${dateFilter} ${polda ? sql`AND polda_name = ${polda}` : sql``}
         ) as pam_lainnya
     `);
     
     const stats = results.rows[0] as any;
-    res.json({ ...stats, date: targetDateValue });
+    const responseDate = (startDate && endDate) ? `${startDate} - ${endDate}` : (startDate || 'Terkini');
+    res.json({ ...stats, date: responseDate });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -1806,24 +1906,34 @@ app.get('/api/kamtibmas/stats', authenticateToken, async (req, res) => {
 app.get('/api/kamtibmas/recent-cases', authenticateToken, async (req, res) => {
   const polda = req.query.polda;
   const classification = req.query.classification;
+  const risk = req.query.risk;
+  const startDate = req.query.startDate;
+  const endDate = req.query.endDate;
   const limit = parseInt(req.query.limit as string) || 20;
   const page = parseInt(req.query.page as string) || 1;
   const offset = (page - 1) * limit;
   
   try {
-    const date = req.query.date;
-    let targetDate;
-    if (date) {
-      targetDate = date;
-    } else {
-      const latestDateRes = await dbSecondary.execute(sql`SELECT MAX(report_date) as max_date FROM nasional_kamtibmas_case_data`);
-      targetDate = latestDateRes.rows[0].max_date;
-    }
-
     const whereConditions = [sql`sub_category NOT LIKE '%total%'`];
-    if (polda) whereConditions.push(sql`polda_name = ${polda}`);
-    if (classification) whereConditions.push(sql`sub_category = ${classification}`);
-    if (targetDate) whereConditions.push(sql`report_date = ${targetDate}`);
+    if (polda && polda !== 'Nasional') whereConditions.push(sql`polda_name = ${polda}`);
+    if (classification && classification !== 'Semua') whereConditions.push(sql`sub_category = ${classification}`);
+    
+    // Risk Level Filtering
+    if (risk === 'Tinggi') whereConditions.push(sql`value > 30`);
+    else if (risk === 'Waspada') whereConditions.push(sql`value >= 11 AND value <= 30`);
+    else if (risk === 'Normal') whereConditions.push(sql`value <= 10`);
+
+    // Date Range Filtering
+    if (startDate && endDate) {
+      whereConditions.push(sql`report_date BETWEEN ${startDate} AND ${endDate}`);
+    } else if (startDate) {
+      whereConditions.push(sql`report_date >= ${startDate}`);
+    } else {
+      // Default to latest date
+      const latestDateRes = await dbSecondary.execute(sql`SELECT MAX(report_date) as max_date FROM nasional_kamtibmas_case_data`);
+      const targetDate = latestDateRes.rows[0].max_date;
+      if (targetDate) whereConditions.push(sql`report_date = ${targetDate}`);
+    }
     
     // Construct WHERE clause
     const whereClause = sql.join(whereConditions, sql` AND `);

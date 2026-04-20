@@ -17,7 +17,6 @@ import TrafficAccidentMitigation from './pages/TrafficAccidentMitigation';
 import ApiDocs from './pages/ApiDocs';
 import AccountProfile from './pages/AccountProfile';
 import Login from './pages/Login';
-import AlertModal from './components/AlertModal';
 import { useAppStore } from './store/useAppStore';
 import { useSidebarData } from './hooks/useSidebarData';
 import type { AlertItem } from './types';
@@ -110,10 +109,10 @@ const alertData: AlertItem[] = [
 
 function App() {
   const [currentPage, setCurrentPage] = useState<PageType>('login');
-  const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [minTimeElapsed, setMinTimeElapsed] = useState(true);
+  const [latestSystemUpdate, setLatestSystemUpdate] = useState('');
   const [commodityParam, setCommodityParam] = useState('');
   const { addToast, setSelectedSource, isSidebarCollapsed } = useAppStore();
 
@@ -128,9 +127,11 @@ function App() {
       
       // Dynamic Parameter Mapping
       if ((hash === 'sp2kp' || hash === 'pihps') && param) {
+        setLatestSystemUpdate('');
         setCommodityParam(param);
         setSelectedSource(hash.toUpperCase());
       } else {
+        setLatestSystemUpdate('');
         setCommodityParam('');
       }
       
@@ -230,7 +231,7 @@ function App() {
     let alertIdx = 0;
     const interval = setInterval(() => {
       const a = alerts[alertIdx % alerts.length];
-      addToast(a.msg, a.type);
+      setLatestSystemUpdate(a.msg);
       alertIdx++;
     }, 15000);
 
@@ -275,8 +276,8 @@ function App() {
             title={pageTitles[currentPage]}
             subtitle={pageSubtitles[currentPage]}
             currentTime={currentTime}
-            alertCount={3}
-            onAlertClick={() => setIsAlertModalOpen(true)}
+            alerts={alertData}
+            latestUpdate={latestSystemUpdate}
           />
         )}
 
@@ -285,14 +286,6 @@ function App() {
           {renderPage()}
         </main>
       </div>
-
-      {!isStandalonePage && (
-        <AlertModal 
-          isOpen={isAlertModalOpen}
-          onClose={() => setIsAlertModalOpen(false)}
-          alerts={alertData}
-        />
-      )}
     </div>
   );
 }

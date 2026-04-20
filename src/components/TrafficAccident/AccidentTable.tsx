@@ -24,6 +24,8 @@ interface AccidentTableProps {
   setPolres: (p: string) => void;
   refresh: () => void;
   resetFilters: () => void;
+  availableProvinces: string[];
+  availablePolres: string[];
 }
 
 export const AccidentTable: React.FC<AccidentTableProps> = ({ 
@@ -48,13 +50,11 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
   polres,
   setPolres,
   refresh,
-  resetFilters
+  resetFilters,
+  availableProvinces,
+  availablePolres
 }) => {
   const totalPages = pagination?.totalPages || 1;
-  const provinces = [
-    'Nasional', 'DKI JAKARTA', 'JAWA BARAT', 'JAWA TENGAH', 'JAWA TIMUR', 
-    'BALI', 'BANTEN', 'NUSA TENGGARA TIMUR', 'SUMATERA UTARA'
-  ];
 
   const victimRoleOptions = [
     { label: 'Semua Peran', value: 'Semua' },
@@ -70,12 +70,6 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
     { label: 'Luka Luka', value: 'LL' },
     { label: 'Tanpa Keterangan', value: '' }
   ];
-
-  const uniquePolres = React.useMemo(() => {
-    const set = new Set(accidents.map(a => a.polres).filter(Boolean));
-    if (polres !== 'Semua') set.add(polres);
-    return Array.from(set).sort();
-  }, [accidents, polres]);
 
   const renderPagination = () => {
     const pages = [];
@@ -157,9 +151,8 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
                 onChange={(e) => setPolres(e.target.value)} 
                 className="bg-transparent text-sm font-bold text-white focus:outline-none cursor-pointer uppercase hover:text-cyan-400 transition-colors max-w-[150px]"
               >
-                <option value="Semua" className="bg-[#0d121f]">Semua Satuan</option>
-                {uniquePolres.map(p => (
-                  <option key={p} value={p} className="bg-[#0d121f]">{p}</option>
+                {availablePolres.map(p => (
+                  <option key={p} value={p} className="bg-[#0d121f]">{p === 'Semua' ? 'Semua Satuan' : p}</option>
                 ))}
               </select>
             </div>
@@ -216,7 +209,7 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
             <div className="flex items-center gap-3 bg-black/40 px-4 py-3 rounded-2xl border-2 border-white/5 focus-within:border-cyan-500/30 transition-all shadow-inner">
               <span className="text-[11px] text-cyan-500/60 font-black uppercase tracking-widest border-r border-white/10 pr-3">Region</span>
               <select value={province} onChange={(e) => setProvince(e.target.value)} className="bg-transparent text-sm font-bold text-white focus:outline-none cursor-pointer uppercase hover:text-cyan-400 transition-colors">
-                {provinces.map(p => <option key={p} value={p} className="bg-[#0d121f]">{p}</option>)}
+                {availableProvinces.map(p => <option key={p} value={p} className="bg-[#0d121f]">{p}</option>)}
               </select>
             </div>
 
@@ -296,10 +289,7 @@ export const AccidentTable: React.FC<AccidentTableProps> = ({
                       </p>
                       {acc.location_latlong && (
                         <button 
-                          onClick={() => {
-                            onViewOnMap(acc.location_latlong);
-                            document.getElementById('accident-map-container')?.scrollIntoView({ behavior: 'smooth' });
-                          }}
+                          onClick={() => onViewOnMap(acc.location_latlong)}
                           className="mt-2 inline-flex items-center gap-1.5 text-[10px] font-black text-cyan-500 hover:text-cyan-400 uppercase tracking-widest transition-colors group/map"
                         >
                           <i className="fa-solid fa-map-location-dot" />
