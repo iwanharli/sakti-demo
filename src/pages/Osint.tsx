@@ -460,15 +460,16 @@ export default function Osint() {
       // Calculate Y positions (inverted SVG coordinates, 140 height)
       // Map counts (0-N) to Y (110-20)
       const maxCount = Math.max(...trend.map(t => Math.max(t.pos, t.neg, t.neut, 1)));
-      const scale = 90 / maxCount;
+      const scale = 180 / maxCount;
       
       return {
         x,
         time: label,
         fullTime: date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
         fullDate: date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
-        pos: 110 - (d.pos * scale),
-        neg: 110 - (d.neg * scale),
+        pos: 210 - (d.pos * scale),
+        neg: 210 - (d.neg * scale),
+        neut: 210 - (d.neut * scale),
         raw: d
       };
     });
@@ -476,8 +477,10 @@ export default function Osint() {
 
   const posPath = sentimentData.length > 0 ? `M${sentimentData.map(d => `${d.x},${d.pos}`).join(' L')}` : '';
   const negPath = sentimentData.length > 0 ? `M${sentimentData.map(d => `${d.x},${d.neg}`).join(' L')}` : '';
-  const posArea = sentimentData.length > 0 ? `${posPath} L1000,110 L0,110 Z` : '';
-  const negArea = sentimentData.length > 0 ? `${negPath} L1000,110 L0,110 Z` : '';
+  const neutPath = sentimentData.length > 0 ? `M${sentimentData.map(d => `${d.x},${d.neut}`).join(' L')}` : '';
+  const posArea = sentimentData.length > 0 ? `${posPath} L1000,210 L0,210 Z` : '';
+  const negArea = sentimentData.length > 0 ? `${negPath} L1000,210 L0,210 Z` : '';
+  const neutArea = sentimentData.length > 0 ? `${neutPath} L1000,210 L0,210 Z` : '';
 
   const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
     if (!sentimentData.length) return;
@@ -521,7 +524,7 @@ export default function Osint() {
     <div className={`space-y-6 ${mounted ? 'ews-animate-fade-in' : ''}`}>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-4 gap-5">
+      <div className="grid grid-cols-3 gap-5">
         <div className="ews-stat-card purple">
           <div className="text-[12px] text-gray-500 uppercase tracking-wider mb-2">Jumlah Postingan</div>
           <div className="font-orbitron text-4xl font-bold text-purple-400 mb-1">
@@ -566,47 +569,6 @@ export default function Osint() {
           </div>
           <div className="absolute right-4 top-1/2 -translate-y-1/2 text-5xl opacity-20 text-red-500 group-hover/stat:scale-110 transition-transform">
             <i className="fa-solid fa-fire-alt"></i>
-          </div>
-        </div>
-
-        {/* Emotion Analytics Card */}
-        <div 
-          className={`ews-stat-card relative overflow-hidden transition-all duration-500 cursor-pointer hover:bg-white/[0.03] group/stat ${
-            topEmotion === 'anger' || topEmotion === 'fear' ? 'red' : 
-            topEmotion === 'joy' ? 'cyan' : 'amber'
-          }`}
-          onClick={() => setIsEmotionModalOpen(true)}
-        >
-          <div className="text-[12px] text-gray-500 uppercase tracking-wider mb-2 relative z-10">Analisis Emosi</div>
-          <div className="flex items-baseline gap-2 mb-1 relative z-10">
-            <div className="font-orbitron text-3xl font-bold uppercase tracking-tighter">
-              {topEmotion === 'anger' ? 'Anger' : 
-               topEmotion === 'joy' ? 'Joy' : 
-               topEmotion === 'fear' ? 'Fear' : 
-               topEmotion === 'sadness' ? 'Sadness' : 'Surprise'}
-            </div>
-            <div className="text-xl font-bold opacity-60">{Math.round(topPct)}%</div>
-          </div>
-          
-          <div className="space-y-1.5 relative z-10 pt-1">
-             <div className="h-1.5 w-full bg-black/40 rounded-full overflow-hidden flex border border-white/5">
-                <div className="h-full bg-red-500 shadow-[0_0_8px_#ef4444]" style={{ width: `${(emotions.anger/totalEmotions)*100}%` }} />
-                <div className="h-full bg-purple-500 shadow-[0_0_8px_#8b5cf6]" style={{ width: `${(emotions.fear/totalEmotions)*100}%` }} />
-                <div className="h-full bg-blue-500 shadow-[0_0_8px_#3b82f6]" style={{ width: `${(emotions.sadness/totalEmotions)*100}%` }} />
-                <div className="h-full bg-emerald-500 shadow-[0_0_8px_#10b981]" style={{ width: `${(emotions.joy/totalEmotions)*100}%` }} />
-                <div className="h-full bg-amber-500 shadow-[0_0_8px_#f59e0b]" style={{ width: `${(emotions.surprise/totalEmotions)*100}%` }} />
-             </div>
-             <div className="flex justify-between items-center text-[7px] font-black font-mono opacity-50 uppercase tracking-widest">
-                <span>Aggregated Psychological Index</span>
-             </div>
-          </div>
-
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-5xl opacity-20 transition-transform duration-700 group-hover/stat:scale-110">
-            <i className={`fa-solid ${
-              topEmotion === 'anger' ? 'fa-face-angry' : 
-              topEmotion === 'joy' ? 'fa-face-smile-beam' : 
-              topEmotion === 'fear' ? 'fa-face-frown-open' : 'fa-face-meh-blank'
-            }`}></i>
           </div>
         </div>
       </div>
@@ -686,8 +648,8 @@ export default function Osint() {
 
         <div className="relative mb-8 px-6">
           <svg 
-            viewBox="0 0 1000 140" 
-            className="w-full h-56 cursor-crosshair" 
+            viewBox="0 0 1000 240" 
+            className="w-full h-80 cursor-crosshair" 
             preserveAspectRatio="none"
             onMouseMove={handleMouseMove}
             onMouseLeave={() => setHoverIdx(null)}
@@ -701,22 +663,29 @@ export default function Osint() {
                 <stop offset="0%" stopColor="#ef4444" stopOpacity="0.3"/>
                 <stop offset="100%" stopColor="#ef4444" stopOpacity="0"/>
               </linearGradient>
+              <linearGradient id="neonNeut" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.2"/>
+                <stop offset="100%" stopColor="#3b82f6" stopOpacity="0"/>
+              </linearGradient>
             </defs>
             
             {sentimentData.length > 0 && (
               <>
                 <path d={posArea} fill="url(#neonPos)"/>
-                <path d={posPath} fill="none" stroke="#10b981" strokeWidth="2.5" />
+                <path d={posPath} fill="none" stroke="#10b981" strokeWidth="1.2" />
                 <path d={negArea} fill="url(#neonNeg)"/>
-                <path d={negPath} fill="none" stroke="#ef4444" strokeWidth="2.5" strokeDasharray="6,4" />
+                <path d={negPath} fill="none" stroke="#ef4444" strokeWidth="1.2" strokeDasharray="4,3" />
+                <path d={neutArea} fill="url(#neonNeut)"/>
+                <path d={neutPath} fill="none" stroke="#3b82f6" strokeWidth="1" strokeDasharray="2,2" opacity="0.6"/>
 
                 {hoverIdx !== null && sentimentData[hoverIdx] && (
                   <g>
-                    <line x1={sentimentData[hoverIdx].x} y1="0" x2={sentimentData[hoverIdx].x} y2="120" stroke="#06b6d4" strokeWidth="1.5" />
-                    <circle cx={sentimentData[hoverIdx].x} cy={sentimentData[hoverIdx].pos} r="5" fill="#10b981" />
-                    <circle cx={sentimentData[hoverIdx].x} cy={sentimentData[hoverIdx].neg} r="5" fill="#ef4444" />
+                    <line x1={sentimentData[hoverIdx].x} y1="0" x2={sentimentData[hoverIdx].x} y2="220" stroke="#06b6d4" strokeWidth="1.5" />
+                    <circle cx={sentimentData[hoverIdx].x} cy={sentimentData[hoverIdx].pos} r="4" fill="#10b981" />
+                    <circle cx={sentimentData[hoverIdx].x} cy={sentimentData[hoverIdx].neg} r="4" fill="#ef4444" />
+                    <circle cx={sentimentData[hoverIdx].x} cy={sentimentData[hoverIdx].neut} r="3" fill="#3b82f6" />
                     
-                    <foreignObject x={sentimentData[hoverIdx].x > 800 ? sentimentData[hoverIdx].x - 170 : sentimentData[hoverIdx].x + 10} y="10" width="160" height="100">
+                    <foreignObject x={sentimentData[hoverIdx].x > 800 ? sentimentData[hoverIdx].x - 170 : sentimentData[hoverIdx].x + 10} y="10" width="160" height="130">
                       <div className="bg-[#0b1419]/90 border border-white/10 p-3 rounded-lg shadow-xl backdrop-blur-md">
                         <div className="text-[9px] text-gray-400 font-mono mb-2 border-b border-white/5 pb-1 flex justify-between">
                           <span>{sentimentData[hoverIdx].fullDate}</span>
@@ -726,9 +695,13 @@ export default function Osint() {
                           <span className="text-[8px] text-gray-500 uppercase font-black">Positif</span>
                           <span className="text-[12px] font-orbitron text-emerald-400 font-bold drop-shadow-[0_0_5px_#10b98144]">{sentimentData[hoverIdx].raw.pos}</span>
                         </div>
-                        <div className="flex justify-between items-center px-1">
+                        <div className="flex justify-between items-center mb-1.5 px-1">
                           <span className="text-[8px] text-gray-500 uppercase font-black">Negatif</span>
-                          <span className="text-[12px] font-orbitron text-red-400 font-bold drop-shadow-[0_0_5px_#ef444444]">{sentimentData[hoverIdx].raw.neg}</span>
+                          <span className="text-[12px] font-orbitron text-red-500 font-bold drop-shadow-[0_0_5px_#ef444444]">{sentimentData[hoverIdx].raw.neg}</span>
+                        </div>
+                        <div className="flex justify-between items-center px-1">
+                          <span className="text-[8px] text-gray-500 uppercase font-black">Netral</span>
+                          <span className="text-[12px] font-orbitron text-blue-400 font-bold drop-shadow-[0_0_5px_#3b82f644]">{sentimentData[hoverIdx].raw.neut}</span>
                         </div>
                       </div>
                     </foreignObject>
@@ -739,7 +712,7 @@ export default function Osint() {
 
             <g className="text-[9px] fill-gray-500 font-black">
               {sentimentData.map((d, i) => d.time && (
-                <text key={i} x={d.x} y="132" textAnchor={i === 0 ? 'start' : i === sentimentData.length - 1 ? 'end' : 'middle'}>
+                <text key={i} x={d.x} y="232" textAnchor={i === 0 ? 'start' : i === sentimentData.length - 1 ? 'end' : 'middle'}>
                   {d.time}
                 </text>
               ))}

@@ -12,6 +12,10 @@ dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
 // Primary DB Connection (db_sakti)
 const primaryPool = new pg.Pool({
   connectionString: process.env.DB_PRIMARY_URL,
+  ssl: { rejectUnauthorized: false },
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
 });
 
 export const dbPrimary = drizzle(primaryPool, { 
@@ -21,6 +25,10 @@ export const dbPrimary = drizzle(primaryPool, {
 // Secondary DB Connection (db_indonesiamonitoring)
 const secondaryPool = new pg.Pool({
   connectionString: process.env.DB_SECONDARY_URL,
+  ssl: { rejectUnauthorized: false },
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
 });
 
 export const dbSecondary = drizzle(secondaryPool, { 

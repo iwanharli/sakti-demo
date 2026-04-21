@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Sidebar from './components/Sidebar';
 import Topbar from './components/Topbar';
 import PageTransitionLoader from './components/PageTransitionLoader';
@@ -118,6 +118,15 @@ function App() {
 
   // Initialize Global Sidebar Data Polling
   useSidebarData();
+
+  const mainScrollRef = useRef<HTMLDivElement>(null);
+
+  // Reset scroll to top on page change
+  useEffect(() => {
+    if (mainScrollRef.current) {
+      mainScrollRef.current.scrollTop = 0;
+    }
+  }, [currentPage]);
 
   // --- NATIVE HASH ROUTING LOGIC ---
   useEffect(() => {
@@ -281,7 +290,10 @@ function App() {
           />
         )}
 
-        <main className={`${isStandalonePage ? 'p-0' : 'flex-1 p-5'} relative overflow-y-auto ews-scrollbar`}>
+        <main 
+          ref={mainScrollRef}
+          className={`${isStandalonePage ? 'p-0' : 'flex-1 p-5'} relative overflow-y-auto ews-scrollbar`}
+        >
           <PageTransitionLoader isVisible={isTransitioning} isStandalone={isStandalonePage} />
           {renderPage()}
         </main>
