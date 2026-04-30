@@ -515,10 +515,6 @@ export default function Osint() {
 
   // Emotion Aggregation
   const emotions = summary?.emotions || { anger: 0, fear: 0, sadness: 0, joy: 0, surprise: 0 };
-  const totalEmotions = Object.values(emotions).reduce((a: number, b: any) => a + b, 0) || 1;
-  const sortedEmotions = Object.entries(emotions).sort(([,a]: any, [,b]: any) => b - a);
-  const topEmotion = sortedEmotions[0][0];
-  const topPct = (Number(sortedEmotions[0][1]) / totalEmotions) * 100;
 
   return (
     <div className={`space-y-6 ${mounted ? 'ews-animate-fade-in' : ''}`}>
