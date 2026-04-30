@@ -683,6 +683,7 @@ export const useCommandCenterData = () => {
     filter,
     setFilter,
     filteredTimeline,
+    issueItems,
     riskScores,
     availableRegions,
     kamtibmasRegion,
