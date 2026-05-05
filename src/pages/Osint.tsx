@@ -487,6 +487,16 @@ export default function Osint({ view = 'overview' }: { view?: 'overview' | 'netw
     return { nodes, links };
   }, [network, showHashtags]);
 
+  // Stability: Zoom to fit only when data changes
+  useEffect(() => {
+    if (fgRef.current && filteredNetwork.nodes.length > 0) {
+      // Small delay to ensure engine has started
+      setTimeout(() => {
+        if (fgRef.current) fgRef.current.zoomToFit(400, 50);
+      }, 500);
+    }
+  }, [filteredNetwork.nodes.length]);
+
   const sentimentData = useMemo(() => {
     if (!trend.length) return [];
     return trend.map((d, i) => {
@@ -944,7 +954,7 @@ export default function Osint({ view = 'overview' }: { view?: 'overview' | 'netw
                 </div>
               )}
               <FloatingNetworkHUD nodes={network.nodes.length} links={network.links.length} limit={networkLimit} setLimit={setNetworkLimit} />
-              <ForceGraph2D ref={fgRef} graphData={filteredNetwork} width={graphDimensions.width} height={graphDimensions.height} backgroundColor="transparent" nodeLabel="id" d3AlphaDecay={0.02} d3VelocityDecay={0.3} onEngineStop={() => fgRef.current.zoomToFit(400)}
+              <ForceGraph2D ref={fgRef} graphData={filteredNetwork} width={graphDimensions.width} height={graphDimensions.height} backgroundColor="transparent" nodeLabel="id" d3AlphaDecay={0.02} d3VelocityDecay={0.3}
                 nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
                   const isKeyword = node.type === 'keyword'; const isUser = node.type === 'user'; const isHashtag = node.type === 'hashtag';
                   const color = isKeyword ? '#ef4444' : (isHashtag ? '#a855f7' : '#06b6d4');
