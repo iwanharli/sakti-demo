@@ -773,6 +773,11 @@ export default function Osint({ view = 'overview' }: { view?: 'overview' | 'netw
 
           {/* Emotion Analysis Chart */}
           <div className="ews-card p-6 relative overflow-hidden">
+            {isSummaryLoading && (
+              <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
+                <div className="ews-hud-loader" />
+              </div>
+            )}
             <div className="ews-card-header-bar" />
             <div className="flex items-center gap-4 mb-8">
               <div className="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500">
@@ -816,7 +821,14 @@ export default function Osint({ view = 'overview' }: { view?: 'overview' | 'netw
           </div>
 
           {/* Keyword Intelligence */}
-          {keywordSummary ? <KeywordIntelligenceCard keywords={keywordSummary.keywords} range={keywordRange} setRange={setKeywordRange} hideFilters={true} /> : null}
+          <div className="relative">
+            {isSummaryLoading && (
+              <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-[1px] rounded-2xl">
+                <div className="ews-hud-loader" />
+              </div>
+            )}
+            {keywordSummary ? <KeywordIntelligenceCard keywords={keywordSummary.keywords} range={keywordRange} setRange={setKeywordRange} hideFilters={true} /> : null}
+          </div>
         </div>
       )}
 
