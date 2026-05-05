@@ -1254,7 +1254,7 @@ app.get('/api/osint/sentiment-trend', authenticateToken, async (req, res) => {
  *     summary: Get paginated post feed for live monitoring
  */
 app.get('/api/osint/posts', authenticateToken, async (req, res) => {
-    const { startDate, endDate, limit = 50, page = 1, sentiment, keyword, platform, search } = req.query;
+    const { startDate, endDate, limit = 1000, page = 1, sentiment, keyword, platform, search } = req.query;
     try {
     const latestDateRes = await dbTertiary.execute(sql`SELECT MAX(post_timestamps::date) as max_d FROM post_main WHERE analysis_result IS NOT NULL`);
     const maxDate = (latestDateRes.rows[0] as any)?.max_d;
