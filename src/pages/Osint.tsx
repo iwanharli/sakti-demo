@@ -235,7 +235,8 @@ export default function Osint({ view = 'overview' }: { view?: 'overview' | 'netw
   const [summary, setSummary] = useState<any>(null);
   const [keywordSummary, setKeywordSummary] = useState<any>(null);
   const [trend, setTrend] = useState<any[]>([]);
-  const [posts, setPosts] = useState<any[]>([]);
+  const [postsResponse, setPostsResponse] = useState<any>({ data: [], total: 0, totalPages: 0 });
+  const [postPage, setPostPage] = useState(1);
   const [network, setNetwork] = useState<any>({ nodes: [], links: [] });
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
   const [isPostsLoading, setIsPostsLoading] = useState(false);
@@ -264,7 +265,6 @@ export default function Osint({ view = 'overview' }: { view?: 'overview' | 'netw
   const [networkLimit, setNetworkLimit] = useState(1000);
   const [postSearch, setPostSearch] = useState('');
   const [debouncedPostSearch, setDebouncedPostSearch] = useState('');
-  const [postPage, setPostPage] = useState(1);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -430,8 +430,8 @@ export default function Osint({ view = 'overview' }: { view?: 'overview' | 'netw
       const sentParam = sent !== 'All' ? `&sentiment=${sent}` : '';
       const platParam = plat !== 'All' ? `&platform=${plat}` : '';
       const searchParam = search ? `&search=${encodeURIComponent(search)}` : '';
-      const res = await authFetch(`${apiBase}/osint/posts?startDate=${s}&endDate=${e}${kwParam}${sentParam}${platParam}${searchParam}`);
-      if (res.ok) setPosts(await res.json());
+      const res = await authFetch(`${apiBase}/osint/posts?startDate=${s}&endDate=${e}${kwParam}${sentParam}${platParam}${searchParam}&page=${postPage}`);
+      if (res.ok) setPostsResponse(await res.json());
     } catch (err) {
       console.error('Fetch posts error:', err);
     } finally {
@@ -467,18 +467,13 @@ export default function Osint({ view = 'overview' }: { view?: 'overview' | 'netw
   }, [mounted, view, keywordRange]);
 
   useEffect(() => {
-    if (mounted && (view === 'overview' || view === 'repository')) {
-      setPostPage(1); 
+    if (mounted && view === 'repository') {
       fetchPosts(postRange.start, postRange.end, postKeywords, postSentiment, postPlatform, debouncedPostSearch);
     }
-  }, [mounted, view, postRange, postKeywords.join(','), postSentiment, postPlatform, debouncedPostSearch]);
+  }, [mounted, view, postRange, postKeywords.join(','), postSentiment, postPlatform, debouncedPostSearch, postPage]);
 
-  const paginatedPosts = useMemo(() => {
-    const start = (postPage - 1) * 10;
-    return posts.slice(start, start + 10);
-  }, [posts, postPage]);
-
-  const totalPages = Math.ceil(posts.length / 10);
+  const posts = postsResponse.data || [];
+  const totalPages = postsResponse.totalPages || 0;
 
   const filteredNetwork = useMemo(() => {
     if (showHashtags) return network;
@@ -832,7 +827,7 @@ export default function Osint({ view = 'overview' }: { view?: 'overview' | 'netw
               <table className="w-full border-separate border-spacing-y-2">
                 <thead><tr className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em] font-orbitron"><th className="text-left pb-4 pl-6">Platform</th><th className="text-left pb-4">Aktor & Narasi</th><th className="text-left pb-4">Keyword</th><th className="text-left pb-4 text-center">Status Sentimen</th><th className="text-right pb-4 pr-6">Waktu Kejadian</th></tr></thead>
                 <tbody>
-                  {paginatedPosts.map((post) => (
+                  {posts.map((post: any) => (
                     <tr key={post.id} className="group transition-all duration-300 hover:translate-x-1">
                       <td className="py-4 pl-6 bg-[#0c161d]/80 backdrop-blur-md border-y border-l border-white/5 rounded-l-2xl transition-colors">
                         <div className="flex items-center gap-3">
@@ -867,7 +862,7 @@ export default function Osint({ view = 'overview' }: { view?: 'overview' | 'netw
               </table>
             </div>
             {posts.length > 0 && (
-              <div className="mt-8 flex items-center justify-between pt-6 border-t border-white/5"><div className="text-[10px] text-gray-500 uppercase tracking-widest">Showing <span className="text-cyan-400 font-bold">{(postPage-1)*10+1}-{Math.min(posts.length, postPage*10)}</span> of <span className="text-white">{posts.length}</span></div><div className="flex items-center gap-2 bg-black/40 p-1.5 rounded-2xl border border-white/10"><button onClick={() => setPostPage(p => Math.max(1, p-1))} disabled={postPage === 1} className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-cyan-400 disabled:opacity-20"><i className="fa-solid fa-chevron-left"></i></button><span className="text-[11px] font-orbitron font-bold text-cyan-400 px-4">{postPage} / {totalPages}</span><button onClick={() => setPostPage(p => Math.min(totalPages, p+1))} disabled={postPage === totalPages} className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-cyan-400 disabled:opacity-20"><i className="fa-solid fa-chevron-right"></i></button></div></div>
+              <div className="mt-8 flex items-center justify-between pt-6 border-t border-white/5"><div className="text-[10px] text-gray-500 uppercase tracking-widest">Showing <span className="text-cyan-400 font-bold">{(postPage-1)*10+1}-{Math.min(postsResponse.total, postPage*10)}</span> of <span className="text-white">{postsResponse.total}</span></div><div className="flex items-center gap-2 bg-black/40 p-1.5 rounded-2xl border border-white/10"><button onClick={() => setPostPage(p => Math.max(1, p-1))} disabled={postPage === 1} className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-cyan-400 disabled:opacity-20"><i className="fa-solid fa-chevron-left"></i></button><span className="text-[11px] font-orbitron font-bold text-cyan-400 px-4">{postPage} / {totalPages}</span><button onClick={() => setPostPage(p => Math.min(totalPages, p+1))} disabled={postPage === totalPages} className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-cyan-400 disabled:opacity-20"><i className="fa-solid fa-chevron-right"></i></button></div></div>
             )}
           </div>
         </div>

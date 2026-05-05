@@ -1254,7 +1254,7 @@ app.get('/api/osint/sentiment-trend', authenticateToken, async (req, res) => {
  *     summary: Get paginated post feed for live monitoring
  */
 app.get('/api/osint/posts', authenticateToken, async (req, res) => {
-    const { startDate, endDate, limit = 1000, page = 1, sentiment, keyword, platform, search } = req.query;
+    const { startDate, endDate, limit = 10, page = 1, sentiment, keyword, platform, search } = req.query;
     try {
     const latestDateRes = await dbTertiary.execute(sql`SELECT MAX(post_timestamps::date) as max_d FROM post_main WHERE analysis_result IS NOT NULL`);
     const maxDate = (latestDateRes.rows[0] as any)?.max_d;
@@ -1262,11 +1262,12 @@ app.get('/api/osint/posts', authenticateToken, async (req, res) => {
     
     const sDate = startDate || sevenDaysBefore || maxDate;
     const eDate = endDate || startDate || maxDate;
-    const offset = (Number(page) - 1) * Number(limit);
+    const L = Number(limit);
+    const P = Number(page);
+    const offset = (P - 1) * L;
 
     let whereClause = sql`WHERE analysis_result IS NOT NULL AND post_timestamps::date BETWEEN ${sDate}::date AND ${eDate}::date`;
     if (sentiment && sentiment !== 'All') {
-        // Since sentiment is not mapped yet, filtering by sentiment will return nothing if not All
         if (sentiment !== 'All') whereClause = sql`${whereClause} AND 1=0`;
     }
     if (platform && platform !== 'All') whereClause = sql`${whereClause} AND post_source ILIKE ${platform as string}`;
@@ -1277,22 +1278,32 @@ app.get('/api/osint/posts', authenticateToken, async (req, res) => {
       whereClause = sql`${whereClause} AND (category IN (${sql.join(inParams, sql`, `)}) OR EXISTS (SELECT 1 FROM post_tags t WHERE t.post_code = post_main.post_code AND t.tag IN (${sql.join(inParams, sql`, `)})))`;
     }
 
+    // Get total count for pagination
+    const countRes = await dbTertiary.execute(sql`SELECT COUNT(*)::int as total FROM post_main ${whereClause}`);
+    const total = countRes.rows[0]?.total || 0;
+
     const postsRes = await dbTertiary.execute(sql`
       SELECT 
         id, 
         post_username as username, 
         post_content, 
         post_source as platform, 
-        'Netral' as sentiment, -- Placeholder as requested
+        'Netral' as sentiment, 
         post_timestamps as post_timestamp, 
         COALESCE(category, (SELECT tag FROM post_tags WHERE post_code = post_main.post_code LIMIT 1), 'General') as keyword
       FROM post_main 
       ${whereClause}
       ORDER BY post_timestamps DESC
-      LIMIT ${Number(limit)} OFFSET ${offset}
+      LIMIT ${L} OFFSET ${offset}
     `);
 
-    res.json(postsRes.rows);
+    res.json({
+      data: postsRes.rows,
+      total: Number(total),
+      page: P,
+      limit: L,
+      totalPages: Math.ceil(Number(total) / L)
+    });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
