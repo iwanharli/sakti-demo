@@ -43,8 +43,23 @@ export const getApiBase = () => {
   return import.meta.env.VITE_API_BASE_URL || 'http://localhost:8440/api';
 };
 
+// Global flag to prevent multiple redirects during concurrent unauthorized requests
+let isRedirecting = false;
+
 export const authFetch = async (url: string, options: RequestInit = {}) => {
   const token = sessionStorage.getItem('sakti_token');
+  
+  // 1. Prevent request if no token exists (unless it's a login/public endpoint)
+  if (!token && !url.includes('/auth/login') && !url.includes('/health')) {
+    if (!isRedirecting && window.location.hash !== '#/login') {
+      isRedirecting = true;
+      console.warn('[Auth] No token found, redirecting to login...');
+      window.location.replace('/#/login');
+    }
+    // Return a dummy response to prevent further processing
+    return new Response(JSON.stringify({ error: 'Unauthorized: No token' }), { status: 401 });
+  }
+
   const headers: Record<string, string> = {
     ...options.headers as Record<string, string>,
     'Authorization': `Bearer ${token}`,
@@ -73,14 +88,26 @@ export const authFetch = async (url: string, options: RequestInit = {}) => {
       try {
         const response = await fetch(url, { ...options, headers });
         
+        // 2. Global handling for Session Expired or Invalid Token
         if (response.status === 401 || response.status === 403) {
-          // Session expired or invalid
-          sessionStorage.removeItem('sakti_auth');
-          sessionStorage.removeItem('sakti_token');
-          window.location.href = '/#/login'; 
-          return response; // Return immediately to bypass the retry loop which catches thrown errors
+          if (!isRedirecting) {
+            isRedirecting = true;
+            console.error(`[Auth] Session invalid (${response.status}). Cleaning up...`);
+            
+            sessionStorage.removeItem('sakti_auth');
+            sessionStorage.removeItem('sakti_token');
+            sessionStorage.removeItem('sakti_user');
+            
+            // Tactical: reset redirect flag after a delay to allow fresh login
+            setTimeout(() => { isRedirecting = false; }, 3000);
+            
+            window.location.replace('/#/login');
+          }
+          return response;
         }
 
+        // Reset redirect flag on any successful request
+        isRedirecting = false;
         return response;
       } catch (err) {
         attempts++;

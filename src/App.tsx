@@ -25,6 +25,8 @@ export type PageType =
   | 'login'
   | 'command-center' 
   | 'osint' 
+  | 'osint-network'
+  | 'osint-posts'
   | 'predictive-analytics' 
   | 'crime-mapping' 
   | 'kamtibmas-management' 
@@ -42,7 +44,9 @@ export type PageType =
 const pageTitles: Record<PageType, string> = {
   login: 'AUTENTIKASI SISTEM',
   'command-center': 'COMMAND CENTER',
-  osint: 'OSINT',
+  osint: 'OSINT — SENTIMEN',
+  'osint-network': 'OSINT — JARINGAN',
+  'osint-posts': 'OSINT — REPOSITORI',
   'predictive-analytics': 'ANALITIK PREDIKTIF',
   'crime-mapping': 'DYNAMIC CRIME MAPPING',
   'kamtibmas-management': 'MANAJEMEN KAMTIBMAS',
@@ -61,7 +65,9 @@ const pageTitles: Record<PageType, string> = {
 const pageSubtitles: Record<PageType, string> = {
   login: 'Otoritas Akses Sistem SAKTI',
   'command-center': 'Pusat Kendali Operasional Terintegrasi',
-  osint: 'Intelegensi Media Sosial & Analisis Sinyal',
+  osint: 'Analisis Sinyal & Polaritas Media Sosial',
+  'osint-network': 'Pemetaan Jaringan Interaksi & Aktor Strategis',
+  'osint-posts': 'Repositori Data & Narasi Media Sosial',
   'predictive-analytics': 'Sistem Peringatan Dini Berbasis Vektor AI',
   'crime-mapping': 'Visualisasi Spasial Kepadatan Kriminalitas',
   'kamtibmas-management': 'Administrasi Kamtibmas & Penelusuran Keamanan',
@@ -252,7 +258,9 @@ function App() {
       case 'login':
         return <Login onLoginSuccess={() => window.location.hash = '#/command-center'} />;
       case 'command-center': return <CommandCenter />;
-      case 'osint': return <Osint />;
+      case 'osint': return <Osint view="overview" />;
+      case 'osint-network': return <Osint view="network" />;
+      case 'osint-posts': return <Osint view="repository" />;
       case 'predictive-analytics': return <PredictiveAnalytics />;
       case 'crime-mapping': return <CrimeMapping />;
       case 'kamtibmas-management': return <KamtibmasManagement />;

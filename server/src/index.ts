@@ -2,8 +2,10 @@ import express from 'express';
 import 'dotenv/config';
 import cors from 'cors';
 import swaggerJsdoc from 'swagger-jsdoc';
-import { dbPrimary, dbSecondary } from './db.js';
+import { dbPrimary, dbSecondary, dbTertiary } from './db.js';
 import { sql } from 'drizzle-orm';
+import morgan from 'morgan';
+import pc from 'picocolors';
 
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -20,10 +22,32 @@ const app = express();
 const port = process.env.PORT || 8440;
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_for_dev_only';
 
-// Initialize Database Tables
+// Initialize Database Tables & Connectivity Check
 async function initDb() {
+  console.log(pc.cyan('\n📡 INITIALIZING INFRASTRUCTURE MATRIX...'));
+  console.log(pc.dim('┌───────────────────────────┬──────────────┐'));
+  console.log(pc.dim('│ ') + pc.bold(pc.white('DATABASE'.padEnd(25))) + pc.dim(' │ ') + pc.bold(pc.white('STATUS'.padEnd(12))) + pc.dim(' │'));
+  console.log(pc.dim('├───────────────────────────┼──────────────┤'));
+  
+  const checkConnection = async (db: any, name: string) => {
+    try {
+      await db.execute(sql`SELECT 1`);
+      console.log(pc.dim('│ ') + pc.green(name.padEnd(25)) + pc.dim(' │ ') + pc.bold(pc.green('ONLINE'.padEnd(12))) + pc.dim(' │'));
+      return true;
+    } catch (err: any) {
+      console.log(pc.dim('│ ') + pc.red(name.padEnd(25)) + pc.dim(' │ ') + pc.bold(pc.red('OFFLINE'.padEnd(12))) + pc.dim(' │'));
+      return false;
+    }
+  };
+
+  // 1. Check All Connections
+  await checkConnection(dbPrimary, process.env.DB_PRIMARY_NAME || 'PRIMARY');
+  await checkConnection(dbSecondary, process.env.DB_SECONDARY_NAME || 'SECONDARY');
+  await checkConnection(dbTertiary, process.env.DB_TERTIARY_NAME || 'TERTIARY');
+  console.log(pc.dim('└───────────────────────────┴──────────────┘'));
+
   try {
-    // 1. Create table with flexible VARCHAR user_id
+    // 2. Create required tables in Primary
     await dbPrimary.execute(sql`
       CREATE TABLE IF NOT EXISTS user_login_logs (
         id SERIAL PRIMARY KEY,
@@ -35,7 +59,7 @@ async function initDb() {
       )
     `);
 
-    // 2. Migration: Convert UUID to VARCHAR if needed (for existing installations)
+    // 3. Migration: Convert UUID to VARCHAR if needed
     try {
       await dbPrimary.execute(sql`
         DO $$ 
@@ -51,15 +75,17 @@ async function initDb() {
         END $$;
       `);
     } catch (migErr) {
-      console.warn('Auto-migration warning (user_login_logs):', migErr instanceof Error ? migErr.message : migErr);
+      console.warn(pc.yellow('⚠️  Auto-migration warning (user_login_logs):'), migErr instanceof Error ? migErr.message : migErr);
     }
 
-    console.log('Database initialized: user_login_logs table ready.');
+    console.log(pc.green('✅ Core Infrastructure Ready: user_login_logs active.'));
   } catch (err) {
-    console.error('Database initialization error:', err);
+    console.error(pc.red('❌ System initialization error:'), err);
   }
 }
-initDb();
+
+// Ensure DB is ready before moving on
+await initDb();
 
 // Swagger definition
 const swaggerOptions = {
@@ -101,6 +127,23 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+// Tactical Request Logger
+app.use(morgan((tokens, req, res) => {
+  const status = tokens.status(req, res);
+  const color = Number(status) >= 500 ? pc.red 
+              : Number(status) >= 400 ? pc.yellow 
+              : Number(status) >= 300 ? pc.cyan 
+              : pc.green;
+
+  return [
+    pc.dim(`[${new Date().toLocaleTimeString()}]`),
+    pc.bold(tokens.method(req, res)),
+    tokens.url(req, res),
+    color(status),
+    pc.dim(tokens['response-time'](req, res) + 'ms')
+  ].join(' ');
+}));
 
 // Static files for uploads
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
@@ -1026,15 +1069,16 @@ app.get('/api/analytics/sosmed-sentiment', authenticateToken, async (req, res) =
 app.get('/api/osint/summary', authenticateToken, async (req, res) => {
     const { startDate, endDate, keyword, platform } = req.query;
     try {
-    const latestDateRes = await dbPrimary.execute(sql`SELECT MAX(post_timestamp::date) as max_d FROM sample_sosmed_post_data`);
-    const defaultDate = latestDateRes.rows[0].max_d;
+    const latestDateRes = await dbTertiary.execute(sql`SELECT MAX(post_timestamps::date) as max_d FROM post_main WHERE analysis_result IS NOT NULL`);
+    const maxDate = (latestDateRes.rows[0] as any)?.max_d;
+    const sevenDaysBefore = maxDate ? new Date(new Date(maxDate as string).getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : null;
     
-    const sDate = startDate || defaultDate;
-    const eDate = endDate || startDate || defaultDate;
+    const sDate = startDate || sevenDaysBefore || maxDate;
+    const eDate = endDate || startDate || maxDate;
 
     if (!sDate) return res.json({ platforms: [], keywords: [] });
 
-    let whereClauseBase = sql`WHERE post_timestamp::date BETWEEN ${sDate}::date AND ${eDate}::date`;
+    let whereClauseBase = sql`WHERE analysis_result IS NOT NULL AND post_timestamps::date BETWEEN ${sDate}::date AND ${eDate}::date`;
     
     if (platform && platform !== 'All') {
       whereClauseBase = sql`${whereClauseBase} AND post_source ILIKE ${platform as string}`;
@@ -1045,49 +1089,56 @@ app.get('/api/osint/summary', authenticateToken, async (req, res) => {
     if (keyword && keyword !== 'All') {
       const keywords = (keyword as string).split(',');
       const inParams = keywords.map(k => sql`${k}`);
-      whereClauseFiltered = sql`${whereClauseBase} AND keyword IN (${sql.join(inParams, sql`, `)})`;
+      whereClauseFiltered = sql`${whereClauseBase} AND (category IN (${sql.join(inParams, sql`, `)}) OR EXISTS (SELECT 1 FROM post_tags t WHERE t.post_code = post_main.post_code AND t.tag IN (${sql.join(inParams, sql`, `)})))`;
     }
 
-    const platformRes = await dbPrimary.execute(sql`
+    // Sentiment is empty for now as requested (no explicit sentiment field in DB)
+    const platformRes = await dbTertiary.execute(sql`
       SELECT 
         post_source as platform, 
         COUNT(*)::int as count,
-        COUNT(CASE WHEN sentiment = 'Positif' THEN 1 END)::int as pos_count,
-        COUNT(CASE WHEN sentiment = 'Negatif' THEN 1 END)::int as neg_count
-      FROM sample_sosmed_post_data 
+        0::int as pos_count,
+        0::int as neg_count
+      FROM post_main 
       ${whereClauseFiltered}
       GROUP BY post_source 
       ORDER BY count DESC
     `);
 
-    // Calculate previous period for growth comparison (spike)
     const start = new Date(sDate as string);
     const end = new Date(eDate as string);
     const duration = end.getTime() - start.getTime() + (24 * 60 * 60 * 1000);
     const pSDate = new Date(start.getTime() - duration).toISOString().split('T')[0];
     const pEDate = new Date(start.getTime() - (24 * 60 * 60 * 1000)).toISOString().split('T')[0];
 
-    // Build common filter for keywords (Current & Previous)
     const platformFilter = platform && platform !== 'All' ? sql`AND post_source ILIKE ${platform as string}` : sql``;
 
-    const keywordRes = await dbPrimary.execute(sql`
-      WITH current_data AS (
+    const keywordRes = await dbTertiary.execute(sql`
+      WITH filtered_posts AS (
+        SELECT 
+          COALESCE(category, (SELECT tag FROM post_tags WHERE post_code = p.post_code LIMIT 1), 'General') as keyword,
+          'netral' as polarity, -- Explicitly neutral for now
+          post_source,
+          post_timestamps::date as p_date
+        FROM post_main p
+        WHERE analysis_result IS NOT NULL
+        ${platformFilter}
+      ),
+      current_data AS (
         SELECT keyword, 
                COUNT(*)::int as volume,
-               COUNT(CASE WHEN sentiment = 'Negatif' THEN 1 END)::int as neg_count,
-               COUNT(CASE WHEN sentiment = 'Positif' THEN 1 END)::int as pos_count,
-               COUNT(CASE WHEN sentiment = 'Netral' THEN 1 END)::int as neut_count,
+               0::int as neg_count,
+               0::int as pos_count,
+               COUNT(*)::int as neut_count,
                ARRAY_AGG(DISTINCT post_source) as platforms
-        FROM sample_sosmed_post_data 
-        WHERE post_timestamp::date BETWEEN ${sDate}::date AND ${eDate}::date
-        ${platformFilter}
+        FROM filtered_posts
+        WHERE p_date BETWEEN ${sDate}::date AND ${eDate}::date
         GROUP BY keyword
       ),
       previous_data AS (
         SELECT keyword, COUNT(*)::int as prev_volume
-        FROM sample_sosmed_post_data 
-        WHERE post_timestamp::date BETWEEN ${pSDate}::date AND ${pEDate}::date
-        ${platformFilter}
+        FROM filtered_posts
+        WHERE p_date BETWEEN ${pSDate}::date AND ${pEDate}::date
         GROUP BY keyword
       )
       SELECT c.*, 
@@ -1104,37 +1155,35 @@ app.get('/api/osint/summary', authenticateToken, async (req, res) => {
 
     const keywords = keywordRes.rows;
 
-    const emotionRes = await dbPrimary.execute(sql`
-      SELECT emotion, COUNT(*)::int as count
-      FROM sample_sosmed_post_data 
+    const emotionRes = await dbTertiary.execute(sql`
+      SELECT analysis_result->>'emosi' as emotion, COUNT(*)::int as count
+      FROM post_main 
       ${whereClauseFiltered}
-      AND emotion IS NOT NULL
       GROUP BY emotion
     `);
 
+    // Complete mapping of all emotions found in DB
     const emotions = {
       anger: 0,
       fear: 0,
       sadness: 0,
       joy: 0,
-      surprise: 0
+      surprise: 0,
+      provocative: 0,
+      panic: 0,
+      neutral: 0
     };
 
     emotionRes.rows.forEach((row: any) => {
       const val = (row.emotion || '').toLowerCase().trim();
-      
-      // Multi-lingual mapping (Indonesian & English)
-      if (val.includes('anger') || val.includes('marah') || val.includes('geram') || val.includes('kesal')) {
-        emotions.anger += row.count;
-      } else if (val.includes('fear') || val.includes('takut') || val.includes('khawatir') || val.includes('cemas')) {
-        emotions.fear += row.count;
-      } else if (val.includes('sadness') || val.includes('sad') || val.includes('sedih') || val.includes('duka') || val.includes('kecewa')) {
-        emotions.sadness += row.count;
-      } else if (val.includes('joy') || val.includes('happy') || val.includes('senang') || val.includes('bahagia') || val.includes('gembira')) {
-        emotions.joy += row.count;
-      } else if (val.includes('surprise') || val.includes('kaget') || val.includes('terkejut')) {
-        emotions.surprise += row.count;
-      }
+      if (val.includes('marah')) emotions.anger += row.count;
+      else if (val.includes('takut')) emotions.fear += row.count;
+      else if (val.includes('sedih')) emotions.sadness += row.count;
+      else if (val.includes('senang') || val.includes('bahagia')) emotions.joy += row.count;
+      else if (val.includes('kaget') || val.includes('terkejut')) emotions.surprise += row.count;
+      else if (val.includes('provokatif')) emotions.provocative += row.count;
+      else if (val.includes('panik')) emotions.panic += row.count;
+      else if (val.includes('netral')) emotions.neutral += row.count;
     });
 
     res.json({
@@ -1143,7 +1192,7 @@ app.get('/api/osint/summary', authenticateToken, async (req, res) => {
       platforms: platformRes.rows,
       keywords: keywords,
       emotions: emotions,
-      rawEmotions: emotionRes.rows // Debugging raw database values
+      rawEmotions: emotionRes.rows
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -1159,15 +1208,16 @@ app.get('/api/osint/summary', authenticateToken, async (req, res) => {
 app.get('/api/osint/sentiment-trend', authenticateToken, async (req, res) => {
     const { startDate, endDate, keyword, platform } = req.query;
     try {
-    const latestDateRes = await dbPrimary.execute(sql`SELECT MAX(post_timestamp::date) as max_d FROM sample_sosmed_post_data`);
-    const defaultDate = latestDateRes.rows[0].max_d;
+    const latestDateRes = await dbTertiary.execute(sql`SELECT MAX(post_timestamps::date) as max_d FROM post_main WHERE analysis_result IS NOT NULL`);
+    const maxDate = (latestDateRes.rows[0] as any)?.max_d;
+    const sevenDaysBefore = maxDate ? new Date(new Date(maxDate as string).getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : null;
     
-    const sDate = startDate || defaultDate;
-    const eDate = endDate || startDate || defaultDate;
+    const sDate = startDate || sevenDaysBefore || maxDate;
+    const eDate = endDate || startDate || maxDate;
 
     if (!sDate) return res.json([]);
 
-    let whereClause = sql`WHERE post_timestamp::date BETWEEN ${sDate}::date AND ${eDate}::date`;
+    let whereClause = sql`WHERE analysis_result IS NOT NULL AND post_timestamps::date BETWEEN ${sDate}::date AND ${eDate}::date`;
     
     if (platform && platform !== 'All') {
       whereClause = sql`${whereClause} AND post_source ILIKE ${platform as string}`;
@@ -1176,16 +1226,16 @@ app.get('/api/osint/sentiment-trend', authenticateToken, async (req, res) => {
     if (keyword && keyword !== 'All') {
       const keywords = (keyword as string).split(',');
       const inParams = keywords.map(k => sql`${k}`);
-      whereClause = sql`${whereClause} AND keyword IN (${sql.join(inParams, sql`, `)})`;
+      whereClause = sql`${whereClause} AND (category IN (${sql.join(inParams, sql`, `)}) OR EXISTS (SELECT 1 FROM post_tags t WHERE t.post_code = post_main.post_code AND t.tag IN (${sql.join(inParams, sql`, `)})))`;
     }
 
-    const trendRes = await dbPrimary.execute(sql`
+    const trendRes = await dbTertiary.execute(sql`
       SELECT 
-        date_trunc('hour', post_timestamp) as hour,
-        COUNT(CASE WHEN sentiment = 'Positif' THEN 1 END)::int as pos,
-        COUNT(CASE WHEN sentiment = 'Negatif' THEN 1 END)::int as neg,
-        COUNT(CASE WHEN sentiment = 'Netral' THEN 1 END)::int as neut
-      FROM sample_sosmed_post_data 
+        date_trunc('hour', post_timestamps) as hour,
+        0::int as pos,
+        0::int as neg,
+        COUNT(*)::int as neut
+      FROM post_main 
       ${whereClause}
       GROUP BY hour 
       ORDER BY hour ASC
@@ -1206,28 +1256,40 @@ app.get('/api/osint/sentiment-trend', authenticateToken, async (req, res) => {
 app.get('/api/osint/posts', authenticateToken, async (req, res) => {
     const { startDate, endDate, limit = 50, page = 1, sentiment, keyword, platform, search } = req.query;
     try {
-    const latestDateRes = await dbPrimary.execute(sql`SELECT MAX(post_timestamp::date) as max_d FROM sample_sosmed_post_data`);
-    const defaultDate = latestDateRes.rows[0].max_d;
+    const latestDateRes = await dbTertiary.execute(sql`SELECT MAX(post_timestamps::date) as max_d FROM post_main WHERE analysis_result IS NOT NULL`);
+    const maxDate = (latestDateRes.rows[0] as any)?.max_d;
+    const sevenDaysBefore = maxDate ? new Date(new Date(maxDate as string).getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : null;
     
-    const sDate = startDate || defaultDate;
-    const eDate = endDate || startDate || defaultDate;
+    const sDate = startDate || sevenDaysBefore || maxDate;
+    const eDate = endDate || startDate || maxDate;
     const offset = (Number(page) - 1) * Number(limit);
 
-    let whereClause = sql`WHERE post_timestamp::date BETWEEN ${sDate}::date AND ${eDate}::date`;
-    if (sentiment && sentiment !== 'All') whereClause = sql`${whereClause} AND sentiment = ${sentiment as string}`;
+    let whereClause = sql`WHERE analysis_result IS NOT NULL AND post_timestamps::date BETWEEN ${sDate}::date AND ${eDate}::date`;
+    if (sentiment && sentiment !== 'All') {
+        // Since sentiment is not mapped yet, filtering by sentiment will return nothing if not All
+        if (sentiment !== 'All') whereClause = sql`${whereClause} AND 1=0`;
+    }
     if (platform && platform !== 'All') whereClause = sql`${whereClause} AND post_source ILIKE ${platform as string}`;
-    if (search) whereClause = sql`${whereClause} AND post_author ILIKE ${'%' + (search as string) + '%'}`;
+    if (search) whereClause = sql`${whereClause} AND (post_username ILIKE ${'%' + (search as string) + '%'} OR post_content ILIKE ${'%' + (search as string) + '%'})`;
     if (keyword && keyword !== 'All') {
       const keywords = (keyword as string).split(',');
       const inParams = keywords.map(k => sql`${k}`);
-      whereClause = sql`${whereClause} AND keyword IN (${sql.join(inParams, sql`, `)})`;
+      whereClause = sql`${whereClause} AND (category IN (${sql.join(inParams, sql`, `)}) OR EXISTS (SELECT 1 FROM post_tags t WHERE t.post_code = post_main.post_code AND t.tag IN (${sql.join(inParams, sql`, `)})))`;
     }
 
-    const postsRes = await dbPrimary.execute(sql`
-      SELECT id, post_author as username, post_content, post_source as platform, sentiment, post_timestamp, keyword
-      FROM sample_sosmed_post_data 
+    const postsRes = await dbTertiary.execute(sql`
+      SELECT 
+        id, 
+        post_username as username, 
+        post_content, 
+        post_source as platform, 
+        'Netral' as sentiment, -- Placeholder as requested
+        post_timestamps as post_timestamp, 
+        COALESCE(category, (SELECT tag FROM post_tags WHERE post_code = post_main.post_code LIMIT 1), 'General') as keyword
+      FROM post_main 
       ${whereClause}
-      ORDER BY post_timestamp DESC
+      ORDER BY post_timestamps DESC
+      LIMIT ${Number(limit)} OFFSET ${offset}
     `);
 
     res.json(postsRes.rows);
@@ -1249,19 +1311,19 @@ app.get('/api/osint/network', authenticateToken, async (req, res) => {
     const authorsLimit = Math.floor(L * 0.6);
     const hashtagsLimit = Math.floor(L * 0.3);
     const keywordsLimit = Math.max(20, Math.floor(L * 0.1));
-    const latestDateRes = await dbPrimary.execute(sql`SELECT MAX(post_timestamp::date) as max_d FROM sample_sosmed_post_data`);
-    const defaultDate = latestDateRes.rows[0].max_d;
+    const latestDateRes = await dbTertiary.execute(sql`SELECT MAX(post_timestamps::date) as max_d FROM post_main WHERE analysis_result IS NOT NULL`);
+    const maxDate = (latestDateRes.rows[0] as any)?.max_d;
+    const sevenDaysBefore = maxDate ? new Date(new Date(maxDate as string).getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : null;
     
-    const sDate = startDate || defaultDate;
-    const eDate = endDate || startDate || defaultDate;
+    const sDate = startDate || sevenDaysBefore || maxDate;
+    const eDate = endDate || startDate || maxDate;
 
+    console.log(`[OSINT NETWORK] Range: ${sDate} to ${eDate}`);
     if (!sDate) return res.json({ nodes: [], links: [] });
 
-    let whereClause = sql`WHERE p.post_timestamp::date BETWEEN ${sDate}::date AND ${eDate}::date`;
+    let whereClause = sql`WHERE p.analysis_result IS NOT NULL AND p.post_timestamps >= ${sDate}::timestamp AND p.post_timestamps <= (${eDate}::date + interval '1 day')::timestamp`;
     
-    if (sentiment && sentiment !== 'All') {
-      whereClause = sql`${whereClause} AND p.sentiment = ${sentiment as string}`;
-    }
+    // ... (sentiment filtering logic skipped as before)
 
     if (platform && platform !== 'All') {
       whereClause = sql`${whereClause} AND p.post_source ILIKE ${platform as string}`;
@@ -1270,59 +1332,59 @@ app.get('/api/osint/network', authenticateToken, async (req, res) => {
     if (keyword && keyword !== 'All') {
       const keywords = (keyword as string).split(',');
       const inParams = keywords.map(k => sql`${k}`);
-      whereClause = sql`${whereClause} AND p.keyword IN (${sql.join(inParams, sql`, `)})`;
+      whereClause = sql`${whereClause} AND (p.category IN (${sql.join(inParams, sql`, `)}) OR EXISTS (SELECT 1 FROM post_tags t WHERE t.post_code = p.post_code AND t.tag IN (${sql.join(inParams, sql`, `)})))`;
     }
 
-    // 1. Get Top Authors (Primaries) - Limit to 100 for performance
-    const authorsRes = await dbPrimary.execute(sql`
+    // 1. Get Top Authors
+    const authorsRes = await dbTertiary.execute(sql`
       SELECT 
-        post_author as id, 
-        SUM(COALESCE(likes_count,0) + COALESCE(comment_count,0) + COALESCE(share_count,0) + COALESCE(retweet_count,0))::int + 10 as val,
+        p.post_username as id, 
+        COUNT(*)::int + 10 as val,
         'user' as type
-      FROM sample_sosmed_post_data p
-      ${whereClause}
-      GROUP BY post_author 
+      FROM post_main p
+      ${whereClause} AND p.post_username IS NOT NULL
+      GROUP BY p.post_username 
       ORDER BY val DESC 
       LIMIT ${authorsLimit}
     `);
 
-    // 2. Get All Active Keywords in this period
-    const keywordsRes = await dbPrimary.execute(sql`
+    // 2. Get Top Categories (Keywords)
+    const keywordsRes = await dbTertiary.execute(sql`
       SELECT 
-        p.keyword as id, 
+        COALESCE(p.category, (SELECT tag FROM post_tags WHERE post_code = p.post_code LIMIT 1), 'General') as id, 
         (COUNT(p.id)::int * 5) + 30 as val, 
         'keyword' as type
-      FROM sample_sosmed_post_data p
-      ${whereClause}
-      GROUP BY p.keyword 
+      FROM post_main p
+      ${whereClause} AND (p.category IS NOT NULL OR EXISTS (SELECT 1 FROM post_tags WHERE post_code = p.post_code))
+      GROUP BY id 
       ORDER BY val DESC 
       LIMIT ${keywordsLimit}
     `);
 
-    // 3. Get Top Hashtags for this period
-    const hashtagRes = await dbPrimary.execute(sql`
+    // 3. Get Top Hashtags
+    const hashtagRes = await dbTertiary.execute(sql`
       SELECT 
         h.tag as id,
         COUNT(h.id)::int * 3 + 10 as val,
         'hashtag' as type
-      FROM sample_sosmed_hashtag_data h
-      JOIN sample_sosmed_post_data p ON h.post_code = p.post_code
-      ${whereClause}
+      FROM post_tags h
+      JOIN post_main p ON h.post_code = p.post_code
+      ${whereClause} AND h.tag IS NOT NULL
       GROUP BY h.tag
       ORDER BY val DESC
       LIMIT ${hashtagsLimit}
     `);
 
     const nodesMap = new Map();
-    authorsRes.rows.forEach(r => nodesMap.set(r.id, r));
-    keywordsRes.rows.forEach(r => nodesMap.set(r.id, r));
-    hashtagRes.rows.forEach(r => nodesMap.set(r.id, r));
+    authorsRes.rows.forEach(r => nodesMap.set(String(r.id).toLowerCase(), r));
+    keywordsRes.rows.forEach(r => nodesMap.set(String(r.id).toLowerCase(), r));
+    hashtagRes.rows.forEach(r => nodesMap.set(String(r.id).toLowerCase(), r));
 
-    // 4. Extract Links (Keyword + Mentions + Hashtags)
-    const rawPosts = await dbPrimary.execute(sql`
-      SELECT p.post_code, p.post_author, p.post_content, p.keyword, h.tag as hashtag
-      FROM sample_sosmed_post_data p
-      LEFT JOIN sample_sosmed_hashtag_data h ON p.post_code = h.post_code
+    // 4. Extract Links
+    const rawPosts = await dbTertiary.execute(sql`
+      SELECT p.post_code, p.post_username as post_author, p.post_content, COALESCE(p.category, (SELECT tag FROM post_tags WHERE post_code = p.post_code LIMIT 1), 'General') as keyword, h.tag as hashtag
+      FROM post_main p
+      LEFT JOIN post_tags h ON p.post_code = h.post_code
       ${whereClause}
       LIMIT ${L * 3}
     `);
@@ -1331,51 +1393,48 @@ app.get('/api/osint/network', authenticateToken, async (req, res) => {
     const linkKeys = new Set();
 
     rawPosts.rows.forEach((post: any) => {
-      // User-Keyword Link
-      if (post.keyword && nodesMap.has(post.keyword) && nodesMap.has(post.post_author)) {
-        const key = `k:${post.post_author}->${post.keyword}`;
+      const authorId = String(post.post_author || '').toLowerCase();
+      const keywordId = String(post.keyword || '').toLowerCase();
+      const hashtagId = post.hashtag ? String(post.hashtag).toLowerCase() : null;
+
+      if (keywordId && nodesMap.has(keywordId) && nodesMap.has(authorId)) {
+        const key = `k:${authorId}->${keywordId}`;
         if (!linkKeys.has(key)) {
-          links.push({ source: post.post_author, target: post.keyword, value: 5 });
+          links.push({ source: authorId, target: keywordId, value: 3, key });
           linkKeys.add(key);
         }
       }
-
-      // User-Hashtag Link
-      if (post.hashtag && nodesMap.has(post.hashtag) && nodesMap.has(post.post_author)) {
-        const key = `h:${post.post_author}->${post.hashtag}`;
+      if (hashtagId && nodesMap.has(hashtagId) && nodesMap.has(authorId)) {
+        const key = `h:${authorId}->${hashtagId}`;
         if (!linkKeys.has(key)) {
-          links.push({ source: post.post_author, target: post.hashtag, value: 3 });
+          links.push({ source: authorId, target: hashtagId, value: 2, key });
           linkKeys.add(key);
         }
       }
-
-      // User-User (Mention) Link logic remains as it scans content for on-the-fly links
       const content = String(post.post_content || '');
       const mentions = content.match(/@(\w+)/g);
       if (mentions) {
         mentions.forEach((m: string) => {
-          const targetUser = m.replace('@', '');
-          if (targetUser === post.post_author) return;
-
-          // Only link to authors we already have to prevent unlinked star-bursts in 7d view
-          if (nodesMap.has(post.post_author)) {
+          const targetUser = m.replace('@', '').toLowerCase();
+          if (targetUser === authorId) return;
+          if (nodesMap.has(authorId)) {
              if (!nodesMap.has(targetUser)) {
                nodesMap.set(targetUser, { id: targetUser, val: 5, type: 'user' });
              }
-             const key = `m:${post.post_author}->${targetUser}`;
+             const key = `m:${authorId}->${targetUser}`;
              if (!linkKeys.has(key)) {
-               links.push({ source: post.post_author, target: targetUser, value: 2 });
+               links.push({ source: authorId, target: targetUser, value: 2, key });
                linkKeys.add(key);
              }
           }
         });
       }
     });
-    res.json({ 
-      nodes: Array.from(nodesMap.values()), 
-      links: links 
-    });
+    const nodes = Array.from(nodesMap.values());
+    console.log(`[OSINT NETWORK] Nodes: ${nodes.length}, Links: ${links.length}`);
+    res.json({ nodes, links });
   } catch (error: any) {
+    console.error('[OSINT NETWORK ERROR]', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -2652,6 +2711,45 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
 const host = process.env.HOST || '0.0.0.0';
 
 app.listen(Number(port), host, () => {
-  console.log(`🚀 Sakti Backend running at http://${host}:${port}`);
-  console.log(`📡 OpenAPI Spec available at http://${host}:${port}/openapi.json`);
+  console.log('\n' + pc.bold(pc.cyan('════════════════════════════════════════════════════════════')));
+  console.log(pc.bold(pc.cyan('   🛡️  SAKTI ANALYTICAL PLATFORM - COMMAND CENTER BACKEND')));
+  console.log(pc.bold(pc.cyan('════════════════════════════════════════════════════════════')));
+  console.log(`${pc.white('  🚀 Server Status  :')} ${pc.green('ONLINE')}`);
+  console.log(`${pc.white('  🔗 API Base URL   :')} ${pc.underline(pc.cyan(`http://localhost:${port}/api`))}`);
+  console.log(`${pc.white('  📖 Documentation  :')} ${pc.underline(pc.cyan(`http://localhost:${port}/openapi.json`))}`);
+  console.log(`${pc.white('  📊 Active DBs     :')} ${pc.yellow('Primary, Secondary, Tertiary (Social-Monitor)')}`);
+  
+  // Display API Endpoints Matrix
+  const routes = app._router.stack
+    .filter((r: any) => r.route)
+    .map((r: any) => ({
+      method: Object.keys(r.route.methods)[0].toUpperCase(),
+      path: r.route.path
+    }));
+  
+  if (routes.length > 0) {
+    console.log(pc.dim('├──────────────────────────────────────────────────────────'));
+    console.log(`${pc.white('  📑 Registered Endpoints: ')} ${pc.bold(pc.cyan(routes.length))} routes active`);
+    
+    // Grouping Logic
+    const groups: Record<string, any[]> = {};
+    routes.forEach((route: any) => {
+      const parts = route.path.split('/');
+      const groupName = parts[2] ? parts[2].toUpperCase() : 'CORE';
+      if (!groups[groupName]) groups[groupName] = [];
+      groups[groupName].push(route);
+    });
+
+    // Display Groups
+    Object.entries(groups).forEach(([name, items]) => {
+      console.log(`     ${pc.bold(pc.magenta('●'))} ${pc.bold(name.padEnd(12))} ${pc.dim(`(${items.length} endpoints)`)}`);
+      items.slice(0, 3).forEach((route: any) => {
+        const methodColor = route.method === 'GET' ? pc.green : route.method === 'POST' ? pc.yellow : pc.cyan;
+        console.log(`        ${methodColor(route.method.padEnd(6))} ${pc.dim(route.path)}`);
+      });
+      if (items.length > 3) console.log(`        ${pc.dim('...')}`);
+    });
+  }
+  
+  console.log(pc.bold(pc.cyan('════════════════════════════════════════════════════════════')) + '\n');
 });

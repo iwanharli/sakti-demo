@@ -10,6 +10,7 @@ interface MenuItem {
   label: string;
   icon: string;
   badge?: { count: number; color: 'red' | 'yellow' };
+  children?: { id: PageType; label: string; icon: string }[];
 }
 
 interface MenuSection {
@@ -29,7 +30,17 @@ const menuSections: MenuSection[] = [
   {
     title: 'INTELIJEN',
     items: [
-      { id: 'osint', label: 'OSINT', icon: 'fa-solid fa-tower-broadcast', badge: { count: 7, color: 'red' } },
+      { 
+        id: 'osint', 
+        label: 'OSINT', 
+        icon: 'fa-solid fa-tower-broadcast', 
+        badge: { count: 7, color: 'red' },
+        children: [
+          { id: 'osint', label: 'Overview & Sentimen', icon: 'fa-solid fa-chart-line' },
+          { id: 'osint-network', label: 'Jaringan Interaksi', icon: 'fa-solid fa-share-nodes' },
+          { id: 'osint-posts', label: 'Repositori Sosial Media', icon: 'fa-solid fa-rss' }
+        ]
+      },
       { id: 'predictive-analytics', label: 'Analitik Prediktif', icon: 'fa-solid fa-wand-magic-sparkles' },
     ]
   },
@@ -51,8 +62,30 @@ const menuSections: MenuSection[] = [
   }
 ];
 
+import { useState, useEffect } from 'react';
+
 export default function Sidebar({ currentPage }: SidebarProps) {
   const { sidebarCounts, isSidebarCollapsed, toggleSidebar } = useAppStore();
+  const [expandedMenus, setExpandedMenus] = useState<string[]>(['osint']);
+
+  // Auto-expand parent if child is active
+  useEffect(() => {
+    menuSections.forEach(section => {
+      section.items.forEach(item => {
+        if (item.children?.some(child => child.id === currentPage)) {
+          if (!expandedMenus.includes(item.id)) {
+            setExpandedMenus(prev => [...prev, item.id]);
+          }
+        }
+      });
+    });
+  }, [currentPage]);
+
+  const toggleExpand = (id: string) => {
+    setExpandedMenus(prev => 
+      prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]
+    );
+  };
 
   const navigateTo = (page: PageType) => {
     window.location.hash = `#/${page}`;
@@ -146,44 +179,78 @@ export default function Sidebar({ currentPage }: SidebarProps) {
             <div className="space-y-1">
               {section.items.map((item) => {
                 const badge = getBadge(item.id);
+                const hasChildren = item.children && item.children.length > 0;
+                const isExpanded = expandedMenus.includes(item.id);
+                const isChildActive = item.children?.some(c => c.id === currentPage);
+                const isActive = currentPage === item.id || isChildActive;
+
                 return (
-                  <button
-                    key={item.id}
-                    onClick={() => navigateTo(item.id)}
-                    className={`
-                      w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 group relative
-                      ${currentPage === item.id 
-                        ? 'bg-cyan-500/10 border border-cyan-500/40 shadow-[inset_0_0_15px_rgba(6,182,212,0.1)]' 
-                        : 'hover:bg-gray-800/30 border-b border-white/[0.03]'
-                      }
-                    `}
-                  >
-                    {/* Active Indicator Bar */}
-                    {currentPage === item.id && (
-                      <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-gradient-to-b from-cyan-400 to-indigo-500 rounded-r-full shadow-[0_0_15px_rgba(79,70,229,0.4)]" />
-                    )}
+                  <div key={item.id} className="flex flex-col gap-1">
+                    <button
+                      onClick={() => hasChildren ? toggleExpand(item.id) : navigateTo(item.id)}
+                      className={`
+                        w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 group relative
+                        ${isActive 
+                          ? 'bg-cyan-500/10 border border-cyan-500/40 shadow-[inset_0_0_15px_rgba(6,182,212,0.1)]' 
+                          : 'hover:bg-gray-800/30 border-b border-white/[0.03]'
+                        }
+                      `}
+                    >
+                      {/* Active Indicator Bar */}
+                      {isActive && (
+                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-gradient-to-b from-cyan-400 to-indigo-500 rounded-r-full shadow-[0_0_15px_rgba(79,70,229,0.4)]" />
+                      )}
 
-                     <div className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 ${isSidebarCollapsed ? 'flex-shrink-0 mx-auto' : ''} ${currentPage === item.id ? 'bg-indigo-500/20 text-cyan-400 shadow-[0_0_10px_rgba(99,102,241,0.2)]' : 'text-slate-500 group-hover:text-slate-300'}`}>
-                      <i className={item.icon}></i>
-                    </div>
-                    
-                    {!isSidebarCollapsed && (
-                      <span className="text-sm font-bold tracking-wide flex-1 text-left text-white animate-in fade-in slide-in-from-left-1 duration-300">
-                        {item.label}
-                      </span>
-                    )}
+                       <div className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-300 ${isSidebarCollapsed ? 'flex-shrink-0 mx-auto' : ''} ${isActive ? 'bg-indigo-500/20 text-cyan-400 shadow-[0_0_10px_rgba(99,102,241,0.2)]' : 'text-slate-500 group-hover:text-slate-300'}`}>
+                        <i className={item.icon}></i>
+                      </div>
+                      
+                      {!isSidebarCollapsed && (
+                        <>
+                          <span className="text-sm font-bold tracking-wide flex-1 text-left text-white animate-in fade-in slide-in-from-left-1 duration-300">
+                            {item.label}
+                          </span>
+                          
+                          {hasChildren && (
+                            <i className={`fa-solid fa-chevron-down text-[10px] text-slate-600 transition-transform duration-300 ${isExpanded ? 'rotate-180 text-cyan-500' : ''}`}></i>
+                          )}
+                        </>
+                      )}
 
-                    {badge && badge.count > 0 && (
-                      <span className={`
-                        ${isSidebarCollapsed ? 'absolute top-1 right-1' : 'min-w-[18px]'} h-[18px] flex items-center justify-center rounded-full px-1.5 text-[9px] font-bold
-                        ${badge.color === 'red' 
-                          ? 'bg-red-500/10 text-red-400 border border-red-500/30' 
-                          : 'bg-amber-400/10 text-amber-400 border border-amber-400/30'}
-                      `}>
-                        {badge.count}
-                      </span>
+                      {badge && badge.count > 0 && (
+                        <span className={`
+                          ${isSidebarCollapsed ? 'absolute top-1 right-1' : 'min-w-[18px]'} h-[18px] flex items-center justify-center rounded-full px-1.5 text-[9px] font-bold
+                          ${badge.color === 'red' 
+                            ? 'bg-red-500/10 text-red-400 border border-red-500/30' 
+                            : 'bg-amber-400/10 text-amber-400 border border-amber-400/30'}
+                        `}>
+                          {badge.count}
+                        </span>
+                      )}
+                    </button>
+
+                    {/* Sub-menu Items */}
+                    {!isSidebarCollapsed && hasChildren && isExpanded && (
+                      <div className="flex flex-col gap-1 ml-6 pl-4 border-l border-white/5 mt-1 animate-in slide-in-from-top-2 duration-300">
+                        {item.children?.map((child) => (
+                          <button
+                            key={child.id}
+                            onClick={() => navigateTo(child.id)}
+                            className={`
+                              flex items-center gap-3 px-3 py-2 rounded-lg text-[12px] font-bold transition-all
+                              ${currentPage === child.id 
+                                ? 'text-cyan-400 bg-cyan-500/5' 
+                                : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                              }
+                            `}
+                          >
+                            <i className={`${child.icon} text-[10px] ${currentPage === child.id ? 'text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]' : ''}`}></i>
+                            {child.label}
+                          </button>
+                        ))}
+                      </div>
                     )}
-                  </button>
+                  </div>
                 );
               })}
             </div>
