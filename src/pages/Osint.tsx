@@ -834,7 +834,28 @@ export default function Osint({ view = 'overview' }: { view?: 'overview' | 'netw
                 <tbody>
                   {paginatedPosts.map((post) => (
                     <tr key={post.id} className="group transition-all duration-300 hover:translate-x-1">
-                      <td className="py-4 pl-6 bg-[#0c161d]/80 backdrop-blur-md border-y border-l border-white/5 rounded-l-2xl transition-colors"><div className="flex items-center gap-3"><div className="w-9 h-9 rounded-full bg-black/40 border border-white/10 flex items-center justify-center shadow-lg"><i className={`${post.platform.toLowerCase() === 'twitter' ? 'fa-brands fa-x-twitter text-white' : post.platform.toLowerCase() === 'facebook' ? 'fa-brands fa-facebook text-[#1877F2]' : post.platform.toLowerCase() === 'instagram' ? 'fa-brands fa-instagram text-[#E4405F]' : post.platform.toLowerCase() === 'tiktok' ? 'fa-brands fa-tiktok text-white' : post.platform.toLowerCase() === 'youtube' ? 'fa-brands fa-youtube text-[#FF0000]' : post.platform.toLowerCase() === 'threads' ? 'fa-brands fa-threads text-white' : 'fa-solid fa-globe text-cyan-400'} text-base drop-shadow-[0_0_8px_currentColor]`}></i></div></div></td>
+                      <td className="py-4 pl-6 bg-[#0c161d]/80 backdrop-blur-md border-y border-l border-white/5 rounded-l-2xl transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg border transition-all duration-300 ${
+                            post.platform.toLowerCase() === 'twitter' ? 'bg-white/5 border-white/20' : 
+                            post.platform.toLowerCase() === 'facebook' ? 'bg-[#1877F2]/10 border-[#1877F2]/30' :
+                            post.platform.toLowerCase() === 'instagram' ? 'bg-[#E4405F]/10 border-[#E4405F]/30' :
+                            post.platform.toLowerCase() === 'tiktok' ? 'bg-white/5 border-white/20' :
+                            post.platform.toLowerCase() === 'youtube' ? 'bg-[#FF0000]/10 border-[#FF0000]/30' :
+                            'bg-cyan-500/10 border-cyan-500/30'
+                          }`}>
+                            <i className={`${
+                              post.platform.toLowerCase() === 'twitter' ? 'fa-brands fa-x-twitter text-white' : 
+                              post.platform.toLowerCase() === 'facebook' ? 'fa-brands fa-facebook text-[#1877F2]' : 
+                              post.platform.toLowerCase() === 'instagram' ? 'fa-brands fa-instagram text-[#E4405F]' : 
+                              post.platform.toLowerCase() === 'tiktok' ? 'fa-brands fa-tiktok text-white' : 
+                              post.platform.toLowerCase() === 'youtube' ? 'fa-brands fa-youtube text-[#FF0000]' : 
+                              post.platform.toLowerCase() === 'threads' ? 'fa-brands fa-threads text-white' : 
+                              'fa-solid fa-globe text-cyan-400'
+                            } text-xl drop-shadow-[0_0_12px_currentColor]`}></i>
+                          </div>
+                        </div>
+                      </td>
                       <td className="py-4 bg-[#0c161d]/80 backdrop-blur-md border-y border-white/5 transition-colors"><div className="flex flex-col gap-1 relative pr-8"><span className="font-mono text-[13px] text-cyan-400 font-bold">@{post.username}</span><p className="text-[12px] text-gray-300 italic">"{post.post_content}"</p><div className="absolute -left-3 top-0 w-0.5 h-full bg-cyan-500/20 rounded-full" /></div></td>
                       <td className="py-4 bg-[#0c161d]/80 backdrop-blur-md border-y border-white/5 transition-colors"><div className="inline-flex items-center gap-2 px-2.5 py-1 bg-white/[0.03] border border-white/10 rounded-lg text-[9px] text-gray-400 font-mono uppercase truncate max-w-[120px]"><span className="w-1 h-1 rounded-full bg-amber-500 shadow-[0_0_5px_#f59e0b]" />{post.keyword}</div></td>
                       <td className="py-4 bg-[#0c161d]/80 backdrop-blur-md border-y border-white/5 transition-colors text-center"><div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest ${post.sentiment === 'Negatif' ? 'bg-red-500/10 border-red-500/40 text-red-500' : post.sentiment === 'Positif' ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-500' : 'bg-cyan-500/10 border-cyan-500/40 text-cyan-400'}`}><span className={`w-1.5 h-1.5 rounded-full animate-pulse ${post.sentiment === 'Negatif' ? 'bg-red-500' : post.sentiment === 'Positif' ? 'bg-emerald-500' : 'bg-cyan-400'}`} />{post.sentiment}</div></td>

@@ -1144,7 +1144,7 @@ app.get('/api/osint/summary', authenticateToken, async (req, res) => {
       SELECT c.*, 
              COALESCE(p.prev_volume, 0) as prev_volume,
              CASE 
-               WHEN COALESCE(p.prev_volume, 0) = 0 THEN 500
+               WHEN COALESCE(p.prev_volume, 0) < 10 THEN 0
                ELSE ((c.volume - p.prev_volume)::float / p.prev_volume * 100)::int 
              END as spike
       FROM current_data c

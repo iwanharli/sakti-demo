@@ -105,10 +105,10 @@ const KeywordIntelligenceCard: React.FC<KeywordIntelligenceCardProps> = ({ keywo
                   <tr key={idx} className="bg-white/[0.02] hover:bg-white/[0.04] transition-all group/row border border-white/5">
                     <td className="py-4 pl-4 rounded-l-xl border-l border-y border-white/5">
                       <div className="flex items-center gap-3">
-                        <div className={`w-1 h-4 rounded-full ${kw.spike > 200 ? 'bg-red-500 shadow-[0_0_8px_#ef4444]' : 'bg-amber-500'}`} />
+                        <div className={`w-1 h-4 rounded-full ${kw.spike > 500 && kw.volume > 100 ? 'bg-red-500 shadow-[0_0_8px_#ef4444]' : 'bg-emerald-500'}`} />
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-gray-200 text-[13px] tracking-wide">{kw.keyword}</span>
-                          {kw.spike > 200 && (
+                          {kw.spike > 500 && kw.volume > 100 && (
                             <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-red-500 text-[8px] font-black font-mono border border-red-500/30">CRITICAL</span>
                           )}
                         </div>
