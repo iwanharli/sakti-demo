@@ -836,23 +836,24 @@ export default function Osint({ view = 'overview' }: { view?: 'overview' | 'netw
                     <tr key={post.id} className="group transition-all duration-300 hover:translate-x-1">
                       <td className="py-4 pl-6 bg-[#0c161d]/80 backdrop-blur-md border-y border-l border-white/5 rounded-l-2xl transition-colors">
                         <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg border transition-all duration-300 ${
-                            post.platform.toLowerCase() === 'twitter' ? 'bg-white/5 border-white/20' : 
-                            post.platform.toLowerCase() === 'facebook' ? 'bg-[#1877F2]/10 border-[#1877F2]/30' :
-                            post.platform.toLowerCase() === 'instagram' ? 'bg-[#E4405F]/10 border-[#E4405F]/30' :
-                            post.platform.toLowerCase() === 'tiktok' ? 'bg-white/5 border-white/20' :
-                            post.platform.toLowerCase() === 'youtube' ? 'bg-[#FF0000]/10 border-[#FF0000]/30' :
+                          <div className={`w-11 h-11 rounded-xl flex items-center justify-center shadow-lg border transition-all duration-300 ${
+                            (post.platform.toLowerCase() === 'twitter' || post.platform.toLowerCase() === 'x') ? 'bg-white/10 border-white/30 shadow-[0_0_15px_rgba(255,255,255,0.1)]' : 
+                            post.platform.toLowerCase() === 'facebook' ? 'bg-[#1877F2]/20 border-[#1877F2]/40 shadow-[0_0_15px_rgba(24,119,242,0.2)]' :
+                            post.platform.toLowerCase() === 'instagram' ? 'bg-[#E4405F]/20 border-[#E4405F]/40 shadow-[0_0_15px_rgba(228,64,95,0.2)]' :
+                            post.platform.toLowerCase() === 'tiktok' ? 'bg-cyan-500/10 border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.1)]' :
+                            post.platform.toLowerCase() === 'youtube' ? 'bg-[#FF0000]/20 border-[#FF0000]/40 shadow-[0_0_15px_rgba(255,0,0,0.2)]' :
+                            post.platform.toLowerCase() === 'threads' ? 'bg-white/10 border-white/30 shadow-[0_0_15px_rgba(255,255,255,0.1)]' :
                             'bg-cyan-500/10 border-cyan-500/30'
                           }`}>
                             <i className={`${
-                              post.platform.toLowerCase() === 'twitter' ? 'fa-brands fa-x-twitter text-white' : 
+                              (post.platform.toLowerCase() === 'twitter' || post.platform.toLowerCase() === 'x') ? 'fa-brands fa-x-twitter text-white' : 
                               post.platform.toLowerCase() === 'facebook' ? 'fa-brands fa-facebook text-[#1877F2]' : 
                               post.platform.toLowerCase() === 'instagram' ? 'fa-brands fa-instagram text-[#E4405F]' : 
-                              post.platform.toLowerCase() === 'tiktok' ? 'fa-brands fa-tiktok text-white' : 
+                              post.platform.toLowerCase() === 'tiktok' ? 'fa-brands fa-tiktok text-[#00f2ea]' : 
                               post.platform.toLowerCase() === 'youtube' ? 'fa-brands fa-youtube text-[#FF0000]' : 
                               post.platform.toLowerCase() === 'threads' ? 'fa-brands fa-threads text-white' : 
                               'fa-solid fa-globe text-cyan-400'
-                            } text-xl drop-shadow-[0_0_12px_currentColor]`}></i>
+                            } text-2xl drop-shadow-[0_0_15px_currentColor]`}></i>
                           </div>
                         </div>
                       </td>
